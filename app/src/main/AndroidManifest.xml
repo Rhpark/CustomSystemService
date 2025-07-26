@@ -36,6 +36,13 @@
             android:label="Alarm Controller Test"
             android:parentActivityName=".MainActivity" />
 
+        <!-- Alarm Test Activity -->
+        <activity
+            android:name=".NotificationTestActivity"
+            android:exported="false"
+            android:label="Notification Controller Test"
+            android:parentActivityName=".MainActivity" />
+
         <!-- Test Alarm Receiver -->
         <receiver
             android:name=".TestAlarmReceiver"
