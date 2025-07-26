@@ -41,6 +41,6 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 
-    implementation("com.github.rhpark:Permissions:0.9.3")
+    implementation("com.github.rhpark:Permissions:0.9.4")
     implementation("com.github.rhpark:Android_Custom_Logcat:0.9.2")
 }

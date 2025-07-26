@@ -1,16 +1,24 @@
 package kr.open.library.system_service
 
-import android.Manifest
+import android.Manifest.permission.POST_NOTIFICATIONS
+import android.Manifest.permission.RECEIVE_BOOT_COMPLETED
+import android.Manifest.permission.SCHEDULE_EXACT_ALARM
+import android.Manifest.permission.USE_EXACT_ALARM
+import android.Manifest.permission.WAKE_LOCK
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.widget.*
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.*
+import kr.open.library.logcat.Logx
+import kr.open.library.permissions.PermissionManager
 import kr.open.library.systemmanager.controller.alarm.AlarmController
 import kr.open.library.systemmanager.controller.alarm.dto.AlarmDTO
+import kr.open.library.systemmanager.extenstions.checkSdkVersion
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -26,7 +34,19 @@ class AlarmTestActivity : AppCompatActivity() {
     private lateinit var alarmController: AlarmController
     private val testAlarmId = 12345
     private val dateFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
-    
+
+    private var currentRequestId: String? = null
+    // 일반 권한 요청 런처
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        permissionManager.result(this, permissions, currentRequestId)
+    }
+
+    private val permissionManager:PermissionManager by lazy {
+        PermissionManager.getInstance()
+    }
+
     // UI Components
     private lateinit var etHour: EditText
     private lateinit var etMinute: EditText
@@ -51,11 +71,11 @@ class AlarmTestActivity : AppCompatActivity() {
     companion object {
         private const val PERMISSION_REQUEST_CODE = 1001
         private val REQUIRED_PERMISSIONS = arrayOf(
-            Manifest.permission.WAKE_LOCK,
-            Manifest.permission.RECEIVE_BOOT_COMPLETED
+            WAKE_LOCK,
+            RECEIVE_BOOT_COMPLETED
         ).let { basePermissions ->
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                basePermissions + Manifest.permission.SCHEDULE_EXACT_ALARM
+                basePermissions + SCHEDULE_EXACT_ALARM
             } else {
                 basePermissions
             }
@@ -287,19 +307,12 @@ class AlarmTestActivity : AppCompatActivity() {
     }
 
     private fun checkAndRequestPermissions() {
-        val missingPermissions = REQUIRED_PERMISSIONS.filter { permission ->
-            ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED
-        }
-        
-        if (missingPermissions.isNotEmpty()) {
-            logMessage("Requesting permissions: ${missingPermissions.joinToString()}")
-            ActivityCompat.requestPermissions(
-                this,
-                missingPermissions.toTypedArray(),
-                PERMISSION_REQUEST_CODE
-            )
-        } else {
-            logMessage("All required permissions granted")
+        permissionManager.request(
+            this, requestPermissionLauncher = requestPermissionLauncher,
+            specialPermissionLaunchers = null,
+            permissions = getPermissionList()
+        ) { deniedPermissions ->
+            Logx.d("deniedPermissions $deniedPermissions")
         }
     }
 
@@ -329,5 +342,19 @@ class AlarmTestActivity : AppCompatActivity() {
         super.onDestroy()
         activityScope.cancel()
         logMessage("AlarmTestActivity destroyed")
+    }
+
+    private fun getPermissionList(): List<String> {
+        val list = mutableListOf<String>()
+        list.add(RECEIVE_BOOT_COMPLETED)
+        list.add(WAKE_LOCK)
+        checkSdkVersion(Build.VERSION_CODES.TIRAMISU) {
+            list.add(USE_EXACT_ALARM)
+            list.add(POST_NOTIFICATIONS)
+        }
+        checkSdkVersion(Build.VERSION_CODES.S) {
+            list.add(SCHEDULE_EXACT_ALARM)
+        }
+        return list.toList()
     }
 }
