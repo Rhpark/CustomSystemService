@@ -50,8 +50,10 @@ public open class SimpleNotificationController(context: Context, private val sho
     // 진행률 알림 빌더들을 저장하는 맵 (ID별 관리) - Thread-safe
     private val progressBuilders = ConcurrentHashMap<Int, ProgressNotificationInfo>()
     
-    // 진행률 알림 정리를 위한 스케줄러
-    private val cleanupScheduler: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
+    // 진행률 알림 정리를 위한 스케줄러 (lazy 초기화)
+    private val cleanupScheduler: ScheduledExecutorService by lazy { 
+        Executors.newSingleThreadScheduledExecutor()
+    }
     
     // 진행률 알림 정보를 담는 데이터 클래스
     private data class ProgressNotificationInfo(
