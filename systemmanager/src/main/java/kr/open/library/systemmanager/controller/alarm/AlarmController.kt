@@ -5,62 +5,185 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.icu.util.Calendar
+import kr.open.library.logcat.Logx
 import kr.open.library.systemmanager.base.BaseSystemService
 import kr.open.library.systemmanager.controller.alarm.dto.AlarmDTO
 import kr.open.library.systemmanager.controller.alarm.receiver.BaseAlarmReceiver
+import kr.open.library.systemmanager.controller.alarm.vo.AlarmConstants
 import kr.open.library.systemmanager.extenstions.getAlarmManager
+import kr.open.library.systemmanager.extenstions.safeCatch
 
 
 /**
+ * Controller for managing Android alarm operations with enhanced safety and reliability.
+ * Provides methods to register different types of alarms and handles calendar logic properly.
+ * 
+ * Android 알람 작업을 안전하고 신뢰성 있게 관리하는 컨트롤러입니다.
+ * 다양한 유형의 알람을 등록하는 메서드를 제공하고 캘린더 로직을 올바르게 처리합니다.
  *
+ * @param context The application context
  */
 public open class AlarmController(context: Context) : BaseSystemService(context) {
 
     public val alarmManager: AlarmManager by lazy { context.getAlarmManager() }
 
-    public fun registerAlarmClock(receiver: Class<*>, alarmDto: AlarmDTO) {
-        val calendar = getCalendar(alarmDto)
-        val pendingIntent = getAlarmPendingIntent(receiver, alarmDto.key)
-        val alarmClockInfo = AlarmManager.AlarmClockInfo(calendar.timeInMillis, pendingIntent)
-        alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
-    }
-
-    public fun registerAlarmExactAndAllowWhileIdle(receiver: Class<*>, alarmDto: AlarmDTO) {
-        val calendar = getCalendar(alarmDto)
-        val pendingIntent = getAlarmPendingIntent(receiver, alarmDto.key)
-        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
-    }
-
-    public fun registerAlarmAndAllowWhileIdle(receiver: Class<*>, alarmDto: AlarmDTO) {
-        val calendar = getCalendar(alarmDto)
-        val pendingIntent = getAlarmPendingIntent(receiver, alarmDto.key)
-        alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
-    }
-
-    private fun getAlarmPendingIntent(receiver: Class<*>, key: Int): PendingIntent =
-        PendingIntent.getBroadcast(
-            context,
-            key,
-            Intent(context, receiver).apply { putExtra("AlarmKey", key) },
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-    private fun getCalendar(alarmDto: AlarmDTO): Calendar = Calendar.getInstance().apply {
-//        timeInMillis = System.currentTimeMillis()
-        set(Calendar.HOUR_OF_DAY, alarmDto.hour)
-        set(Calendar.MINUTE, alarmDto.minute)
-        set(Calendar.SECOND, alarmDto.second)
-//        set(Calendar.SECOND, 10)
-        if (before(this@apply)) {
-            add(Calendar.DATE, 1)
+    /**
+     * Registers an alarm clock that will wake up the device and show in the status bar.
+     * 기기를 깨우고 상태 표시줄에 표시되는 알람 시계를 등록합니다.
+     *
+     * @param receiver The BroadcastReceiver class to handle the alarm
+     * @param alarmDto The alarm data containing time and metadata
+     * @return true if alarm was registered successfully, false otherwise
+     */
+    public fun registerAlarmClock(receiver: Class<*>, alarmDto: AlarmDTO): Boolean {
+        return safeCatch("registerAlarmClock", false) {
+            val calendar = getCalendar(alarmDto)
+            val pendingIntent = getAlarmPendingIntent(receiver, alarmDto.key)
+                ?: return@safeCatch false
+                
+            val alarmClockInfo = AlarmManager.AlarmClockInfo(calendar.timeInMillis, pendingIntent)
+            alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
+            Logx.d("Alarm clock registered for key: ${alarmDto.key} at ${calendar.time}")
+            true
         }
     }
 
-    public fun remove(key: Int) {
-        val intent = Intent(context, BaseAlarmReceiver::class.java)
-        val pendingIntent =
-            PendingIntent.getBroadcast(context, key, intent, PendingIntent.FLAG_NO_CREATE)
+    /**
+     * Registers an exact alarm that can fire while the device is in idle mode.
+     * 기기가 유휴 모드일 때도 실행될 수 있는 정확한 알람을 등록합니다.
+     *
+     * @param receiver The BroadcastReceiver class to handle the alarm
+     * @param alarmDto The alarm data containing time and metadata
+     * @return true if alarm was registered successfully, false otherwise
+     */
+    public fun registerAlarmExactAndAllowWhileIdle(receiver: Class<*>, alarmDto: AlarmDTO): Boolean {
+        return safeCatch("registerAlarmExactAndAllowWhileIdle", false) {
+            val calendar = getCalendar(alarmDto)
+            val pendingIntent = getAlarmPendingIntent(receiver, alarmDto.key)
+                ?: return@safeCatch false
+                
+            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
+            Logx.d("Exact alarm registered for key: ${alarmDto.key} at ${calendar.time}")
+            true
+        }
+    }
 
-        pendingIntent?.let { alarmManager.cancel(it) }
+    /**
+     * Registers an alarm that can fire while the device is in idle mode (less precise than exact).
+     * 기기가 유휴 모드일 때도 실행될 수 있는 알람을 등록합니다 (정확한 알람보다 덜 정밀함).
+     *
+     * @param receiver The BroadcastReceiver class to handle the alarm
+     * @param alarmDto The alarm data containing time and metadata
+     * @return true if alarm was registered successfully, false otherwise
+     */
+    public fun registerAlarmAndAllowWhileIdle(receiver: Class<*>, alarmDto: AlarmDTO): Boolean {
+        return safeCatch("registerAlarmAndAllowWhileIdle", false) {
+            val calendar = getCalendar(alarmDto)
+            val pendingIntent = getAlarmPendingIntent(receiver, alarmDto.key)
+                ?: return@safeCatch false
+                
+            alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
+            Logx.d("Idle-allowed alarm registered for key: ${alarmDto.key} at ${calendar.time}")
+            true
+        }
+    }
+
+    /**
+     * Creates a PendingIntent for alarm operations with proper error handling.
+     * 알람 작업을 위한 PendingIntent를 안전하게 생성합니다.
+     */
+    private fun getAlarmPendingIntent(receiver: Class<*>, key: Int): PendingIntent? {
+        return safeCatch("getAlarmPendingIntent", null) {
+            PendingIntent.getBroadcast(
+                context,
+                key,
+                Intent(context, receiver).apply { 
+                    putExtra(AlarmConstants.ALARM_KEY, key) 
+                },
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+        }
+    }
+
+    /**
+     * Creates a Calendar instance for the alarm time, properly handling next-day scheduling.
+     * 알람 시간에 대한 Calendar 인스턴스를 생성하며, 다음 날 스케줄링을 올바르게 처리합니다.
+     *
+     * @param alarmDto The alarm data containing hour, minute, and second
+     * @return Calendar instance set to the appropriate alarm time
+     */
+    private fun getCalendar(alarmDto: AlarmDTO): Calendar {
+        val now = Calendar.getInstance()
+        val alarmTime = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, alarmDto.hour)
+            set(Calendar.MINUTE, alarmDto.minute)
+            set(Calendar.SECOND, alarmDto.second)
+            set(Calendar.MILLISECOND, 0) // Reset milliseconds for precise comparison
+        }
+        
+        // If the alarm time has already passed today, schedule it for tomorrow
+        if (alarmTime.before(now)) {
+            alarmTime.add(Calendar.DATE, 1)
+            Logx.d("Alarm time has passed today, scheduling for tomorrow: ${alarmTime.time}")
+        } else {
+            Logx.d("Alarm scheduled for today: ${alarmTime.time}")
+        }
+        
+        return alarmTime
+    }
+
+    /**
+     * Removes an existing alarm by its key.
+     * 키를 사용하여 기존 알람을 제거합니다.
+     *
+     * @param key The unique identifier for the alarm to remove
+     * @param receiver The BroadcastReceiver class used when creating the alarm
+     * @return true if alarm was found and cancelled, false otherwise
+     */
+    public fun remove(key: Int, receiver: Class<*> = BaseAlarmReceiver::class.java): Boolean {
+        return safeCatch("removeAlarm", false) {
+            val intent = Intent(context, receiver).apply {
+                putExtra(AlarmConstants.ALARM_KEY, key)
+            }
+            val pendingIntent = PendingIntent.getBroadcast(
+                context, 
+                key, 
+                intent, 
+                PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+            )
+            
+            if (pendingIntent != null) {
+                alarmManager.cancel(pendingIntent)
+                pendingIntent.cancel()
+                Logx.d("Alarm with key $key cancelled successfully")
+                true
+            } else {
+                Logx.w("No alarm found with key $key")
+                false
+            }
+        }
+    }
+    
+    /**
+     * Checks if an alarm with the given key exists.
+     * 주어진 키를 가진 알람이 존재하는지 확인합니다.
+     *
+     * @param key The unique identifier for the alarm
+     * @param receiver The BroadcastReceiver class used when creating the alarm
+     * @return true if alarm exists, false otherwise
+     */
+    public fun exists(key: Int, receiver: Class<*> = BaseAlarmReceiver::class.java): Boolean {
+        return safeCatch("checkAlarmExists", false) {
+            val intent = Intent(context, receiver).apply {
+                putExtra(AlarmConstants.ALARM_KEY, key)
+            }
+            val pendingIntent = PendingIntent.getBroadcast(
+                context,
+                key,
+                intent,
+                PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+            )
+            pendingIntent != null
+        }
     }
 }

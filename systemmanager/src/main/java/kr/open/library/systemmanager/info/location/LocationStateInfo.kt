@@ -37,15 +37,36 @@ public open class LocationStateInfo(
     private val msfUpdate: MutableStateFlow<LocationStateEvent> = MutableStateFlow(LocationStateEvent.OnGpsEnabled(isGpsEnabled()))
     public val sfUpdate: StateFlow<LocationStateEvent> = msfUpdate.asStateFlow()
 
-    private val locationChanged = DataUpdate<Location?>(getLocation()){ sendFlow(LocationStateEvent.OnLocationChanged(it))}
+    private val locationChanged = DataUpdate<Location?>(getLocation())
+    private val isGpsEnabled = DataUpdate<Boolean>(isGpsEnable())
+    private val isNetworkEnabled = DataUpdate<Boolean>(isNetworkEnable())
+    private val isPassiveEnabled = DataUpdate<Boolean>(isPassiveEnable())
+    private val isFusedEnabled = DataUpdate<Boolean>(isFusedEnable())
 
-    private val isGpsEnabled = DataUpdate<Boolean>(isGpsEnable()){ sendFlow(LocationStateEvent.OnGpsEnabled(it))}
+    init {
+        setupDataFlows()
+    }
 
-    private val isNetworkEnabled = DataUpdate<Boolean>(isNetworkEnable()){ sendFlow(LocationStateEvent.OnNetworkEnabled(it))}
-
-    private val isPassiveEnabled = DataUpdate<Boolean>(isPassiveEnable()){ sendFlow(LocationStateEvent.OnPassiveEnabled(it))}
-
-    private val isFusedEnabled = DataUpdate<Boolean>(isFusedEnable()){ sendFlow(LocationStateEvent.OnFusedEnabled(it))}
+    /**
+     * Sets up reactive flows for all location data updates
+     */
+    private fun setupDataFlows() {
+        coroutineScope.launch {
+            locationChanged.state.collect { sendFlow(LocationStateEvent.OnLocationChanged(it)) }
+        }
+        coroutineScope.launch {
+            isGpsEnabled.state.collect { sendFlow(LocationStateEvent.OnGpsEnabled(it)) }
+        }
+        coroutineScope.launch {
+            isNetworkEnabled.state.collect { sendFlow(LocationStateEvent.OnNetworkEnabled(it)) }
+        }
+        coroutineScope.launch {
+            isPassiveEnabled.state.collect { sendFlow(LocationStateEvent.OnPassiveEnabled(it)) }
+        }
+        coroutineScope.launch {
+            isFusedEnabled.state.collect { sendFlow(LocationStateEvent.OnFusedEnabled(it)) }
+        }
+    }
 
 
     private val locationListener = object : LocationListener {

@@ -7,13 +7,53 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Hello World!"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="32dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="SystemManager Demo"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp"
+            android:textColor="@android:color/black" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Test the SystemManager library components"
+            android:textSize="16sp"
+            android:layout_marginBottom="32dp"
+            android:textAlignment="center"
+            android:textColor="@android:color/darker_gray" />
+
+        <Button
+            android:id="@+id/btnAlarmTest"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🔔 Test Alarm Controller"
+            android:textSize="18sp"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp"
+            android:backgroundTint="@android:color/holo_blue_dark" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="More tests coming soon..."
+            android:textSize="14sp"
+            android:textStyle="italic"
+            android:textColor="@android:color/darker_gray" />
+
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

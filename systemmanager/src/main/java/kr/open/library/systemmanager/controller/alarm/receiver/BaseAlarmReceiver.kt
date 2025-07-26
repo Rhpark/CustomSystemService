@@ -8,13 +8,24 @@ import android.os.PowerManager
 import kr.open.library.logcat.Logx
 import kr.open.library.systemmanager.controller.alarm.AlarmController
 import kr.open.library.systemmanager.controller.alarm.dto.AlarmDTO
-import kr.open.library.systemmanager.controller.alarm.vo.AlarmVO.ALARM_KEY
-import kr.open.library.systemmanager.controller.alarm.vo.AlarmVO.ALARM_KEY_DEFAULT_VALUE
+import kr.open.library.systemmanager.controller.alarm.vo.AlarmConstants.ALARM_KEY
+import kr.open.library.systemmanager.controller.alarm.vo.AlarmConstants.ALARM_KEY_DEFAULT_VALUE
+import kr.open.library.systemmanager.controller.alarm.vo.AlarmConstants.WAKELOCK_TAG
+import kr.open.library.systemmanager.controller.alarm.vo.AlarmConstants.WAKELOCK_TIMEOUT_MS
 import kr.open.library.systemmanager.controller.notification.SimpleNotificationController
 import kr.open.library.systemmanager.extenstions.getAlarmController
 import kr.open.library.systemmanager.extenstions.getPowerManager
 
 
+/**
+ * Base class for handling alarm broadcasts with safe WakeLock management.
+ * Provides a template method pattern for alarm processing with proper resource management.
+ * 
+ * WakeLock을 안전하게 관리하며 알람 브로드캐스트를 처리하는 기본 클래스입니다.
+ * 적절한 리소스 관리와 함께 알람 처리를 위한 템플릿 메서드 패턴을 제공합니다.
+ *
+ * @constructor Creates a BaseAlarmReceiver instance
+ */
 public abstract class BaseAlarmReceiver() : BroadcastReceiver() {
 
     protected lateinit var notificationController: SimpleNotificationController
@@ -29,35 +40,134 @@ public abstract class BaseAlarmReceiver() : BroadcastReceiver() {
     protected abstract fun loadAllAlarmDtoList(context: Context): List<AlarmDTO>
     protected abstract fun loadAlarmDtoList(context:Context, intent: Intent, key:Int): AlarmDTO?
 
+    /**
+     * The maximum time to hold the WakeLock (in milliseconds).
+     * Should be kept as short as possible to preserve battery life.
+     * WakeLock을 유지하는 최대 시간(밀리초 단위).
+     * 배터리 수명을 보존하기 위해 가능한 한 짧게 유지해야 합니다.
+     */
     protected abstract val powerManagerAcquireTime: Long
 
-    @SuppressLint("InvalidWakeLockTag")
+    /**
+     * Handles alarm broadcasts with safe WakeLock management and proper error handling.
+     * WakeLock을 안전하게 관리하고 적절한 오류 처리로 알람 브로드캐스트를 처리합니다.
+     */
     override fun onReceive(context: Context?, intent: Intent?) {
-        Logx.d()
-        if(context == null || intent == null) return
-
-        Logx.d("BaseAlarmReceiver onReceive")
-        val pm = context.getPowerManager()
-        val wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK or
-                PowerManager.ACQUIRE_CAUSES_WAKEUP or
-                PowerManager.ON_AFTER_RELEASE, "AlarmReceiver").apply {
-            acquire(powerManagerAcquireTime)
+        Logx.d("BaseAlarmReceiver.onReceive called")
+        
+        // Early validation
+        if (context == null) {
+            Logx.e("Context is null, cannot process alarm")
+            return
         }
-        val alarmController = context.getAlarmController()
+        if (intent == null) {
+            Logx.e("Intent is null, cannot process alarm")
+            return
+        }
 
-        Logx.d(" intent.action ${intent.action}")
-        if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
-            //data load
-            loadAllAlarmDtoList(context).forEach { registerAlarm(alarmController, it) }
-        } else {
-            // alarmDto Load
+        var wakeLock: PowerManager.WakeLock? = null
+        
+        try {
+            // Acquire WakeLock with safe configuration
+            val powerManager = context.getPowerManager()
+            wakeLock = powerManager.newWakeLock(
+                PowerManager.PARTIAL_WAKE_LOCK,  // Only CPU stays awake
+                WAKELOCK_TAG
+            ).apply {
+                // Use timeout as a safety net
+                acquire(minOf(powerManagerAcquireTime, WAKELOCK_TIMEOUT_MS))
+            }
+            
+            Logx.d("WakeLock acquired for alarm processing")
+            processAlarmIntent(context, intent)
+            
+        } catch (e: SecurityException) {
+            Logx.e("Security exception acquiring WakeLock: ${e.message}")
+            // Continue without WakeLock if permission is missing
+            processAlarmIntent(context, intent)
+        } catch (e: Exception) {
+            Logx.e("Unexpected error in alarm processing: ${e.message}")
+        } finally {
+            // Always release WakeLock in finally block
+            wakeLock?.let { wl ->
+                try {
+                    if (wl.isHeld) {
+                        wl.release()
+                        Logx.d("WakeLock released successfully")
+                    }
+                } catch (e: RuntimeException) {
+                    Logx.e("Error releasing WakeLock: ${e.message}")
+                }
+            }
+        }
+    }
+    
+    /**
+     * Processes the alarm intent based on its action.
+     * 액션에 따라 알람 인텐트를 처리합니다.
+     */
+    private fun processAlarmIntent(context: Context, intent: Intent) {
+        try {
+            val alarmController = context.getAlarmController()
+            
+            Logx.d("Processing alarm intent with action: ${intent.action}")
+            
+            when (intent.action) {
+                Intent.ACTION_BOOT_COMPLETED -> {
+                    handleBootCompleted(context, alarmController)
+                }
+                else -> {
+                    handleAlarmTrigger(context, intent)
+                }
+            }
+        } catch (e: Exception) {
+            Logx.e("Error processing alarm intent: ${e.message}")
+        }
+    }
+    
+    /**
+     * Handles device boot completion by re-registering all active alarms.
+     * 기기 부팅 완료를 처리하여 모든 활성 알람을 다시 등록합니다.
+     */
+    private fun handleBootCompleted(context: Context, alarmController: AlarmController) {
+        try {
+            val allAlarms = loadAllAlarmDtoList(context)
+            Logx.d("Re-registering ${allAlarms.size} alarms after boot")
+            
+            allAlarms.forEach { alarmDto ->
+                if (alarmDto.isActive) {
+                    registerAlarm(alarmController, alarmDto)
+                }
+            }
+        } catch (e: Exception) {
+            Logx.e("Error re-registering alarms after boot: ${e.message}")
+        }
+    }
+    
+    /**
+     * Handles alarm trigger by showing notification.
+     * 알람 트리거를 처리하여 알림을 표시합니다.
+     */
+    private fun handleAlarmTrigger(context: Context, intent: Intent) {
+        try {
             val key = intent.getIntExtra(ALARM_KEY, ALARM_KEY_DEFAULT_VALUE)
-            loadAlarmDtoList(context, intent, key)?.let {
-                createNotificationChannel(context, it)
-                showNotification(context, it)
-            } ?: Logx.e("Failed to load AlarmDTO for key: $key")
+            
+            if (key == ALARM_KEY_DEFAULT_VALUE) {
+                Logx.e("Invalid alarm key received: $key")
+                return
+            }
+            
+            val alarmDto = loadAlarmDtoList(context, intent, key)
+            if (alarmDto != null) {
+                createNotificationChannel(context, alarmDto)
+                showNotification(context, alarmDto)
+                Logx.d("Alarm notification shown for key: $key")
+            } else {
+                Logx.e("Failed to load AlarmDTO for key: $key")
+            }
+        } catch (e: Exception) {
+            Logx.e("Error handling alarm trigger: ${e.message}")
         }
-        wl.release()
     }
 
     private fun registerAlarm(alarmController: AlarmController, alarmDto: AlarmDTO): Unit =

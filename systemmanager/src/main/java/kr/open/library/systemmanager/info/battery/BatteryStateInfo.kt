@@ -63,18 +63,18 @@ public open class BatteryStateInfo(context: Context) :
      */
     public val sfUpdate: StateFlow<BatteryStateEvent> = msfUpdate.asStateFlow()
 
-    private val capacity = DataUpdate(getCapacity()) { sendFlow(BatteryStateEvent.OnCapacity(it)) }
-    private val currentAmpere = DataUpdate(getCurrentAmpere()) { sendFlow(BatteryStateEvent.OnCurrentAmpere(it)) }
-    private val currentAverageAmpere = DataUpdate(getCurrentAverageAmpere()) { sendFlow(BatteryStateEvent.OnCurrentAverageAmpere(it)) }
-    private val chargeStatus = DataUpdate(getChargeStatus()) { sendFlow(BatteryStateEvent.OnChargeStatus(it)) }
-    private val chargeCounter = DataUpdate(getChargeCounter()) { sendFlow(BatteryStateEvent.OnChargeCounter(it)) }
-    private val chargePlug = DataUpdate(getChargePlug()) { sendFlow(BatteryStateEvent.OnChargePlug(it)) }
-    private val energyCounter = DataUpdate(getEnergyCounter()) { sendFlow(BatteryStateEvent.OnEnergyCounter(it)) }
-    private val health = DataUpdate(getHealth()) { sendFlow(BatteryStateEvent.OnHealth(it)) }
-    private val present = DataUpdate(getPresent()) { sendFlow(BatteryStateEvent.OnPresent(it)) }
-    private val totalCapacity = DataUpdate(getTotalCapacity()) { sendFlow(BatteryStateEvent.OnTotalCapacity(it)) }
-    private val temperature = DataUpdate(getTemperature()) { sendFlow(BatteryStateEvent.OnTemperature(it)) }
-    private val voltage = DataUpdate(getVoltage()) { sendFlow(BatteryStateEvent.OnVoltage(it)) }
+    private val capacity = DataUpdate(getCapacity())
+    private val currentAmpere = DataUpdate(getCurrentAmpere())
+    private val currentAverageAmpere = DataUpdate(getCurrentAverageAmpere())
+    private val chargeStatus = DataUpdate(getChargeStatus())
+    private val chargeCounter = DataUpdate(getChargeCounter())
+    private val chargePlug = DataUpdate(getChargePlug())
+    private val energyCounter = DataUpdate(getEnergyCounter())
+    private val health = DataUpdate(getHealth())
+    private val present = DataUpdate(getPresent())
+    private val totalCapacity = DataUpdate(getTotalCapacity())
+    private val temperature = DataUpdate(getTemperature())
+    private val voltage = DataUpdate(getVoltage())
 
     private val batteryBroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -105,6 +105,51 @@ public open class BatteryStateInfo(context: Context) :
     private fun sendFlow(event: BatteryStateEvent) {
         coroutineScope?.launch { msfUpdate.emit(event) } ?: run {
             Logx.e("Error: Cannot send event - coroutineScope is null. Call updateStart() first.")
+        }
+    }
+
+    /**
+     * Sets up reactive flows for all battery data updates.
+     * This method should be called after setting the coroutineScope.
+     */
+    private fun setupDataFlows() {
+        coroutineScope?.let { scope ->
+            scope.launch {
+                capacity.state.collect { sendFlow(BatteryStateEvent.OnCapacity(it)) }
+            }
+            scope.launch {
+                currentAmpere.state.collect { sendFlow(BatteryStateEvent.OnCurrentAmpere(it)) }
+            }
+            scope.launch {
+                currentAverageAmpere.state.collect { sendFlow(BatteryStateEvent.OnCurrentAverageAmpere(it)) }
+            }
+            scope.launch {
+                chargeStatus.state.collect { sendFlow(BatteryStateEvent.OnChargeStatus(it)) }
+            }
+            scope.launch {
+                chargeCounter.state.collect { sendFlow(BatteryStateEvent.OnChargeCounter(it)) }
+            }
+            scope.launch {
+                chargePlug.state.collect { sendFlow(BatteryStateEvent.OnChargePlug(it)) }
+            }
+            scope.launch {
+                energyCounter.state.collect { sendFlow(BatteryStateEvent.OnEnergyCounter(it)) }
+            }
+            scope.launch {
+                health.state.collect { sendFlow(BatteryStateEvent.OnHealth(it)) }
+            }
+            scope.launch {
+                present.state.collect { sendFlow(BatteryStateEvent.OnPresent(it)) }
+            }
+            scope.launch {
+                totalCapacity.state.collect { sendFlow(BatteryStateEvent.OnTotalCapacity(it)) }
+            }
+            scope.launch {
+                temperature.state.collect { sendFlow(BatteryStateEvent.OnTemperature(it)) }
+            }
+            scope.launch {
+                voltage.state.collect { sendFlow(BatteryStateEvent.OnVoltage(it)) }
+            }
         }
     }
 
@@ -140,6 +185,7 @@ public open class BatteryStateInfo(context: Context) :
         updateStop()
 
         coroutineScope = coroutine
+        setupDataFlows()  // Setup reactive flows for data updates
         updateJob = coroutine.launch {
             while (isActive) {
                 sendBroadcast()
