@@ -140,7 +140,7 @@ public open class AlarmController(context: Context) : BaseSystemService(context)
      * @param receiver The BroadcastReceiver class used when creating the alarm
      * @return true if alarm was found and cancelled, false otherwise
      */
-    public fun remove(key: Int, receiver: Class<*> = BaseAlarmReceiver::class.java): Boolean {
+    public fun remove(key: Int, receiver: Class<*>): Boolean {
         return safeCatch("removeAlarm", false) {
             val intent = Intent(context, receiver).apply {
                 putExtra(AlarmConstants.ALARM_KEY, key)
@@ -172,7 +172,7 @@ public open class AlarmController(context: Context) : BaseSystemService(context)
      * @param receiver The BroadcastReceiver class used when creating the alarm
      * @return true if alarm exists, false otherwise
      */
-    public fun exists(key: Int, receiver: Class<*> = BaseAlarmReceiver::class.java): Boolean {
+    public fun exists(key: Int, receiver: Class<*>): Boolean {
         return safeCatch("checkAlarmExists", false) {
             val intent = Intent(context, receiver).apply {
                 putExtra(AlarmConstants.ALARM_KEY, key)
