@@ -42,18 +42,13 @@ public open class SimpleNotificationController(context: Context, private val sho
     init {
         // 기본 채널 자동 생성
         ensureDefaultChannel()
-        
-        // 진행률 알림 정리 스케줄러 시작 (5분마다 실행)
-        startProgressCleanupScheduler()
     }
 
     // 진행률 알림 빌더들을 저장하는 맵 (ID별 관리) - Thread-safe
     private val progressBuilders = ConcurrentHashMap<Int, ProgressNotificationInfo>()
     
-    // 진행률 알림 정리를 위한 스케줄러 (lazy 초기화)
-    private val cleanupScheduler: ScheduledExecutorService by lazy { 
-        Executors.newSingleThreadScheduledExecutor()
-    }
+    // 진행률 알림 정리를 위한 스케줄러 (필요시 생성)
+    private var cleanupScheduler: ScheduledExecutorService? = null
     
     // 진행률 알림 정보를 담는 데이터 클래스
     private data class ProgressNotificationInfo(
@@ -160,6 +155,12 @@ public open class SimpleNotificationController(context: Context, private val sho
             }
 
             progressBuilders[notificationId] = ProgressNotificationInfo(builder) // 진행률 업데이트를 위해 빌더 저장
+            
+            // 첫 번째 진행률 알림 생성 시 스케줄러 시작
+            if (cleanupScheduler == null) {
+                startProgressCleanupScheduler()
+            }
+            
             builder
         }
     }
@@ -334,12 +335,16 @@ public open class SimpleNotificationController(context: Context, private val sho
     public fun cleanup() {
         try {
             progressBuilders.clear()
-            cleanupScheduler.shutdown()
-            if (!cleanupScheduler.awaitTermination(1, TimeUnit.SECONDS)) {
-                cleanupScheduler.shutdownNow()
+            cleanupScheduler?.let { scheduler ->
+                scheduler.shutdown()
+                if (!scheduler.awaitTermination(1, TimeUnit.SECONDS)) {
+                    scheduler.shutdownNow()
+                }
             }
+            cleanupScheduler = null
         } catch (e: InterruptedException) {
-            cleanupScheduler.shutdownNow()
+            cleanupScheduler?.shutdownNow()
+            cleanupScheduler = null
             Thread.currentThread().interrupt()
         }
     }
@@ -376,26 +381,35 @@ public open class SimpleNotificationController(context: Context, private val sho
      * 오래된 진행률 알림 빌더를 주기적으로 정리하여 메모리 누수를 방지합니다.
      */
     private fun startProgressCleanupScheduler() {
-        cleanupScheduler.scheduleWithFixedDelay({
+        if (cleanupScheduler == null) {
             try {
-                val currentTime = System.currentTimeMillis()
-                val staleThreshold = 30 * 60 * 1000L // 30분
+                cleanupScheduler = Executors.newSingleThreadScheduledExecutor()
+                cleanupScheduler?.scheduleWithFixedDelay({
+                    try {
+                        val currentTime = System.currentTimeMillis()
+                        val staleThreshold = 30 * 60 * 1000L // 30분
+                        
+                        val staleNotifications = progressBuilders.filter { (_, info) ->
+                            currentTime - info.lastUpdateTime > staleThreshold
+                        }.keys
+                        
+                        staleNotifications.forEach { notificationId ->
+                            progressBuilders.remove(notificationId)
+                            Logx.d("Removed stale progress notification: $notificationId")
+                        }
+                        
+                        if (staleNotifications.isNotEmpty()) {
+                            Logx.d("Cleaned up ${staleNotifications.size} stale progress notifications")
+                        }
+                    } catch (e: Exception) {
+                        Logx.e("Error during progress notification cleanup: ${e.message}")
+                    }
+                }, 5, 5, TimeUnit.MINUTES) // 5분 후 시작, 5분마다 실행
                 
-                val staleNotifications = progressBuilders.filter { (_, info) ->
-                    currentTime - info.lastUpdateTime > staleThreshold
-                }.keys
-                
-                staleNotifications.forEach { notificationId ->
-                    progressBuilders.remove(notificationId)
-                    Logx.d("Removed stale progress notification: $notificationId")
-                }
-                
-                if (staleNotifications.isNotEmpty()) {
-                    Logx.d("Cleaned up ${staleNotifications.size} stale progress notifications")
-                }
+                Logx.d("Progress cleanup scheduler started")
             } catch (e: Exception) {
-                Logx.e("Error during progress notification cleanup: ${e.message}")
+                Logx.e("Failed to start progress cleanup scheduler: ${e.message}")
             }
-        }, 5, 5, TimeUnit.MINUTES) // 5분 후 시작, 5분마다 실행
+        }
     }
 }
