@@ -9,11 +9,16 @@ import android.content.Context
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationCompat.PRIORITY_LOW
 import kr.open.library.logcat.Logx
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
 import kr.open.library.systemmanager.base.BaseSystemService
 import kr.open.library.systemmanager.controller.notification.dto.SimpleNotificationOption
 import kr.open.library.systemmanager.controller.notification.dto.SimplePendingIntentOption
 import kr.open.library.systemmanager.controller.notification.dto.SimpleProgressNotificationOption
 import kr.open.library.systemmanager.controller.notification.vo.SimpleNotificationType
+import kr.open.library.systemmanager.controller.notification.vo.NotificationStyle
 import kr.open.library.systemmanager.extenstions.getNotificationManager
 import kr.open.library.systemmanager.extenstions.safeCatch
 
@@ -33,12 +38,36 @@ public open class SimpleNotificationController(context: Context, private val sho
     : BaseSystemService(context, listOf(POST_NOTIFICATIONS)) {
 
     public val notificationManager: NotificationManager by lazy { context.getNotificationManager() }
+    
+    init {
+        // 기본 채널 자동 생성
+        ensureDefaultChannel()
+        
+        // 진행률 알림 정리 스케줄러 시작 (5분마다 실행)
+        startProgressCleanupScheduler()
+    }
 
-    // 진행률 알림 빌더들을 저장하는 맵 (ID별 관리)
-    private val progressBuilders = mutableMapOf<Int, NotificationCompat.Builder>()
+    // 진행률 알림 빌더들을 저장하는 맵 (ID별 관리) - Thread-safe
+    private val progressBuilders = ConcurrentHashMap<Int, ProgressNotificationInfo>()
+    
+    // 진행률 알림 정리를 위한 스케줄러
+    private val cleanupScheduler: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor()
+    
+    // 진행률 알림 정보를 담는 데이터 클래스
+    private data class ProgressNotificationInfo(
+        val builder: NotificationCompat.Builder,
+        val lastUpdateTime: Long = System.currentTimeMillis()
+    )
 
     // 현재 설정된 알림 채널
     private var currentChannel: NotificationChannel? = null
+    
+    // 기본 채널 상수
+    companion object {
+        private const val DEFAULT_CHANNEL_ID = "default_notification_channel"
+        private const val DEFAULT_CHANNEL_NAME = "Default Notifications"
+        private const val DEFAULT_CHANNEL_DESCRIPTION = "Default notification channel for the application"
+    }
 
     /**
      * NotificationChannel을 생성 및 등록하고 현재 채널로 설정.
@@ -62,13 +91,23 @@ public open class SimpleNotificationController(context: Context, private val sho
     }
 
     /**
-     * 기본 알림을 표시합니다.
+     * 알림을 표시합니다. 스타일에 따라 적절한 형태로 표시됩니다.
      * @param notificationOption 알림 옵션
      * @return 성공 여부
      */
     public fun showNotification(notificationOption: SimpleNotificationOption): Boolean =
         safeCatch("Failed to show notification", false) {
-            showNotification(notificationOption.notificationId, getBuilder(notificationOption))
+            val builder = when (notificationOption.style) {
+                NotificationStyle.DEFAULT -> getBuilder(notificationOption)
+                NotificationStyle.BIG_PICTURE -> getBigPictureBuilder(notificationOption)
+                NotificationStyle.BIG_TEXT -> getBigTextBuilder(notificationOption)
+                NotificationStyle.PROGRESS -> {
+                    // Progress 스타일은 SimpleProgressNotificationOption 사용 권장
+                    Logx.w("Progress style should use SimpleProgressNotificationOption instead")
+                    getBuilder(notificationOption)
+                }
+            }
+            showNotification(notificationOption.notificationId, builder)
             true
         }
 
@@ -79,22 +118,21 @@ public open class SimpleNotificationController(context: Context, private val sho
      */
     public fun getBuilder(notificationOption: SimpleNotificationOption):NotificationCompat.Builder {
         return with(notificationOption) {
-            currentChannel?.let { channel ->
-                val builder = NotificationCompat.Builder(context, channel.id).apply {
-                    title?.let { setContentTitle(it) }
-                    content?.let { setContentText(it) }
-                    setAutoCancel(isAutoCancel)
-                    smallIcon?.let { setSmallIcon(it) }
-                    largeIcon?.let { setLargeIcon(it) }
-                    setOngoing(onGoing)
-                    clickIntent?.let {
-                        setContentIntent(getPendingIntentType(SimplePendingIntentOption(notificationId, it)))
-                    }
-                    actions?.forEach { addAction(it) }
+            val channel = currentChannel ?: getOrCreateDefaultChannel()
+            val builder = NotificationCompat.Builder(context, channel.id).apply {
+                title?.let { setContentTitle(it) }
+                content?.let { setContentText(it) }
+                setAutoCancel(isAutoCancel)
+                smallIcon?.let { setSmallIcon(it) }
+                largeIcon?.let { setLargeIcon(it) }
+                setOngoing(onGoing)
+                clickIntent?.let {
+                    setContentIntent(getPendingIntentType(SimplePendingIntentOption(notificationId, it)))
                 }
-                builder
+                actions?.forEach { addAction(it) }
             }
-        }?: throw IllegalStateException("Notification channel not created. Call createChannel() first.")
+            builder
+        }
     }
 
     /**
@@ -104,25 +142,24 @@ public open class SimpleNotificationController(context: Context, private val sho
      */
     public fun getProgressBuilder(notificationOption: SimpleProgressNotificationOption):NotificationCompat.Builder {
         return with(notificationOption) {
-            currentChannel?.let { channel ->
-                val builder = NotificationCompat.Builder(context, channel.id).apply {
-                    title?.let { setContentTitle(it) }
-                    content?.let { setContentText(it) }
-                    setAutoCancel(isAutoCancel)
-                    smallIcon?.let { setSmallIcon(it) }
-                    setOngoing(onGoing)
-                    clickIntent?.let {
-                        setContentIntent(getPendingIntentType(SimplePendingIntentOption(notificationId, it)))
-                    }
-                    actions?.forEach { addAction(it) }
-                    setPriority(PRIORITY_LOW)
-                    setProgress(100, progressPercent, false)
+            val channel = currentChannel ?: getOrCreateDefaultChannel()
+            val builder = NotificationCompat.Builder(context, channel.id).apply {
+                title?.let { setContentTitle(it) }
+                content?.let { setContentText(it) }
+                setAutoCancel(isAutoCancel)
+                smallIcon?.let { setSmallIcon(it) }
+                setOngoing(onGoing)
+                clickIntent?.let {
+                    setContentIntent(getPendingIntentType(SimplePendingIntentOption(notificationId, it)))
                 }
-
-                progressBuilders[notificationId] = builder // 진행률 업데이트를 위해 빌더 저장
-                builder
+                actions?.forEach { addAction(it) }
+                setPriority(PRIORITY_LOW)
+                setProgress(100, progressPercent, false)
             }
-        }?: throw IllegalStateException("Notification channel not created. Call createChannel() first.")
+
+            progressBuilders[notificationId] = ProgressNotificationInfo(builder) // 진행률 업데이트를 위해 빌더 저장
+            builder
+        }
     }
 
     /**
@@ -157,36 +194,54 @@ public open class SimpleNotificationController(context: Context, private val sho
     }
 
     /**
+     * 큰 이미지 스타일 알림 빌더를 생성합니다.
+     * @param notificationOption 알림 옵션
+     * @return NotificationCompat.Builder
+     */
+    private fun getBigPictureBuilder(notificationOption: SimpleNotificationOption): NotificationCompat.Builder {
+        return getBuilder(notificationOption).apply {
+            notificationOption.largeIcon?.let { bitmap ->
+                setStyle(NotificationCompat.BigPictureStyle().bigPicture(bitmap))
+            } ?: run {
+                Logx.w("BigPicture style requires largeIcon bitmap")
+            }
+        }
+    }
+    
+    /**
      * 큰 이미지 스타일 알림을 표시합니다.
      * @param notificationOption 알림 옵션
      * @return 성공 여부
+     * @deprecated showNotification()을 style 파라미터와 함께 사용하세요
      */
+    @Deprecated("Use showNotification() with style parameter instead", ReplaceWith("showNotification(notificationOption.copy(style = NotificationStyle.BIG_PICTURE))"))
     public fun showNotificationBigImage(notificationOption: SimpleNotificationOption): Boolean =
-        safeCatch("Failed to show notification", false) {
-            with(notificationOption) {
-                val builder = getBuilder(notificationOption).apply {
-                    setStyle(NotificationCompat.BigPictureStyle().bigPicture(largeIcon))
-                }
-                showNotification(notificationId, builder)
-            }
-            true
-        }
+        showNotification(notificationOption.copy(style = NotificationStyle.BIG_PICTURE))
 
+    /**
+     * 긴 텍스트 스타일 알림 빌더를 생성합니다.
+     * @param notificationOption 알림 옵션
+     * @return NotificationCompat.Builder
+     */
+    private fun getBigTextBuilder(notificationOption: SimpleNotificationOption): NotificationCompat.Builder {
+        return getBuilder(notificationOption).apply {
+            notificationOption.snippet?.let { text ->
+                setStyle(NotificationCompat.BigTextStyle().bigText(text))
+            } ?: run {
+                Logx.w("BigText style requires snippet text")
+            }
+        }
+    }
+    
     /**
      * 긴 텍스트 스타일 알림을 표시합니다.
      * @param notificationOption 알림 옵션
      * @return 성공 여부
+     * @deprecated showNotification()을 style 파라미터와 함께 사용하세요
      */
+    @Deprecated("Use showNotification() with style parameter instead", ReplaceWith("showNotification(notificationOption.copy(style = NotificationStyle.BIG_TEXT))"))
     public fun showNotificationBigText(notificationOption: SimpleNotificationOption): Boolean =
-        safeCatch("Failed to show notification", false) {
-            with(notificationOption) {
-                val builder = getBuilder(notificationOption).apply {
-                    setStyle(NotificationCompat.BigTextStyle().bigText(snippet))
-                }
-                showNotification(notificationId, builder)
-            }
-            true
-        }
+        showNotification(notificationOption.copy(style = NotificationStyle.BIG_TEXT))
 
     /**
      * 진행률 알림을 생성합니다.
@@ -216,9 +271,11 @@ public open class SimpleNotificationController(context: Context, private val sho
             return false
         }
         return safeCatch("Failed to update progress", false) {
-            progressBuilders[notificationId]?.let { builder ->
-                builder.setProgress(100, progressPercent, false)
-                showNotification(notificationId, builder)
+            progressBuilders[notificationId]?.let { info ->
+                info.builder.setProgress(100, progressPercent, false)
+                showNotification(notificationId, info.builder)
+                // 업데이트 시간 갱신
+                progressBuilders[notificationId] = info.copy(lastUpdateTime = System.currentTimeMillis())
                 true
             } ?: run {
                 Logx.w("Progress notification not found for ID: $notificationId")
@@ -235,10 +292,10 @@ public open class SimpleNotificationController(context: Context, private val sho
      */
     public fun completeProgress(notificationId: Int, completedContent: String? = null): Boolean =
         safeCatch("Failed to complete progress", false) {
-            progressBuilders[notificationId]?.let { builder ->
-                builder.setProgress(0, 0, false) // 진행률 바 제거
-                completedContent?.let { builder.setContentText(it) }
-                showNotification(notificationId, builder)
+            progressBuilders[notificationId]?.let { info ->
+                info.builder.setProgress(0, 0, false) // 진행률 바 제거
+                completedContent?.let { info.builder.setContentText(it) }
+                showNotification(notificationId, info.builder)
                 progressBuilders.remove(notificationId) // 빌더 제거로 메모리 정리
                 true
             } ?: run {
@@ -267,5 +324,76 @@ public open class SimpleNotificationController(context: Context, private val sho
     public fun cancelAll(): Unit {
         notificationManager.cancelAll()
         progressBuilders.clear()
+    }
+    
+    /**
+     * 리소스를 정리합니다. Activity/Service가 종료될 때 호출해야 합니다.
+     */
+    public fun cleanup() {
+        try {
+            progressBuilders.clear()
+            cleanupScheduler.shutdown()
+            if (!cleanupScheduler.awaitTermination(1, TimeUnit.SECONDS)) {
+                cleanupScheduler.shutdownNow()
+            }
+        } catch (e: InterruptedException) {
+            cleanupScheduler.shutdownNow()
+            Thread.currentThread().interrupt()
+        }
+    }
+    
+    /**
+     * 기본 채널이 존재하는지 확인하고 없으면 생성합니다.
+     */
+    private fun ensureDefaultChannel() {
+        if (currentChannel == null) {
+            getOrCreateDefaultChannel()
+        }
+    }
+    
+    /**
+     * 기본 채널을 가져오거나 생성합니다.
+     * @return 기본 NotificationChannel
+     */
+    private fun getOrCreateDefaultChannel(): NotificationChannel {
+        return currentChannel ?: run {
+            val defaultChannel = NotificationChannel(
+                DEFAULT_CHANNEL_ID,
+                DEFAULT_CHANNEL_NAME,
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                description = DEFAULT_CHANNEL_DESCRIPTION
+            }
+            createChannel(defaultChannel)
+            defaultChannel
+        }
+    }
+    
+    /**
+     * 진행률 알림 정리 스케줄러를 시작합니다.
+     * 오래된 진행률 알림 빌더를 주기적으로 정리하여 메모리 누수를 방지합니다.
+     */
+    private fun startProgressCleanupScheduler() {
+        cleanupScheduler.scheduleWithFixedDelay({
+            try {
+                val currentTime = System.currentTimeMillis()
+                val staleThreshold = 30 * 60 * 1000L // 30분
+                
+                val staleNotifications = progressBuilders.filter { (_, info) ->
+                    currentTime - info.lastUpdateTime > staleThreshold
+                }.keys
+                
+                staleNotifications.forEach { notificationId ->
+                    progressBuilders.remove(notificationId)
+                    Logx.d("Removed stale progress notification: $notificationId")
+                }
+                
+                if (staleNotifications.isNotEmpty()) {
+                    Logx.d("Cleaned up ${staleNotifications.size} stale progress notifications")
+                }
+            } catch (e: Exception) {
+                Logx.e("Error during progress notification cleanup: ${e.message}")
+            }
+        }, 5, 5, TimeUnit.MINUTES) // 5분 후 시작, 5분마다 실행
     }
 }

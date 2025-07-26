@@ -18,6 +18,7 @@ import androidx.core.view.WindowInsetsCompat
 class MainActivity : AppCompatActivity() {
     
     private lateinit var btnAlarmTest: Button
+    private lateinit var btnNotificationTest: Button
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,11 +39,16 @@ class MainActivity : AppCompatActivity() {
     
     private fun initializeViews() {
         btnAlarmTest = findViewById(R.id.btnAlarmTest)
+        btnNotificationTest = findViewById(R.id.btnNotificationTest)
     }
     
     private fun setupClickListeners() {
         btnAlarmTest.setOnClickListener {
             navigateToAlarmTest()
+        }
+        
+        btnNotificationTest.setOnClickListener {
+            navigateToNotificationTest()
         }
     }
     
@@ -52,6 +58,15 @@ class MainActivity : AppCompatActivity() {
      */
     private fun navigateToAlarmTest() {
         val intent = Intent(this, AlarmTestActivity::class.java)
+        startActivity(intent)
+    }
+    
+    /**
+     * Navigates to the NotificationTestActivity for testing notification functionality.
+     * 알림 기능을 테스트하기 위해 NotificationTestActivity로 이동합니다.
+     */
+    private fun navigateToNotificationTest() {
+        val intent = Intent(this, NotificationTestActivity::class.java)
         startActivity(intent)
     }
 }

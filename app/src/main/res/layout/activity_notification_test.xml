@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    tools:context=".NotificationTestActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Notification Test Activity"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Channel Configuration -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="📺 Channel Configuration"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <Spinner
+            android:id="@+id/spChannelImportance"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/btnCreateChannel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Create Channel"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Notification Content -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="📝 Notification Content"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/etTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Notification Title"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/etContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Notification Content"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/etSnippet"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Snippet for BigText style"
+            android:minLines="3"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Notification Settings -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="⚙️ Notification Settings"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <Spinner
+            android:id="@+id/spNotificationStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp" />
+
+        <Spinner
+            android:id="@+id/spNotificationType"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp" />
+
+        <CheckBox
+            android:id="@+id/cbAutoCancel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Auto Cancel"
+            android:layout_marginBottom="4dp" />
+
+        <CheckBox
+            android:id="@+id/cbOngoing"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Ongoing"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Notification Actions -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🚀 Notification Actions"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/btnShowNotification"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Show Notification"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/btnShowProgressNotification"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Show Progress Notification"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Progress Control -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="📊 Progress Control"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Progress: "
+                android:layout_marginEnd="8dp" />
+
+            <SeekBar
+                android:id="@+id/seekProgress"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp" />
+
+            <TextView
+                android:id="@+id/tvProgressValue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="50%"
+                android:minWidth="40dp"
+                android:gravity="end" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <Button
+                android:id="@+id/btnUpdateProgress"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Update Progress"
+                android:layout_marginEnd="4dp"
+                android:enabled="false" />
+
+            <Button
+                android:id="@+id/btnCompleteProgress"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Complete Progress"
+                android:layout_marginStart="4dp"
+                android:enabled="false" />
+
+        </LinearLayout>
+
+        <!-- Control Actions -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🎛️ Control Actions"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <Button
+                android:id="@+id/btnCancelNotification"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Cancel Current"
+                android:layout_marginEnd="4dp" />
+
+            <Button
+                android:id="@+id/btnCancelAll"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Cancel All"
+                android:layout_marginStart="4dp" />
+
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnClearLogs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Clear Logs"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Status Log -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="📋 Status Log"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:background="@android:color/black"
+            android:padding="8dp">
+
+            <TextView
+                android:id="@+id/tvStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Ready to test notifications"
+                android:textColor="@android:color/white"
+                android:textSize="12sp"
+                android:fontFamily="monospace" />
+
+        </ScrollView>
+
+    </LinearLayout>
+
+</ScrollView>

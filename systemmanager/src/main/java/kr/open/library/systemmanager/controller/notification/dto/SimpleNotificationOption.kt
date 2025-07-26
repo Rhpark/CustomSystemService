@@ -4,6 +4,7 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.graphics.Bitmap
 import androidx.core.app.NotificationCompat.Action
+import kr.open.library.systemmanager.controller.notification.vo.NotificationStyle
 
 public data class SimpleNotificationOption(
     public val notificationId: Int,
@@ -15,7 +16,8 @@ public data class SimpleNotificationOption(
     public val clickIntent: Intent? = null,
     public val snippet: String? = null,
     public val actions: List<Action>? = null,
-    public val onGoing: Boolean = false
+    public val onGoing: Boolean = false,
+    public val style: NotificationStyle = NotificationStyle.DEFAULT
 )
 
 public data class SimpleProgressNotificationOption(
@@ -27,7 +29,8 @@ public data class SimpleProgressNotificationOption(
     public val clickIntent: Intent? = null,
     public val actions: List<Action>? = null,
     public val progressPercent: Int,
-    public val onGoing: Boolean = false
+    public val onGoing: Boolean = false,
+    public val style: NotificationStyle = NotificationStyle.PROGRESS
 )
 
 public data class SimplePendingIntentOption(
