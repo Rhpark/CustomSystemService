@@ -1,0 +1,363 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    tools:context=".VibratorTestActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Header Section -->
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="📳 Vibrator Controller Test"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textAlignment="center"
+            android:textColor="@android:color/black"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/tvApiLevel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="API Level Info"
+            android:textSize="14sp"
+            android:textColor="@android:color/holo_blue_dark"
+            android:textAlignment="center"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Status: Ready"
+            android:textSize="16sp"
+            android:textColor="@android:color/holo_green_dark"
+            android:textAlignment="center"
+            android:layout_marginBottom="24dp"
+            android:padding="8dp"
+            android:background="@android:drawable/edit_text" />
+
+        <!-- Control Parameters Section -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🎛️ Control Parameters"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            android:layout_marginBottom="12dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Duration (ms):"
+                android:textSize="16sp"
+                android:gravity="center_vertical" />
+
+            <EditText
+                android:id="@+id/etDuration"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:hint="1000"
+                android:inputType="number"
+                android:textAlignment="center"
+                android:padding="8dp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="24dp"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="2"
+                android:layout_height="wrap_content"
+                android:text="Amplitude (0-255):"
+                android:textSize="16sp" />
+
+            <SeekBar
+                android:id="@+id/seekAmplitude"
+                android:layout_width="0dp"
+                android:layout_weight="3"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="8dp" />
+
+            <TextView
+                android:id="@+id/tvAmplitudeValue"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="128"
+                android:textAlignment="center"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+
+        <!-- Basic Vibration Section -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🔧 Basic Vibration"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            android:layout_marginBottom="12dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <Button
+                android:id="@+id/btnBasicVibration"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Basic\n(500ms)"
+                android:textSize="13sp"
+                android:layout_marginEnd="4dp"
+                android:backgroundTint="@android:color/holo_blue_dark" />
+
+            <Button
+                android:id="@+id/btnCustomDuration"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Custom\nDuration"
+                android:textSize="13sp"
+                android:layout_marginHorizontal="4dp"
+                android:backgroundTint="@android:color/holo_green_dark" />
+
+            <Button
+                android:id="@+id/btnCustomAmplitude"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Custom\nAmplitude"
+                android:textSize="13sp"
+                android:layout_marginStart="4dp"
+                android:backgroundTint="@android:color/holo_orange_dark" />
+
+        </LinearLayout>
+
+        <!-- Predefined Effects Section -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="✨ Predefined Effects (API 29+)"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="12dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <Button
+                android:id="@+id/btnEffectClick"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Click"
+                android:textSize="13sp"
+                android:layout_marginEnd="4dp"
+                android:backgroundTint="@android:color/holo_purple" />
+
+            <Button
+                android:id="@+id/btnEffectDoubleClick"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Double\nClick"
+                android:textSize="12sp"
+                android:layout_marginHorizontal="4dp"
+                android:backgroundTint="@android:color/holo_red_dark" />
+
+            <Button
+                android:id="@+id/btnEffectTick"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Tick"
+                android:textSize="13sp"
+                android:layout_marginHorizontal="4dp"
+                android:backgroundTint="@android:color/holo_blue_bright" />
+
+            <Button
+                android:id="@+id/btnEffectThud"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Thud"
+                android:textSize="13sp"
+                android:layout_marginStart="4dp"
+                android:backgroundTint="@android:color/holo_green_light" />
+
+        </LinearLayout>
+
+        <!-- Waveform Patterns Section -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🌊 Waveform Patterns (API 31+)"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            android:layout_marginBottom="12dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <Button
+                android:id="@+id/btnWaveformPulse"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Pulse"
+                android:textSize="13sp"
+                android:layout_marginEnd="4dp"
+                android:backgroundTint="@android:color/holo_orange_light" />
+
+            <Button
+                android:id="@+id/btnWaveformHeartbeat"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Heartbeat"
+                android:textSize="12sp"
+                android:layout_marginStart="4dp"
+                android:backgroundTint="@android:color/holo_red_light" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <Button
+                android:id="@+id/btnWaveformSOS"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="SOS\n(... --- ...)"
+                android:textSize="12sp"
+                android:layout_marginEnd="4dp"
+                android:backgroundTint="@android:color/darker_gray" />
+
+            <Button
+                android:id="@+id/btnWaveformCustom"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Custom\nRepeating"
+                android:textSize="12sp"
+                android:layout_marginStart="4dp"
+                android:backgroundTint="@android:color/holo_blue_light" />
+
+        </LinearLayout>
+
+        <!-- Control Section -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🛑 Control"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            android:layout_marginBottom="12dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <Button
+                android:id="@+id/btnCancelVibration"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Cancel\nVibration"
+                android:textSize="14sp"
+                android:layout_marginEnd="8dp"
+                android:backgroundTint="@android:color/holo_red_dark" />
+
+            <Button
+                android:id="@+id/btnPermissionCheck"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Check\nPermission"
+                android:textSize="14sp"
+                android:layout_marginStart="8dp"
+                android:backgroundTint="@android:color/holo_blue_bright" />
+
+        </LinearLayout>
+
+        <!-- Instructions Section -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="📋 Instructions"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            android:layout_marginBottom="12dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="• Make sure VIBRATE permission is granted\n• Try different durations and amplitudes\n• Predefined effects require Android 10+\n• Waveform patterns require Android 12+\n• Use Cancel button to stop repeating patterns\n• Watch the status updates for results"
+            android:textSize="14sp"
+            android:textColor="@android:color/darker_gray"
+            android:lineSpacingExtra="4dp"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="⚠️ Note: Some effects may not work on all devices due to hardware limitations"
+            android:textSize="12sp"
+            android:textColor="@android:color/holo_orange_dark"
+            android:textStyle="italic"
+            android:textAlignment="center"
+            android:padding="8dp"
+            android:background="@android:drawable/edit_text" />
+
+    </LinearLayout>
+
+</androidx.core.widget.NestedScrollView>

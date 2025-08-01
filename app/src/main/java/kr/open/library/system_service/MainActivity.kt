@@ -20,6 +20,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnAlarmTest: Button
     private lateinit var btnNotificationTest: Button
     private lateinit var btnSoftKeyboardTest: Button
+    private lateinit var btnVibratorTest: Button
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,6 +43,7 @@ class MainActivity : AppCompatActivity() {
         btnAlarmTest = findViewById(R.id.btnAlarmTest)
         btnNotificationTest = findViewById(R.id.btnNotificationTest)
         btnSoftKeyboardTest = findViewById(R.id.btnSoftKeyboardTest)
+        btnVibratorTest = findViewById(R.id.btnVibratorTest)
     }
     
     private fun setupClickListeners() {
@@ -55,6 +57,10 @@ class MainActivity : AppCompatActivity() {
         
         btnSoftKeyboardTest.setOnClickListener {
             navigateToSoftKeyboardTest()
+        }
+        
+        btnVibratorTest.setOnClickListener {
+            navigateToVibratorTest()
         }
     }
     
@@ -82,6 +88,15 @@ class MainActivity : AppCompatActivity() {
      */
     private fun navigateToSoftKeyboardTest() {
         val intent = Intent(this, SoftKeyboardTestActivity::class.java)
+        startActivity(intent)
+    }
+    
+    /**
+     * Navigates to the VibratorTestActivity for testing vibrator functionality.
+     * 진동 기능을 테스트하기 위해 VibratorTestActivity로 이동합니다.
+     */
+    private fun navigateToVibratorTest() {
+        val intent = Intent(this, VibratorTestActivity::class.java)
         startActivity(intent)
     }
 }
