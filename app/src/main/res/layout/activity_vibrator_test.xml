@@ -213,12 +213,12 @@
                 android:backgroundTint="@android:color/holo_blue_bright" />
 
             <Button
-                android:id="@+id/btnEffectThud"
+                android:id="@+id/btnEffectHeavyClick"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Thud"
-                android:textSize="13sp"
+                android:text="Heavy\nClick"
+                android:textSize="12sp"
                 android:layout_marginStart="4dp"
                 android:backgroundTint="@android:color/holo_green_light" />
 

@@ -50,7 +50,7 @@ class VibratorTestActivity : AppCompatActivity() {
     private lateinit var btnEffectClick: Button
     private lateinit var btnEffectDoubleClick: Button
     private lateinit var btnEffectTick: Button
-    private lateinit var btnEffectThud: Button
+    private lateinit var btnEffectHeavyClick: Button
     
     // Waveform Buttons (API 31+)
     private lateinit var btnWaveformPulse: Button
@@ -113,7 +113,7 @@ class VibratorTestActivity : AppCompatActivity() {
         btnEffectClick = findViewById(R.id.btnEffectClick)
         btnEffectDoubleClick = findViewById(R.id.btnEffectDoubleClick)
         btnEffectTick = findViewById(R.id.btnEffectTick)
-        btnEffectThud = findViewById(R.id.btnEffectThud)
+        btnEffectHeavyClick = findViewById(R.id.btnEffectHeavyClick)
         
         // Waveform buttons
         btnWaveformPulse = findViewById(R.id.btnWaveformPulse)
@@ -141,7 +141,7 @@ class VibratorTestActivity : AppCompatActivity() {
         btnEffectClick.isEnabled = isApi29Plus
         btnEffectDoubleClick.isEnabled = isApi29Plus
         btnEffectTick.isEnabled = isApi29Plus
-        btnEffectThud.isEnabled = isApi29Plus
+        btnEffectHeavyClick.isEnabled = isApi29Plus
         
         // Waveform patterns require API 31+
         btnWaveformPulse.isEnabled = isApi31Plus
@@ -154,7 +154,7 @@ class VibratorTestActivity : AppCompatActivity() {
             btnEffectClick.text = "Click (API 29+)"
             btnEffectDoubleClick.text = "Double Click (API 29+)"
             btnEffectTick.text = "Tick (API 29+)"
-            btnEffectThud.text = "Thud (API 29+)"
+            btnEffectHeavyClick.text = "Heavy Click (API 29+)"
         }
         
         if (!isApi31Plus) {
@@ -179,7 +179,7 @@ class VibratorTestActivity : AppCompatActivity() {
         btnEffectClick.setOnClickListener { demonstratePredefinedEffect(VibrationEffect.EFFECT_CLICK, "Click") }
         btnEffectDoubleClick.setOnClickListener { demonstratePredefinedEffect(VibrationEffect.EFFECT_DOUBLE_CLICK, "Double Click") }
         btnEffectTick.setOnClickListener { demonstratePredefinedEffect(VibrationEffect.EFFECT_TICK, "Tick") }
-        btnEffectThud.setOnClickListener { demonstratePredefinedEffect(VibrationEffect.EFFECT_THUD, "Thud") }
+        btnEffectHeavyClick.setOnClickListener { demonstratePredefinedEffect(VibrationEffect.EFFECT_HEAVY_CLICK, "Heavy Click") }
         
         // Waveform patterns
         btnWaveformPulse.setOnClickListener { demonstrateWaveformPulse() }
