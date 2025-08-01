@@ -55,6 +55,13 @@
             </intent-filter>
         </receiver>
 
+
+        <!-- SoftKeyboard Test Activity -->
+        <activity
+            android:name=".SoftKeyboardTestActivity"
+            android:exported="false"
+            android:label="SoftKeyboard Controller Test"
+            android:parentActivityName=".MainActivity" />
     </application>
 
 </manifest>
