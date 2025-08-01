@@ -103,7 +103,7 @@ public open class SoftKeyboardController(context: Context) : BaseSystemService(c
         flag: Int = InputMethodManager.SHOW_IMPLICIT,
         coroutineScope: CoroutineScope
     ) {
-        safeCatch("showDelayCoroutine") {
+        safeCatch("showDelayCoroutine", Unit) {
             coroutineScope.launch {
                 delay(delay)
                 show(v, flag)
@@ -150,7 +150,7 @@ public open class SoftKeyboardController(context: Context) : BaseSystemService(c
      * 코루틴 기반 지연을 사용하여 소프트 키보드를 숨깁니다.
      */
     public fun hideDelay(v: View, delay: Long, flag: Int = 0, coroutineScope: CoroutineScope) {
-        safeCatch("hideDelayCoroutine") {
+        safeCatch("hideDelayCoroutine", Unit) {
             coroutineScope.launch {
                 delay(delay)
                 hide(v, flag)
