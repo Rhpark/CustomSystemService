@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    tools:context=".SoftKeyboardTestActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Header Section -->
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="⌨️ SoftKeyboard Controller Test"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textAlignment="center"
+            android:textColor="@android:color/black"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Status: Ready"
+            android:textSize="16sp"
+            android:textColor="@android:color/holo_blue_dark"
+            android:textAlignment="center"
+            android:layout_marginBottom="24dp"
+            android:padding="8dp"
+            android:background="@android:drawable/edit_text" />
+
+        <!-- Test Input Fields Section -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="📝 Test Input Fields"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            android:layout_marginBottom="12dp" />
+
+        <EditText
+            android:id="@+id/etTest1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Test EditText 1 - Basic operations"
+            android:inputType="text"
+            android:layout_marginBottom="8dp"
+            android:padding="12dp" />
+
+        <EditText
+            android:id="@+id/etTest2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Test EditText 2 - Delayed operations"
+            android:inputType="text"
+            android:layout_marginBottom="8dp"
+            android:padding="12dp" />
+
+        <EditText
+            android:id="@+id/etStylusTest"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Stylus Test EditText (API 33+)"
+            android:inputType="text"
+            android:layout_marginBottom="24dp"
+            android:padding="12dp" />
+
+        <!-- Basic Operations Section -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🔧 Basic Operations"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            android:layout_marginBottom="12dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <Button
+                android:id="@+id/btnShowKeyboard"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Show\nKeyboard"
+                android:textSize="14sp"
+                android:layout_marginEnd="8dp"
+                android:backgroundTint="@android:color/holo_green_dark" />
+
+            <Button
+                android:id="@+id/btnHideKeyboard"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Hide\nKeyboard"
+                android:textSize="14sp"
+                android:layout_marginStart="8dp"
+                android:backgroundTint="@android:color/holo_red_dark" />
+
+        </LinearLayout>
+
+        <!-- Delayed Operations Section -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="⏰ Delayed Operations"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            android:layout_marginBottom="12dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <Button
+                android:id="@+id/btnShowWithDelay"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Show\n(2s delay)"
+                android:textSize="13sp"
+                android:layout_marginEnd="8dp"
+                android:backgroundTint="@android:color/holo_blue_dark" />
+
+            <Button
+                android:id="@+id/btnHideWithDelay"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Hide\n(2s delay)"
+                android:textSize="13sp"
+                android:layout_marginStart="8dp"
+                android:backgroundTint="@android:color/holo_orange_dark" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <Button
+                android:id="@+id/btnShowCoroutineDelay"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Show Coroutine\n(1.5s delay)"
+                android:textSize="12sp"
+                android:layout_marginEnd="8dp"
+                android:backgroundTint="@android:color/holo_purple" />
+
+            <Button
+                android:id="@+id/btnHideCoroutineDelay"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Hide Coroutine\n(1.5s delay)"
+                android:textSize="12sp"
+                android:layout_marginStart="8dp"
+                android:backgroundTint="@android:color/darker_gray" />
+
+        </LinearLayout>
+
+        <!-- Window Mode Section -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🖼️ Window Mode Settings"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            android:layout_marginBottom="12dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <Button
+                android:id="@+id/btnSetAdjustPan"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Set\nADJUST_PAN"
+                android:textSize="13sp"
+                android:layout_marginEnd="8dp"
+                android:backgroundTint="@android:color/holo_blue_bright" />
+
+            <Button
+                android:id="@+id/btnSetAdjustResize"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Set\nADJUST_RESIZE"
+                android:textSize="13sp"
+                android:layout_marginStart="8dp"
+                android:backgroundTint="@android:color/holo_green_light" />
+
+        </LinearLayout>
+
+        <!-- Stylus Handwriting Section -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="✏️ Stylus Handwriting (API 33+)"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            android:layout_marginBottom="12dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <Button
+                android:id="@+id/btnStartStylusHandwriting"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Start\nStylus Mode"
+                android:textSize="13sp"
+                android:layout_marginEnd="8dp"
+                android:backgroundTint="@android:color/holo_red_light" />
+
+            <Button
+                android:id="@+id/btnStartStylusDelayed"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Start Stylus\n(2s delay)"
+                android:textSize="13sp"
+                android:layout_marginStart="8dp"
+                android:backgroundTint="@android:color/holo_orange_light" />
+
+        </LinearLayout>
+
+        <!-- Instructions Section -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="📋 Instructions"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            android:layout_marginBottom="12dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="• Click on EditText fields to focus them before testing\n• Try different window modes to see layout behavior\n• Stylus features require Android 13+ devices\n• Watch the status updates for operation results\n• Test with physical/virtual keyboards"
+            android:textSize="14sp"
+            android:textColor="@android:color/darker_gray"
+            android:lineSpacingExtra="4dp" />
+
+    </LinearLayout>
+
+</androidx.core.widget.NestedScrollView>

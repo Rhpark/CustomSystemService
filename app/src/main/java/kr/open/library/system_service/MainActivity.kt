@@ -19,6 +19,7 @@ class MainActivity : AppCompatActivity() {
     
     private lateinit var btnAlarmTest: Button
     private lateinit var btnNotificationTest: Button
+    private lateinit var btnSoftKeyboardTest: Button
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,6 +41,7 @@ class MainActivity : AppCompatActivity() {
     private fun initializeViews() {
         btnAlarmTest = findViewById(R.id.btnAlarmTest)
         btnNotificationTest = findViewById(R.id.btnNotificationTest)
+        btnSoftKeyboardTest = findViewById(R.id.btnSoftKeyboardTest)
     }
     
     private fun setupClickListeners() {
@@ -49,6 +51,10 @@ class MainActivity : AppCompatActivity() {
         
         btnNotificationTest.setOnClickListener {
             navigateToNotificationTest()
+        }
+        
+        btnSoftKeyboardTest.setOnClickListener {
+            navigateToSoftKeyboardTest()
         }
     }
     
@@ -67,6 +73,15 @@ class MainActivity : AppCompatActivity() {
      */
     private fun navigateToNotificationTest() {
         val intent = Intent(this, NotificationTestActivity::class.java)
+        startActivity(intent)
+    }
+    
+    /**
+     * Navigates to the SoftKeyboardTestActivity for testing soft keyboard functionality.
+     * 소프트 키보드 기능을 테스트하기 위해 SoftKeyboardTestActivity로 이동합니다.
+     */
+    private fun navigateToSoftKeyboardTest() {
+        val intent = Intent(this, SoftKeyboardTestActivity::class.java)
         startActivity(intent)
     }
 }
