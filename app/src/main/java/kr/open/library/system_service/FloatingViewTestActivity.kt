@@ -60,8 +60,8 @@ class FloatingViewTestActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        initializeFloatingController()
         setupUI()
+        initializeFloatingController()
         setupEventListeners()
         updatePermissionStatus()
         
