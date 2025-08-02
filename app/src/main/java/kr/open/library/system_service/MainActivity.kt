@@ -22,6 +22,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnSoftKeyboardTest: Button
     private lateinit var btnVibratorTest: Button
     private lateinit var btnFloatingViewTest: Button
+    private lateinit var btnBatteryTest: Button
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,6 +47,7 @@ class MainActivity : AppCompatActivity() {
         btnSoftKeyboardTest = findViewById(R.id.btnSoftKeyboardTest)
         btnVibratorTest = findViewById(R.id.btnVibratorTest)
         btnFloatingViewTest = findViewById(R.id.btnFloatingViewTest)
+        btnBatteryTest = findViewById(R.id.btnBatteryTest)
     }
     
     private fun setupClickListeners() {
@@ -67,6 +69,10 @@ class MainActivity : AppCompatActivity() {
         
         btnFloatingViewTest.setOnClickListener {
             navigateToFloatingViewTest()
+        }
+        
+        btnBatteryTest.setOnClickListener {
+            navigateToBatteryTest()
         }
     }
     
@@ -112,6 +118,15 @@ class MainActivity : AppCompatActivity() {
      */
     private fun navigateToFloatingViewTest() {
         val intent = Intent(this, FloatingViewTestActivity::class.java)
+        startActivity(intent)
+    }
+    
+    /**
+     * Navigates to the BatteryTestActivity for testing battery state monitoring functionality.
+     * 배터리 상태 모니터링 기능을 테스트하기 위해 BatteryTestActivity로 이동합니다.
+     */
+    private fun navigateToBatteryTest() {
+        val intent = Intent(this, BatteryTestActivity::class.java)
         startActivity(intent)
     }
 }

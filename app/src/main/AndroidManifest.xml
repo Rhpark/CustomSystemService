@@ -78,6 +78,13 @@
             android:exported="false"
             android:label="FloatingView Controller Test"
             android:parentActivityName=".MainActivity" />
+
+        <!-- Battery Test Activity -->
+        <activity
+            android:name=".BatteryTestActivity"
+            android:exported="false"
+            android:label="Battery State Monitor Test"
+            android:parentActivityName=".MainActivity" />
     </application>
 
 </manifest>

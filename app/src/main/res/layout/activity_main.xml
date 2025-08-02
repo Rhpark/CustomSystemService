@@ -86,6 +86,16 @@
             android:layout_marginBottom="16dp"
             android:backgroundTint="@android:color/holo_red_dark" />
 
+        <Button
+            android:id="@+id/btnBatteryTest"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🔋 Test Battery State Monitor"
+            android:textSize="18sp"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp"
+            android:backgroundTint="@android:color/holo_blue_bright" />
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
