@@ -21,6 +21,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnNotificationTest: Button
     private lateinit var btnSoftKeyboardTest: Button
     private lateinit var btnVibratorTest: Button
+    private lateinit var btnFloatingViewTest: Button
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,6 +45,7 @@ class MainActivity : AppCompatActivity() {
         btnNotificationTest = findViewById(R.id.btnNotificationTest)
         btnSoftKeyboardTest = findViewById(R.id.btnSoftKeyboardTest)
         btnVibratorTest = findViewById(R.id.btnVibratorTest)
+        btnFloatingViewTest = findViewById(R.id.btnFloatingViewTest)
     }
     
     private fun setupClickListeners() {
@@ -61,6 +63,10 @@ class MainActivity : AppCompatActivity() {
         
         btnVibratorTest.setOnClickListener {
             navigateToVibratorTest()
+        }
+        
+        btnFloatingViewTest.setOnClickListener {
+            navigateToFloatingViewTest()
         }
     }
     
@@ -97,6 +103,15 @@ class MainActivity : AppCompatActivity() {
      */
     private fun navigateToVibratorTest() {
         val intent = Intent(this, VibratorTestActivity::class.java)
+        startActivity(intent)
+    }
+    
+    /**
+     * Navigates to the FloatingViewTestActivity for testing floating view functionality.
+     * 플로팅 뷰 기능을 테스트하기 위해 FloatingViewTestActivity로 이동합니다.
+     */
+    private fun navigateToFloatingViewTest() {
+        val intent = Intent(this, FloatingViewTestActivity::class.java)
         startActivity(intent)
     }
 }
