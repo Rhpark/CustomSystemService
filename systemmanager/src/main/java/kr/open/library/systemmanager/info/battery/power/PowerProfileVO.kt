@@ -19,31 +19,24 @@ public enum class PowerProfileVO(public val  res: String) {
      *               + core_power.cluster0 * num running cores in cluster 0
      *               + core_power.cluster1 * num running cores in cluster 1
      */
-    POWER_CPU_SUSPEND( "cpu.suspend"),
-
-    //    @UnsupportedAppUsage
+    POWER_CPU_SUSPEND("cpu.suspend"),
     POWER_CPU_IDLE("cpu.idle"),
-
-    //    @UnsupportedAppUsage
     POWER_CPU_ACTIVE("cpu.active"),
 
     POWER_SCREEN_FULL("screen.full"),
     /**
      * Power consumption when WiFi driver is scanning for networks.
      */
-//    @UnsupportedAppUsage
     POWER_WIFI_SCAN("wifi.scan"),
 
     /**
      * Power consumption when WiFi driver is on.
      */
-//    @UnsupportedAppUsage
     POWER_WIFI_ON("wifi.on"),
 
     /**
      * Power consumption when WiFi driver is transmitting/receiving.
      */
-//    @UnsupportedAppUsage
     POWER_WIFI_ACTIVE("wifi.active"),
 
     //
@@ -70,7 +63,6 @@ public enum class PowerProfileVO(public val  res: String) {
     /**
      * Power consumption when GPS is on.
      */
-//    @UnsupportedAppUsage
     POWER_GPS_ON("gps.on"),
 
     /**
@@ -82,19 +74,16 @@ public enum class PowerProfileVO(public val  res: String) {
     /**
      * Power consumption when cell radio is on but not on a call.
      */
-//    @UnsupportedAppUsage
     POWER_RADIO_ON("radio.on"),
 
     /**
      * Power consumption when cell radio is hunting for a signal.
      */
-//    @UnsupportedAppUsage
     POWER_RADIO_SCANNING("radio.scanning"),
 
     /**
      * Power consumption when talking on the phone.
      */
-//    @UnsupportedAppUsage
     POWER_RADIO_ACTIVE("radio.active"),
 
     /**
@@ -153,29 +142,6 @@ public enum class PowerProfileVO(public val  res: String) {
      */
     POWER_GROUP_DISPLAY_SCREEN_FULL("screen.full.display"),
 
-    /**
-     * Constants for generating a 64bit power constant key.
-     *
-     * The bitfields of a key describes what its corresponding power constant represents:
-     * [63:40] - RESERVED
-     * [39:32] - [Subsystem] (max count(16).
-     * [31:0] - per Subsystem fields, see [ModemPowerProfile].
-     *
-     */
-//    SUBSYSTEM_MASK(0xF00000000L),
-
-    /**
-     * Power constant not associated with a subsystem.
-     */
-//    SUBSYSTEM_NONE(0x000000000L),
-
-    /**
-     * Modem power constant.
-     */
-//    SUBSYSTEM_MODEM(0x100000000L),
-
-//    private SUBSYSTEM_FIELDS_MASK: Long = 0x1
-
     TAG_DEVICE("device"),
     TAG_ITEM("item"),
     TAG_ARRAY("array"),
@@ -183,8 +149,6 @@ public enum class PowerProfileVO(public val  res: String) {
     ATTR_NAME("name"),
 
     TAG_MODEM("modem"),
-
-//    sLock = Any()
 
     CPU_PER_CLUSTER_CORE_COUNT("cpu.clusters.cores"),
     CPU_CLUSTER_POWER_COUNT("cpu.cluster_power.cluster"),

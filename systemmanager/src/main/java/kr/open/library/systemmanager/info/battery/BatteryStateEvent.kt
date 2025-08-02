@@ -3,23 +3,35 @@ package kr.open.library.systemmanager.info.battery
 /**
  * Sealed class representing various battery state events.
  * Each event contains specific battery information that can be observed.
+ * 
+ * 다양한 배터리 상태 이벤트를 나타내는 sealed 클래스입니다.
+ * 각 이벤트는 관찰할 수 있는 특정 배터리 정보를 포함합니다.
  */
 public sealed class BatteryStateEvent {
     /**
      * Event for battery capacity updates.
+     * 배터리 용량 업데이트 이벤트입니다.
+     * 
      * @param percent Battery remaining capacity as percentage (0-100)
+     * @param percent 배터리 잔량 (백분율, 0-100)
      */
     public data class OnCapacity(val percent: Int) : BatteryStateEvent()
 
     /**
      * Event for battery charge counter updates.
+     * 배터리 충전 카운터 업데이트 이벤트입니다.
+     * 
      * @param counter Battery charge counter in microampere-hours (µAh)
+     * @param counter 배터리 충전 카운터 (마이크로암페어시, µAh)
      */
     public data class OnChargeCounter(val counter: Int) : BatteryStateEvent()
 
     /**
      * Event for power source connection type updates.
+     * 전원 연결 유형 업데이트 이벤트입니다.
+     * 
      * @param type Power source type as defined in [android.os.BatteryManager]
+     * @param type [android.os.BatteryManager]에 정의된 전원 유형
      * @see android.os.BatteryManager.BATTERY_PLUGGED_USB
      * @see android.os.BatteryManager.BATTERY_PLUGGED_AC
      * @see android.os.BatteryManager.BATTERY_PLUGGED_WIRELESS
@@ -28,13 +40,19 @@ public sealed class BatteryStateEvent {
 
     /**
      * Event for battery temperature updates.
+     * 배터리 온도 업데이트 이벤트입니다.
+     * 
      * @param temperature Battery temperature in Celsius
+     * @param temperature 배터리 온도 (섭씨)
      */
     public data class OnTemperature(val temperature: Double) : BatteryStateEvent()
 
     /**
      * Event for battery voltage updates.
+     * 배터리 전압 업데이트 이벤트입니다.
+     * 
      * @param voltage Battery voltage in Volts
+     * @param voltage 배터리 전압 (볼트)
      */
     public data class OnVoltage(val voltage: Double) : BatteryStateEvent()
 
