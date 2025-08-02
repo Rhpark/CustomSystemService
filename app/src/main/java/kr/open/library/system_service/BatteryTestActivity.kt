@@ -495,8 +495,20 @@ class BatteryTestActivity : AppCompatActivity() {
                         logMessage("📊 Capacity updated: ${event.percent}%")
                     }
                     is BatteryStateEvent.OnTemperature -> {
-                        temperatureTextView.text = "온도 / Temperature: ${event.temperature}°C"
-                        logMessage("🌡️ Temperature updated: ${event.temperature}°C")
+                        val tempDisplay = if (event.temperature == -999.0) {
+                            "사용할 수 없음 / Unavailable"
+                        } else {
+                            "${event.temperature}°C"
+                        }
+                        temperatureTextView.text = "온도 / Temperature: $tempDisplay"
+                        
+                        if (event.temperature == -999.0) {
+                            logMessage("🌡️ Temperature unavailable (sensor error or not supported)")
+                        } else if (event.temperature < -214000000.0) {
+                            logMessage("🌡️ Temperature error detected: ${event.temperature}°C (ERROR_VALUE overflow)")
+                        } else {
+                            logMessage("🌡️ Temperature updated: ${event.temperature}°C (converted from ${(event.temperature * 10).toInt()}/10)")
+                        }
                     }
                     is BatteryStateEvent.OnVoltage -> {
                         voltageTextView.text = "전압 / Voltage: ${event.voltage}V"
@@ -543,23 +555,40 @@ class BatteryTestActivity : AppCompatActivity() {
             val temperature = batteryStateInfo.getTemperature()
             val voltage = batteryStateInfo.getVoltage()
             val current = batteryStateInfo.getCurrentAmpere()
+            val chargeCounter = batteryStateInfo.getChargeCounter()
             val totalCapacity = batteryStateInfo.getTotalCapacity()
             val isCharging = batteryStateInfo.isCharging()
             val technology = batteryStateInfo.getTechnology()
 
             logMessage("📊 === 즉시 배터리 정보 / Instant Battery Info ===")
             logMessage("배터리 잔량 / Capacity: ${capacity}%")
-            logMessage("온도 / Temperature: ${temperature}°C")
+            logMessage("현재 충전량 / Current Charge: ${chargeCounter}µAh (${chargeCounter/1000.0}mAh)")
+            logMessage("총 배터리 용량 / Total Capacity: ${totalCapacity}mAh")
+            if (temperature == -999.0) {
+                logMessage("온도 / Temperature: 사용할 수 없음 / Unavailable (센서 오류 또는 미지원)")
+            } else if (temperature < -214000000.0) {
+                logMessage("온도 / Temperature: 오류 감지 ${temperature}°C (ERROR_VALUE 오버플로우)")
+            } else {
+                logMessage("온도 / Temperature: ${temperature}°C (원본값: ${(temperature * 10).toInt()}/10)")
+            }
             logMessage("전압 / Voltage: ${voltage}V")
             logMessage("전류 / Current: ${current}µA")
-            logMessage("총 용량 / Total Capacity: ${totalCapacity}mAh")
             logMessage("충전 상태 / Charging: $isCharging")
             logMessage("배터리 기술 / Technology: $technology")
+            logMessage("계산 검증 / Calculation Check: ${chargeCounter/1000.0}mAh (현재) / ${totalCapacity}mAh (총량) = ${(chargeCounter/1000.0/totalCapacity*100).toInt()}% (이론값)")
             logMessage("=".repeat(50))
 
             // UI도 즉시 업데이트
             capacityTextView.text = "배터리 잔량 / Capacity: ${capacity}%"
-            temperatureTextView.text = "온도 / Temperature: ${temperature}°C"
+            
+            val tempDisplay = if (temperature == -999.0) {
+                "사용할 수 없음 / Unavailable"
+            } else if (temperature < -214000000.0) {
+                "오류 / Error"
+            } else {
+                "${temperature}°C"
+            }
+            temperatureTextView.text = "온도 / Temperature: $tempDisplay"
             voltageTextView.text = "전압 / Voltage: ${voltage}V"
             val chargeStatus = if (isCharging) "충전중 / Charging" else "방전중 / Discharging"
             currentTextView.text = "전류 / Current: ${current}µA ($chargeStatus)"

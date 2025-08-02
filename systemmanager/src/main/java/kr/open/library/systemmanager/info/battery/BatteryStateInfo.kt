@@ -501,13 +501,36 @@ public open class BatteryStateInfo(context: Context) :
     }
 
     /**
-     * Battery Temperature
-     * return double
-     * error return errorValue(Integer.MIN_VALUE)
+     * Gets the battery temperature in Celsius.
+     * Android returns temperature in tenths of a degree Celsius, so we divide by 10.
+     * 
+     * 배터리 온도를 섭씨로 가져옵니다.
+     * Android는 온도를 섭씨 1/10도 단위로 반환하므로 10으로 나눕니다.
+     *
+     * @return Battery temperature in Celsius (°C), or -999.0 if unavailable
+     * @return 배터리 온도 (섭씨), 사용할 수 없는 경우 -999.0
+     * 
+     * Example: Android returns 350 → 35.0°C
+     * 예시: Android가 350을 반환 → 35.0°C
+     * 
+     * Note: If you see very negative values like -214748364.8°C, it means temperature is unavailable
+     * 참고: -214748364.8°C 같은 매우 낮은 음수가 보이면 온도를 사용할 수 없다는 뜻입니다
      */
-    public fun getTemperature(): Double =
-        (batteryStatus?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, ERROR_VALUE)?.toDouble()
-            ?: ERROR_VALUE.toDouble()) / 10.0
+    public fun getTemperature(): Double = safeCatch("getTemperature", -999.0) {
+        val rawTemperature = batteryStatus?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, ERROR_VALUE) ?: ERROR_VALUE
+        if (rawTemperature == ERROR_VALUE) {
+            -999.0  // Use a reasonable error value instead of Integer.MIN_VALUE / 10
+        } else {
+            val convertedTemp = rawTemperature.toDouble() / 10.0
+            // Sanity check: reasonable battery temperature range (-40°C to 100°C)
+            // 정상성 검사: 합리적인 배터리 온도 범위 (-40°C ~ 100°C)
+            if (convertedTemp in -40.0..100.0) {
+                convertedTemp
+            } else {
+                -999.0  // Invalid temperature value
+            }
+        }
+    }
 
     /**
      * boolean indicating whether a battery is present.
@@ -623,27 +646,35 @@ public open class BatteryStateInfo(context: Context) :
     }
     
     /**
-     * Estimates battery capacity from charge counter and current percentage.
-     * 충전 카운터와 현재 백분율로부터 배터리 용량을 추정합니다.
+     * Estimates total battery capacity from current charge counter and battery percentage.
+     * This is a fallback method when PowerProfile is not available.
+     * 
+     * 현재 충전 카운터와 배터리 백분율로부터 총 배터리 용량을 추정합니다.
+     * PowerProfile을 사용할 수 없을 때의 fallback 방법입니다.
+     * 
+     * Formula: Total Capacity = (Current Charge Counter / Current Percentage) * 100
+     * 공식: 총 용량 = (현재 충전량 / 현재 백분율) * 100
      */
     private fun getEstimatedCapacityFromChargeCounter(): Double = safeCatch("getEstimatedCapacityFromChargeCounter", 0.0) {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-            val chargeCounter = getChargeCounter()
-            val capacity = getCapacity()
+            val chargeCounter = getChargeCounter() // Current charge in µAh
+            val capacity = getCapacity() // Current percentage (0-100)
             
-            if (chargeCounter > 0 && capacity > 0 && capacity <= 100) {
-                // Estimate total capacity: (current_charge / current_percentage) * 100
-                // 총 용량 추정: (현재_충전량 / 현재_백분율) * 100
-                val estimatedCapacity = (chargeCounter.toDouble() / capacity.toDouble()) * 100.0 / 1000.0 // Convert to mAh
+            if (chargeCounter > 0 && capacity > 5 && capacity <= 100) { // Avoid division by very small numbers
+                // Calculate total capacity: (current_charge_µAh / current_percentage) * 100 / 1000 = mAh
+                // 총 용량 계산: (현재_충전량_µAh / 현재_백분율) * 100 / 1000 = mAh
+                val estimatedTotalCapacity = (chargeCounter.toDouble() / capacity.toDouble()) * 100.0 / 1000.0
                 
-                // Sanity check: capacity should be between 1000-10000 mAh for mobile devices
-                // 정상성 검사: 모바일 기기의 용량은 1000-10000 mAh 사이여야 함
-                if (estimatedCapacity in 1000.0..10000.0) {
-                    estimatedCapacity
+                // Sanity check: reasonable mobile device battery capacity range
+                // 정상성 검사: 합리적인 모바일 기기 배터리 용량 범위
+                if (estimatedTotalCapacity in 1000.0..10000.0) {
+                    estimatedTotalCapacity
                 } else {
+                    Logx.w("Estimated capacity out of range: $estimatedTotalCapacity mAh")
                     0.0
                 }
             } else {
+                Logx.w("Invalid values for estimation - chargeCounter: $chargeCounter µAh, capacity: $capacity%")
                 0.0
             }
         } else {

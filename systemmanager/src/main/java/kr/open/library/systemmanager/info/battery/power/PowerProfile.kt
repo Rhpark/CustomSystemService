@@ -161,21 +161,33 @@ public class PowerProfile(private val context: Context) {
     }
     
     /**
-     * Fallback method to get battery capacity using BatteryManager.
-     * BatteryManager를 사용하여 배터리 용량을 가져오는 fallback 메서드.
+     * Fallback method to estimate total battery capacity using BatteryManager.
+     * This method calculates total capacity from current charge and percentage.
      * 
-     * @return Battery capacity in mAh, or 0.0 if unavailable
-     * @return 배터리 용량(mAh), 사용할 수 없는 경우 0.0
+     * BatteryManager를 사용하여 총 배터리 용량을 추정하는 fallback 메서드.
+     * 현재 충전량과 백분율로부터 총 용량을 계산합니다.
+     * 
+     * @return Estimated total battery capacity in mAh, or 0.0 if unavailable
+     * @return 추정된 총 배터리 용량(mAh), 사용할 수 없는 경우 0.0
      */
     private fun getBatteryCapacityFromBatteryManager(): Double = safeCatch("getBatteryCapacityFromBatteryManager", 0.0) {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
             val batteryManager = context.getSystemService(android.content.Context.BATTERY_SERVICE) as? android.os.BatteryManager
-            val chargeCounter = batteryManager?.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER)
+            val chargeCounter = batteryManager?.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER) // Current charge in µAh
+            val capacity = batteryManager?.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY) // Current percentage
             
-            // Convert microampere-hours to milliampere-hours
-            // 마이크로암페어시를 밀리암페어시로 변환
-            if (chargeCounter != null && chargeCounter > 0) {
-                chargeCounter / 1000.0
+            if (chargeCounter != null && capacity != null && chargeCounter > 0 && capacity > 5 && capacity <= 100) {
+                // Calculate total capacity: (current_charge_µAh / current_percentage) * 100 / 1000 = mAh
+                // 총 용량 계산: (현재_충전량_µAh / 현재_백분율) * 100 / 1000 = mAh
+                val estimatedTotalCapacity = (chargeCounter.toDouble() / capacity.toDouble()) * 100.0 / 1000.0
+                
+                // Sanity check: reasonable mobile device battery capacity
+                // 정상성 검사: 합리적인 모바일 기기 배터리 용량
+                if (estimatedTotalCapacity in 1000.0..10000.0) {
+                    estimatedTotalCapacity
+                } else {
+                    0.0
+                }
             } else {
                 0.0
             }
