@@ -254,9 +254,17 @@ class BatteryTestActivity : AppCompatActivity() {
                         logMessage("⚡ Voltage updated: ${event.voltage}V")
                     }
                     is BatteryStateEvent.OnCurrentAmpere -> {
-                        val status = if (event.current > 0) "충전중 / Charging" else "방전중 / Discharging"
+                        // 전류와 충전기 연결 상태를 함께 고려하여 충전 상태 판단
+                        // Consider both current and charger connection for accurate charging status
+                        val chargePlug = batteryStateInfo.getChargePlug()
+                        val isCharging = batteryStateInfo.isCharging()
+                        val status = when {
+                            event.current > 0 && chargePlug != batteryStateInfo.ERROR_VALUE -> "충전중 / Charging"
+                            isCharging && chargePlug != batteryStateInfo.ERROR_VALUE -> "충전중 / Charging"
+                            else -> "방전중 / Discharging"
+                        }
                         currentTextView.text = "전류 / Current: ${event.current}µA ($status)"
-                        logMessage("🔋 Current updated: ${event.current}µA")
+                        logMessage("🔋 Current updated: ${event.current}µA ($status)")
                     }
                     is BatteryStateEvent.OnChargePlug -> {
                         val plugType = when (event.type) {
@@ -311,8 +319,23 @@ class BatteryTestActivity : AppCompatActivity() {
                 logMessage("온도 / Temperature: ${temperature}°C (원본값: ${(temperature * 10).toInt()}/10)")
             }
             logMessage("전압 / Voltage: ${voltage}V")
+            // 충전 상태를 전류 값과 충전 상태 모두 고려하여 정확하게 판단
+            // Determine charging status by considering both current value and charge status
+            val chargePlug = batteryStateInfo.getChargePlug()
+            val chargeStatus = batteryStateInfo.getChargeStatus()
+            val actualChargingStatus = when {
+                // 전류가 양수이고 충전기가 연결되어 있으면 충전중
+                current > 0 && chargePlug != batteryStateInfo.ERROR_VALUE -> "충전중 / Charging"
+                // 충전 상태가 충전중이면서 충전기가 연결되어 있으면 충전중
+                isCharging && chargePlug != batteryStateInfo.ERROR_VALUE -> "충전중 / Charging"
+                // 그 외의 경우는 방전중
+                else -> "방전중 / Discharging"
+            }
+            
             logMessage("전류 / Current: ${current}µA")
-            logMessage("충전 상태 / Charging: $isCharging")
+            logMessage("충전 상태 / Charging Status: $chargeStatus")
+            logMessage("충전기 연결 / Charger Plugged: ${if (chargePlug != batteryStateInfo.ERROR_VALUE) "연결됨 / Connected" else "미연결 / Disconnected"}")
+            logMessage("실제 충전 상태 / Actual Charging: $actualChargingStatus")
             logMessage("배터리 기술 / Technology: $technology")
             logMessage("계산 검증 / Calculation Check: ${chargeCounter/1000.0}mAh (현재) / ${totalCapacity}mAh (총량) = ${(chargeCounter/1000.0/totalCapacity*100).toInt()}% (이론값)")
             logMessage("=".repeat(50))
@@ -329,8 +352,7 @@ class BatteryTestActivity : AppCompatActivity() {
             }
             temperatureTextView.text = "온도 / Temperature: $tempDisplay"
             voltageTextView.text = "전압 / Voltage: ${voltage}V"
-            val chargeStatus = if (isCharging) "충전중 / Charging" else "방전중 / Discharging"
-            currentTextView.text = "전류 / Current: ${current}µA ($chargeStatus)"
+            currentTextView.text = "전류 / Current: ${current}µA ($actualChargingStatus)"
 
         } catch (e: Exception) {
             logMessage("❌ Error getting instant battery info: ${e.message}")

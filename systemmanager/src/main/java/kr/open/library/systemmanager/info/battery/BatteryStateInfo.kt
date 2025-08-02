@@ -357,7 +357,17 @@ public open class BatteryStateInfo(context: Context) :
     public fun getChargeStatus(): Int = safeCatch("getChargeStatus", ERROR_VALUE) {
         val res = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_STATUS)
         if (res == ERROR_VALUE) {
-            batteryStatus?.getIntExtra(BatteryManager.EXTRA_STATUS, ERROR_VALUE) ?: ERROR_VALUE
+            // Try to get charge status from current batteryStatus first
+            // 먼저 현재 batteryStatus에서 충전 상태를 가져오기 시도
+            var chargeStatus = batteryStatus?.getIntExtra(BatteryManager.EXTRA_STATUS, ERROR_VALUE) ?: ERROR_VALUE
+            
+            // If batteryStatus is null or doesn't have charge status, get fresh battery intent
+            // batteryStatus가 null이거나 충전 상태가 없는 경우, 새로운 배터리 intent를 가져옴
+            if (chargeStatus == ERROR_VALUE) {
+                val batteryIntent = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+                chargeStatus = batteryIntent?.getIntExtra(BatteryManager.EXTRA_STATUS, ERROR_VALUE) ?: ERROR_VALUE
+            }
+            chargeStatus
         } else {
             res
         }
