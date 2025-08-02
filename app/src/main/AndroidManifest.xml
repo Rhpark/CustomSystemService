@@ -74,7 +74,7 @@
 
         <!-- FloatingView Test Activity -->
         <activity
-            android:name="kr.open.library.system_service.FloatingViewTestActivity"
+            android:name=".FloatingViewTestActivity"
             android:exported="false"
             android:label="FloatingView Controller Test"
             android:parentActivityName=".MainActivity" />
