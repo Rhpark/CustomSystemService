@@ -5,10 +5,8 @@ import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
-import android.view.Gravity
 import android.view.View
 import android.widget.Button
-import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -57,6 +55,7 @@ class BatteryTestActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_battery_test)
         
         setupUI()
         initializeBatteryController()
@@ -70,300 +69,40 @@ class BatteryTestActivity : AppCompatActivity() {
      * UI setup and initialization
      */
     private fun setupUI() {
-        val scrollView = ScrollView(this).apply {
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.MATCH_PARENT
-            )
-        }
-
-        val mainLayout = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(32, 32, 32, 32)
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-        }
-
-        // 제목
-        val titleTextView = TextView(this).apply {
-            text = "🔋 Battery State Monitor Test\n배터리 상태 모니터 테스트"
-            textSize = 18f
-            setTextColor(Color.BLACK)
-            gravity = Gravity.CENTER
-            setPadding(0, 0, 0, 24)
-        }
-
-        // 권한 상태 표시
-        statusTextView = TextView(this).apply {
-            text = "권한 상태 확인 중... / Checking permissions..."
-            textSize = 14f
-            setTextColor(Color.BLUE)
-            setPadding(16, 16, 16, 16)
-            setBackgroundColor(Color.LTGRAY)
-        }
-
-        // 실시간 배터리 정보 카드
-        val batteryInfoCard = createBatteryInfoCard()
-
-        // Fallback 테스트 카드
-        val fallbackTestCard = createFallbackTestCard()
-
-        // 컨트롤 버튼들
-        val controlButtons = createControlButtons()
-
-        // 실행 로그
-        val logCard = createLogCard()
-
-        // 모든 요소를 메인 레이아웃에 추가
-        mainLayout.addView(titleTextView)
-        mainLayout.addView(statusTextView)
-        mainLayout.addView(batteryInfoCard)
-        mainLayout.addView(fallbackTestCard)
-        mainLayout.addView(controlButtons)
-        mainLayout.addView(logCard)
-
-        scrollView.addView(mainLayout)
-        setContentView(scrollView)
+        // XML에서 뷰들을 찾아서 연결
+        statusTextView = findViewById(R.id.tvPermissionStatus)
+        capacityTextView = findViewById(R.id.tvBatteryCapacity)
+        temperatureTextView = findViewById(R.id.tvBatteryTemperature)
+        voltageTextView = findViewById(R.id.tvBatteryVoltage)
+        currentTextView = findViewById(R.id.tvBatteryCurrent)
+        fallbackTestTextView = findViewById(R.id.tvFallbackTest)
+        logTextView = findViewById(R.id.tvExecutionLog)
+        
+        // 버튼들 연결
+        btnStartMonitoring = findViewById(R.id.btnStartMonitoring)
+        btnStopMonitoring = findViewById(R.id.btnStopMonitoring)
+        btnGetInstantInfo = findViewById(R.id.btnGetInstantInfo)
+        btnTestFallback = findViewById(R.id.btnTestFallback)
+        btnCheckPermissions = findViewById(R.id.btnCheckPermissions)
+        btnClearLog = findViewById(R.id.btnClearLog)
+        
+        // 버튼 클릭 리스너 설정
+        setupButtonListeners()
     }
-
+    
     /**
-     * 배터리 정보 카드 생성
-     * Create battery information card
+     * 버튼 클릭 리스너 설정
+     * Setup button click listeners
      */
-    private fun createBatteryInfoCard(): LinearLayout {
-        val card = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(16, 16, 16, 16)
-            setBackgroundColor(Color.parseColor("#E3F2FD"))
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply { setMargins(0, 16, 0, 16) }
-        }
-
-        val cardTitle = TextView(this).apply {
-            text = "📊 실시간 배터리 정보 / Real-time Battery Info"
-            textSize = 16f
-            setTextColor(Color.BLACK)
-            setPadding(0, 0, 0, 16)
-        }
-
-        capacityTextView = TextView(this).apply {
-            text = "배터리 잔량 / Capacity: 대기 중... / Waiting..."
-            textSize = 14f
-            setTextColor(Color.BLACK)
-            setPadding(0, 4, 0, 4)
-        }
-
-        temperatureTextView = TextView(this).apply {
-            text = "온도 / Temperature: 대기 중... / Waiting..."
-            textSize = 14f
-            setTextColor(Color.BLACK)
-            setPadding(0, 4, 0, 4)
-        }
-
-        voltageTextView = TextView(this).apply {
-            text = "전압 / Voltage: 대기 중... / Waiting..."
-            textSize = 14f
-            setTextColor(Color.BLACK)
-            setPadding(0, 4, 0, 4)
-        }
-
-        currentTextView = TextView(this).apply {
-            text = "전류 / Current: 대기 중... / Waiting..."
-            textSize = 14f
-            setTextColor(Color.BLACK)
-            setPadding(0, 4, 0, 4)
-        }
-
-        card.addView(cardTitle)
-        card.addView(capacityTextView)
-        card.addView(temperatureTextView)
-        card.addView(voltageTextView)
-        card.addView(currentTextView)
-
-        return card
+    private fun setupButtonListeners() {
+        btnStartMonitoring.setOnClickListener { startBatteryMonitoring() }
+        btnStopMonitoring.setOnClickListener { stopBatteryMonitoring() }
+        btnGetInstantInfo.setOnClickListener { getInstantBatteryInfo() }
+        btnTestFallback.setOnClickListener { testFallbackMechanism() }
+        btnCheckPermissions.setOnClickListener { checkAndRequestPermissions() }
+        btnClearLog.setOnClickListener { clearLog() }
     }
 
-    /**
-     * Fallback 테스트 카드 생성
-     * Create fallback test card
-     */
-    private fun createFallbackTestCard(): LinearLayout {
-        val card = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(16, 16, 16, 16)
-            setBackgroundColor(Color.parseColor("#FFF3E0"))
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply { setMargins(0, 0, 0, 16) }
-        }
-
-        val cardTitle = TextView(this).apply {
-            text = "🛡️ Fallback 메커니즘 테스트 / Fallback Mechanism Test"
-            textSize = 16f
-            setTextColor(Color.BLACK)
-            setPadding(0, 0, 0, 16)
-        }
-
-        fallbackTestTextView = TextView(this).apply {
-            text = "PowerProfile 상태: 확인 중... / PowerProfile Status: Checking..."
-            textSize = 14f
-            setTextColor(Color.BLACK)
-            setPadding(0, 4, 0, 4)
-        }
-
-        card.addView(cardTitle)
-        card.addView(fallbackTestTextView)
-
-        return card
-    }
-
-    /**
-     * 컨트롤 버튼들 생성
-     * Create control buttons
-     */
-    private fun createControlButtons(): LinearLayout {
-        val buttonLayout = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply { setMargins(0, 0, 0, 16) }
-        }
-
-        // 모니터링 관련 버튼들
-        val monitoringRow = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply { setMargins(0, 0, 0, 8) }
-        }
-
-        btnStartMonitoring = Button(this).apply {
-            text = "모니터링 시작\nStart Monitoring"
-            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-                .apply { setMargins(0, 0, 4, 0) }
-            setOnClickListener { startBatteryMonitoring() }
-        }
-
-        btnStopMonitoring = Button(this).apply {
-            text = "모니터링 중지\nStop Monitoring"
-            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-                .apply { setMargins(4, 0, 0, 0) }
-            setOnClickListener { stopBatteryMonitoring() }
-            isEnabled = false
-        }
-
-        monitoringRow.addView(btnStartMonitoring)
-        monitoringRow.addView(btnStopMonitoring)
-
-        // 테스트 관련 버튼들
-        val testRow = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply { setMargins(0, 0, 0, 8) }
-        }
-
-        btnGetInstantInfo = Button(this).apply {
-            text = "즉시 정보 조회\nGet Instant Info"
-            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-                .apply { setMargins(0, 0, 4, 0) }
-            setOnClickListener { getInstantBatteryInfo() }
-        }
-
-        btnTestFallback = Button(this).apply {
-            text = "Fallback 테스트\nTest Fallback"
-            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-                .apply { setMargins(4, 0, 0, 0) }
-            setOnClickListener { testFallbackMechanism() }
-        }
-
-        testRow.addView(btnGetInstantInfo)
-        testRow.addView(btnTestFallback)
-
-        // 유틸리티 버튼들
-        val utilityRow = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-        }
-
-        btnCheckPermissions = Button(this).apply {
-            text = "권한 상태 확인\nCheck Permission Status"
-            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-                .apply { setMargins(0, 0, 4, 0) }
-            setOnClickListener { checkAndRequestPermissions() }
-        }
-
-        btnClearLog = Button(this).apply {
-            text = "로그 지우기\nClear Log"
-            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-                .apply { setMargins(4, 0, 0, 0) }
-            setOnClickListener { clearLog() }
-        }
-
-        utilityRow.addView(btnCheckPermissions)
-        utilityRow.addView(btnClearLog)
-
-        buttonLayout.addView(monitoringRow)
-        buttonLayout.addView(testRow)
-        buttonLayout.addView(utilityRow)
-
-        return buttonLayout
-    }
-
-    /**
-     * 로그 카드 생성
-     * Create log card
-     */
-    private fun createLogCard(): LinearLayout {
-        val card = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(16, 16, 16, 16)
-            setBackgroundColor(Color.parseColor("#F5F5F5"))
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                400 // 고정 높이
-            )
-        }
-
-        val cardTitle = TextView(this).apply {
-            text = "📝 실행 로그 / Execution Log"
-            textSize = 16f
-            setTextColor(Color.BLACK)
-            setPadding(0, 0, 0, 16)
-        }
-
-        val logScrollView = ScrollView(this).apply {
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.MATCH_PARENT
-            )
-        }
-
-        logTextView = TextView(this).apply {
-            text = "로그가 여기에 표시됩니다...\nLogs will be displayed here..."
-            textSize = 12f
-            setTextColor(Color.DKGRAY)
-            setPadding(8, 8, 8, 8)
-            setBackgroundColor(Color.WHITE)
-        }
-
-        logScrollView.addView(logTextView)
-        card.addView(cardTitle)
-        card.addView(logScrollView)
-
-        return card
-    }
 
     /**
      * BatteryStateInfo 초기화
@@ -655,8 +394,8 @@ class BatteryTestActivity : AppCompatActivity() {
             val logEntry = "[$timestamp] $message\n"
             logTextView.text = "${logTextView.text}$logEntry"
             
-            // 로그가 너무 길어지면 스크롤
-            val scrollView = logTextView.parent as? ScrollView
+            // XML 레이아웃에서 ScrollView를 찾아서 스크롤
+            val scrollView = logTextView.parent.parent as? ScrollView
             scrollView?.post {
                 scrollView.fullScroll(View.FOCUS_DOWN)
             }
