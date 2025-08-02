@@ -54,7 +54,6 @@ class BatteryTestActivity : AppCompatActivity() {
     private lateinit var btnClearLog: Button
     
     private var isMonitoring = false
-    private val BATTERY_STATS_PERMISSION_REQUEST = 1001
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -299,7 +298,7 @@ class BatteryTestActivity : AppCompatActivity() {
         }
 
         btnCheckPermissions = Button(this).apply {
-            text = "권한 확인\nCheck Permissions"
+            text = "권한 상태 확인\nCheck Permission Status"
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
                 .apply { setMargins(0, 0, 4, 0) }
             setOnClickListener { checkAndRequestPermissions() }
@@ -384,8 +383,8 @@ class BatteryTestActivity : AppCompatActivity() {
     }
 
     /**
-     * 권한 확인 및 요청
-     * Check and request permissions
+     * 권한 확인 (BATTERY_STATS는 시스템 권한으로 요청 불가)
+     * Check permissions (BATTERY_STATS is system permission, cannot be requested)
      */
     private fun checkAndRequestPermissions() {
         val hasPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -399,17 +398,13 @@ class BatteryTestActivity : AppCompatActivity() {
             statusTextView.setTextColor(Color.parseColor("#4CAF50"))
             logMessage("✅ BATTERY_STATS permission granted")
         } else {
-            statusTextView.text = "⚠️ 권한 필요 / Permissions Required"
+            statusTextView.text = "ℹ️ 시스템 권한 / System Permission Only"
             statusTextView.setTextColor(Color.parseColor("#FF9800"))
             
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(Manifest.permission.BATTERY_STATS),
-                    BATTERY_STATS_PERMISSION_REQUEST
-                )
-            }
-            logMessage("⚠️ BATTERY_STATS permission not granted, requesting...")
+            logMessage("ℹ️ BATTERY_STATS is a system permission - not available for regular apps")
+            logMessage("ℹ️ BATTERY_STATS는 시스템 권한입니다 - 일반 앱에서는 사용할 수 없음")
+            logMessage("ℹ️ BatteryStateInfo will work without this permission using public APIs")
+            logMessage("ℹ️ BatteryStateInfo는 이 권한 없이도 공개 API를 사용하여 작동합니다")
         }
     }
 
@@ -648,27 +643,6 @@ class BatteryTestActivity : AppCompatActivity() {
         logMessage("🗑️ Log cleared / 로그가 지워졌습니다")
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        
-        when (requestCode) {
-            BATTERY_STATS_PERMISSION_REQUEST -> {
-                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    statusTextView.text = "✅ 권한 승인됨 / Permission Granted"
-                    statusTextView.setTextColor(Color.parseColor("#4CAF50"))
-                    logMessage("✅ BATTERY_STATS permission granted by user")
-                } else {
-                    statusTextView.text = "❌ 권한 거부됨 / Permission Denied"
-                    statusTextView.setTextColor(Color.parseColor("#F44336"))
-                    logMessage("❌ BATTERY_STATS permission denied by user")
-                }
-            }
-        }
-    }
 
     override fun onDestroy() {
         super.onDestroy()
