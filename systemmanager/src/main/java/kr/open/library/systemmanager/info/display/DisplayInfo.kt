@@ -16,6 +16,39 @@ import kr.open.library.systemmanager.extenstions.getWindowManager
  * This class provides information about the display of an Android device.
  * DisplayInfo 클래스는 Android 기기의 디스플레이 정보를 제공.
  *
+ * This class offers both traditional exception-based methods and safer Result-based alternatives.
+ * 이 클래스는 전통적인 예외 기반 메서드와 더 안전한 Result 기반 대안을 모두 제공합니다.
+ *
+ * Example usage / 사용 예제:
+ * ```kotlin
+ * val displayInfo = DisplayInfo(context)
+ * 
+ * // Traditional approach (may throw exceptions)
+ * // 전통적인 방식 (예외 발생 가능)
+ * try {
+ *     val height = displayInfo.getStatusBarHeight()
+ *     // Use height...
+ * } catch (e: Resources.NotFoundException) {
+ *     // Handle error...
+ * }
+ * 
+ * // Safe approach with Result pattern
+ * // Result 패턴을 사용한 안전한 방식
+ * displayInfo.getStatusBarHeightSafe()
+ *     .onSuccess { height -> 
+ *         // Use height safely
+ *         // 높이를 안전하게 사용
+ *     }
+ *     .onFailure { error -> 
+ *         // Handle error gracefully
+ *         // 오류를 우아하게 처리
+ *     }
+ * 
+ * // Convenient approach with default values
+ * // 기본값을 사용한 편리한 방식
+ * val height = displayInfo.getStatusBarHeightOrDefault(60) // Uses 60px if unable to determine
+ * ```
+ *
  * @param context The application context.
  * @param context 애플리케이션 컨텍스트.
  */
@@ -69,6 +102,43 @@ public open class DisplayInfo(context: Context)
     )
 
     /**
+     * Safely returns the screen size excluding the status bar and navigation bar using Result pattern.
+     * Result 패턴을 사용하여 안전하게 상태바와 네비게이션바를 제외한 화면 크기를 반환합니다.
+     *
+     * @return Result containing the screen size or failure information.
+     * @return 화면 크기 또는 실패 정보를 포함한 Result.
+     */
+    public fun getScreenSafe(): Result<Point> = runCatching {
+        checkSdkVersion(Build.VERSION_CODES.R,
+            positiveWork = {
+                val windowMetrics = getCurrentWindowMetrics()
+                val insets = windowMetrics.windowInsets.getInsetsIgnoringVisibility(WindowInsets.Type.systemBars())
+
+                val width = windowMetrics.bounds.width() - (insets.left + insets.right)
+                val height = windowMetrics.bounds.height() - (insets.bottom + insets.top)
+                Point(width, height)
+            }, negativeWork = {
+                val screenWithStatusBar = getScreenWithStatusBar()
+                val statusBarHeight = getStatusBarHeightSafe().getOrThrow()
+                Point(screenWithStatusBar.x, screenWithStatusBar.y - statusBarHeight)
+            }
+        )
+    }
+
+    /**
+     * Returns the screen size with a default fallback value.
+     * 기본 대체 값과 함께 화면 크기를 반환합니다.
+     *
+     * @param defaultSize The default size to use if unable to determine actual size
+     * @param defaultSize 실제 크기를 확인할 수 없을 때 사용할 기본 크기
+     * @return The screen size or default value
+     * @return 화면 크기 또는 기본값
+     */
+    public fun getScreenOrDefault(defaultSize: Point = Point(1080, 1920)): Point {
+        return getScreenSafe().getOrDefault(defaultSize)
+    }
+
+    /**
      * Returns the screen size excluding the navigation bar.
      * 탐색 표시줄을 제외한 화면 크기를 반환.
      *
@@ -108,6 +178,39 @@ public open class DisplayInfo(context: Context)
     )
 
     /**
+     * Safely returns the status bar height using Result pattern.
+     * Result 패턴을 사용하여 안전하게 상태 표시줄 높이를 반환합니다.
+     *
+     * @return Result containing the status bar height or failure information.
+     * @return 상태 표시줄 높이 또는 실패 정보를 포함한 Result.
+     */
+    public fun getStatusBarHeightSafe(): Result<Int> = runCatching {
+        checkSdkVersion(Build.VERSION_CODES.R,
+            positiveWork = {
+                getCurrentWindowMetrics().windowInsets.getInsetsIgnoringVisibility(WindowInsets.Type.systemBars()).top
+            },
+            negativeWork = {
+                context.resources.getIdentifier("status_bar_height", "dimen", "android")
+                    .takeIf { it > 0 }?.let { context.resources.getDimensionPixelSize(it) }
+                    ?: throw Resources.NotFoundException("Cannot find status bar height from system resources")
+            }
+        )
+    }
+
+    /**
+     * Returns the status bar height with a default fallback value.
+     * 기본 대체 값과 함께 상태 표시줄 높이를 반환합니다.
+     *
+     * @param defaultHeight The default height to use if unable to determine actual height (default: 60px)
+     * @param defaultHeight 실제 높이를 확인할 수 없을 때 사용할 기본 높이 (기본값: 60px)
+     * @return The status bar height or default value
+     * @return 상태 표시줄 높이 또는 기본값
+     */
+    public fun getStatusBarHeightOrDefault(defaultHeight: Int = 60): Int {
+        return getStatusBarHeightSafe().getOrDefault(defaultHeight)
+    }
+
+    /**
      * Returns the navigation bar height.
      * 탐색 표시줄 높이를 반환.
      *
@@ -124,4 +227,37 @@ public open class DisplayInfo(context: Context)
                 ?: throw Resources.NotFoundException("Cannot find navigation bar height. Try getNavigationBarHeight(activity: Activity).")
         }
     )
+
+    /**
+     * Safely returns the navigation bar height using Result pattern.
+     * Result 패턴을 사용하여 안전하게 네비게이션바 높이를 반환합니다.
+     *
+     * @return Result containing the navigation bar height or failure information.
+     * @return 네비게이션바 높이 또는 실패 정보를 포함한 Result.
+     */
+    public fun getNavigationBarHeightSafe(): Result<Int> = runCatching {
+        checkSdkVersion(Build.VERSION_CODES.R,
+            positiveWork = {
+                getCurrentWindowMetrics().windowInsets.getInsetsIgnoringVisibility(WindowInsets.Type.systemBars()).bottom
+            },
+            negativeWork = {
+                context.resources.getIdentifier("navigation_bar_height", "dimen", "android")
+                    .takeIf { it > 0 }?.let { context.resources.getDimensionPixelSize(it) }
+                    ?: throw Resources.NotFoundException("Cannot find navigation bar height from system resources")
+            }
+        )
+    }
+
+    /**
+     * Returns the navigation bar height with a default fallback value.
+     * 기본 대체 값과 함께 네비게이션바 높이를 반환합니다.
+     *
+     * @param defaultHeight The default height to use if unable to determine actual height (default: 0px for devices without navigation bar)
+     * @param defaultHeight 실제 높이를 확인할 수 없을 때 사용할 기본 높이 (기본값: 0px, 네비게이션바가 없는 기기용)
+     * @return The navigation bar height or default value
+     * @return 네비게이션바 높이 또는 기본값
+     */
+    public fun getNavigationBarHeightOrDefault(defaultHeight: Int = 0): Int {
+        return getNavigationBarHeightSafe().getOrDefault(defaultHeight)
+    }
 }

@@ -83,7 +83,7 @@ public fun Context.getAlarmController(): AlarmController = AlarmController(this)
 //public fun Context.getNotificationController(showType: SimpleNotificationType): SimpleNotificationController =
 //    SimpleNotificationController(this, showType)
 //
-//public fun Context.getDisplayInfo(): DisplayInfo = DisplayInfo(this)
+public fun Context.getDisplayInfo(): DisplayInfo = DisplayInfo(this)
 //
 //public fun Context.getVibratorController(): VibratorController = VibratorController(this)
 //
