@@ -20,6 +20,7 @@ import android.view.inputmethod.InputMethodManager
 import androidx.annotation.RequiresApi
 import kotlinx.coroutines.CoroutineScope
 import kr.open.library.systemmanager.controller.alarm.AlarmController
+import kr.open.library.systemmanager.info.display.DisplayInfo
 
 /*****************
  * SystemService *
