@@ -42,7 +42,7 @@ class ExampleFloatingController(context: Context) :
      */
     fun addViewWithAutoHandling(view: View, params: WindowManager.LayoutParams): Boolean {
         return addViewSafe(view, params)
-            .onFailure { error ->
+            .onSystemServiceFailure { error ->
                 when (error) {
                     is SystemServiceError.Permission.SpecialPermissionRequired -> {
                         // Could trigger permission request UI
@@ -148,11 +148,11 @@ class BaseSystemServiceUsageExample(private val context: Context) {
                 // Can chain additional operations
                 // 추가 작업을 연결할 수 있음
                 controller.updateViewSafe(view, params)
-                    .onFailure { updateError ->
+                    .onSystemServiceFailure { updateError ->
                         println("Update failed: ${updateError.getUserMessage()}")
                     }
             }
-            .onFailure { error ->
+            .onSystemServiceFailure { error ->
                 when (error) {
                     is SystemServiceError.Permission.SpecialPermissionRequired -> {
                         println("Need special permission: ${error.permission}")

@@ -78,7 +78,7 @@ class FloatingViewControllerEnhanced(context: Context) :
         onError: ((String) -> Unit)? = null
     ): Boolean {
         return setFloatingFixedViewSafe(floatingView)
-            .onFailure { error ->
+            .onSystemServiceFailure { error ->
                 when (error) {
                     is SystemServiceError.Permission.SpecialPermissionRequired -> {
                         onPermissionRequired?.invoke() ?: run {
@@ -284,11 +284,11 @@ class FloatingViewControllerUsageExample(private val context: Context) {
                 }
                 
                 controller.updateViewSafe(view, newParams)
-                    .onFailure { updateError ->
+                    .onSystemServiceFailure { updateError ->
                         println("Update failed: ${updateError.getDeveloperMessage()}")
                     }
             }
-            .onFailure { error ->
+            .onSystemServiceFailure { error ->
                 when (error) {
                     is SystemServiceError.Permission.SpecialPermissionRequired -> {
                         println("Special permission required: ${error.permission}")

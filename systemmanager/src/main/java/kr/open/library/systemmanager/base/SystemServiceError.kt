@@ -206,3 +206,62 @@ public fun SystemServiceError.getDeveloperMessage(): String = when (this) {
         "Unexpected exception${context?.let { " in $it" } ?: ""}: ${cause.message}"
     else -> toString()
 }
+
+/**
+ * Exception wrapper for SystemServiceError to be used with Result.failure().
+ * SystemServiceError를 Result.failure()와 함께 사용하기 위한 Exception 래퍼입니다.
+ */
+public class SystemServiceException(
+    public val error: SystemServiceError,
+    cause: Throwable? = null
+) : Exception(error.getUserMessage(), cause) {
+    
+    /**
+     * Gets the developer message from the wrapped error.
+     * 래핑된 오류에서 개발자 메시지를 가져옵니다.
+     */
+    public fun getDeveloperMessage(): String = error.getDeveloperMessage()
+    
+    /**
+     * Gets the user message from the wrapped error.
+     * 래핑된 오류에서 사용자 메시지를 가져옵니다.
+     */
+    public fun getUserMessage(): String = error.getUserMessage()
+    
+    /**
+     * Checks if this exception wraps a permission error.
+     * 이 예외가 권한 오류를 래핑하는지 확인합니다.
+     */
+    public fun isPermissionError(): Boolean = error.isPermissionError()
+    
+    /**
+     * Checks if this exception wraps a recoverable error.
+     * 이 예외가 복구 가능한 오류를 래핑하는지 확인합니다.
+     */
+    public fun isRecoverable(): Boolean = error.isRecoverable()
+}
+
+/**
+ * Extension functions for Result<T> to work with SystemServiceError.
+ * SystemServiceError와 함께 사용하기 위한 Result<T> 확장 함수들입니다.
+ */
+
+/**
+ * Calls the specified function [action] with the SystemServiceError if this Result is failure.
+ * Result가 실패인 경우 SystemServiceError와 함께 지정된 함수 [action]을 호출합니다.
+ */
+public inline fun <T> Result<T>.onSystemServiceFailure(action: (error: SystemServiceError) -> Unit): Result<T> = 
+    onFailure { throwable ->
+        if (throwable is SystemServiceException) {
+            action(throwable.error)
+        }
+    }
+
+/**
+ * Gets the SystemServiceError from this Result if it's a failure with SystemServiceException.
+ * SystemServiceException으로 실패한 Result에서 SystemServiceError를 가져옵니다.
+ */
+public fun <T> Result<T>.getSystemServiceError(): SystemServiceError? = 
+    exceptionOrNull()?.let { throwable ->
+        if (throwable is SystemServiceException) throwable.error else null
+    }

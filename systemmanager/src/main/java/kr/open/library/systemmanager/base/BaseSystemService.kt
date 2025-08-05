@@ -79,47 +79,49 @@ public abstract class BaseSystemService(
         requiresPermission: Boolean = true,
         block: () -> T
     ): Result<T> {
-        return try {
+        return runCatching {
             // Check permissions if required
             if (requiresPermission && !isPermissionAllGranted()) {
-                Result.failure(createPermissionError())
-            } else {
+                throw SystemServiceException(createPermissionError())
+            }
+            
+            try {
                 val result = block()
                 Logx.d("${this::class.simpleName}.$operation: Success")
-                Result.success(result)
+                result
+            } catch (e: SecurityException) {
+                val error = handleSecurityException(e, operation)
+                Logx.e("${this::class.simpleName}.$operation: Security error - ${error.getDeveloperMessage()}")
+                throw SystemServiceException(error, e)
+            } catch (e: IllegalArgumentException) {
+                val error = SystemServiceError.Configuration.InvalidParameter(
+                    parameterName = "unknown",
+                    value = null,
+                    reason = e.message ?: "Invalid argument"
+                )
+                Logx.e("${this::class.simpleName}.$operation: Invalid argument - ${e.message}")
+                throw SystemServiceException(error, e)
+            } catch (e: IllegalStateException) {
+                val error = SystemServiceError.State.InvalidState(
+                    currentState = "unknown",
+                    requiredState = "valid",
+                    operation = operation
+                )
+                Logx.e("${this::class.simpleName}.$operation: Invalid state - ${e.message}")
+                throw SystemServiceException(error, e)
+            } catch (e: UnsupportedOperationException) {
+                val error = SystemServiceError.SystemService.UnsupportedVersion(
+                    serviceName = this::class.simpleName ?: "unknown",
+                    requiredApi = 0,
+                    currentApi = Build.VERSION.SDK_INT
+                )
+                Logx.e("${this::class.simpleName}.$operation: Unsupported operation - ${e.message}")
+                throw SystemServiceException(error, e)
+            } catch (e: Exception) {
+                val error = SystemServiceError.Unknown.Exception(e, operation)
+                Logx.e("${this::class.simpleName}.$operation: Unexpected error - ${e.message}")
+                throw SystemServiceException(error, e)
             }
-        } catch (e: SecurityException) {
-            val error = handleSecurityException(e, operation)
-            Logx.e("${this::class.simpleName}.$operation: Security error - ${error.getDeveloperMessage()}")
-            Result.failure(error)
-        } catch (e: IllegalArgumentException) {
-            val error = SystemServiceError.Configuration.InvalidParameter(
-                parameterName = "unknown",
-                value = null,
-                reason = e.message ?: "Invalid argument"
-            )
-            Logx.e("${this::class.simpleName}.$operation: Invalid argument - ${e.message}")
-            Result.failure(error)
-        } catch (e: IllegalStateException) {
-            val error = SystemServiceError.State.InvalidState(
-                currentState = "unknown",
-                requiredState = "valid",
-                operation = operation
-            )
-            Logx.e("${this::class.simpleName}.$operation: Invalid state - ${e.message}")
-            Result.failure(error)
-        } catch (e: UnsupportedOperationException) {
-            val error = SystemServiceError.SystemService.UnsupportedVersion(
-                serviceName = this::class.simpleName ?: "unknown",
-                requiredApi = 0,
-                currentApi = Build.VERSION.SDK_INT
-            )
-            Logx.e("${this::class.simpleName}.$operation: Unsupported operation - ${e.message}")
-            Result.failure(error)
-        } catch (e: Exception) {
-            val error = SystemServiceError.Unknown.Exception(e, operation)
-            Logx.e("${this::class.simpleName}.$operation: Unexpected error - ${e.message}")
-            Result.failure(error)
         }
     }
 
