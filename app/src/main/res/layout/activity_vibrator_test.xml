@@ -21,7 +21,7 @@
             android:id="@+id/tvTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="📳 Vibrator Controller Test"
+            android:text="Vibrator Controller Test"
             android:textSize="24sp"
             android:textStyle="bold"
             android:textAlignment="center"
@@ -54,7 +54,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="🎛️ Control Parameters"
+            android:text="Control Parameters"
             android:textSize="18sp"
             android:textStyle="bold"
             android:textColor="@android:color/black"
@@ -123,7 +123,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="🔧 Basic Vibration"
+            android:text="Basic Vibration"
             android:textSize="18sp"
             android:textStyle="bold"
             android:textColor="@android:color/black"
@@ -171,7 +171,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="✨ Predefined Effects (API 29+)"
+            android:text="Predefined Effects (API 29+)"
             android:textSize="18sp"
             android:textStyle="bold"
             android:textColor="@android:color/black"
@@ -230,7 +230,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="🌊 Waveform Patterns (API 31+)"
+            android:text="Waveform Patterns (API 31+)"
             android:textSize="18sp"
             android:textStyle="bold"
             android:textColor="@android:color/black"
@@ -296,7 +296,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="🛑 Control"
+            android:text="Control"
             android:textSize="18sp"
             android:textStyle="bold"
             android:textColor="@android:color/black"
@@ -334,7 +334,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="📋 Instructions"
+            android:text="Instructions"
             android:textSize="18sp"
             android:textStyle="bold"
             android:textColor="@android:color/black"
@@ -352,7 +352,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="⚠️ Note: Some effects may not work on all devices due to hardware limitations"
+            android:text="Note: Some effects may not work on all devices due to hardware limitations"
             android:textSize="12sp"
             android:textColor="@android:color/holo_orange_dark"
             android:textStyle="italic"

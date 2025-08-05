@@ -21,7 +21,7 @@
             android:id="@+id/tvTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="⌨️ SoftKeyboard Controller Test"
+            android:text="SoftKeyboard Controller Test"
             android:textSize="24sp"
             android:textStyle="bold"
             android:textAlignment="center"
@@ -44,7 +44,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="📝 Test Input Fields"
+            android:text="Test Input Fields"
             android:textSize="18sp"
             android:textStyle="bold"
             android:textColor="@android:color/black"
@@ -81,7 +81,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="🔧 Basic Operations"
+            android:text="Basic Operations"
             android:textSize="18sp"
             android:textStyle="bold"
             android:textColor="@android:color/black"
@@ -119,7 +119,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="⏰ Delayed Operations"
+            android:text="Delayed Operations"
             android:textSize="18sp"
             android:textStyle="bold"
             android:textColor="@android:color/black"
@@ -185,7 +185,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="🖼️ Window Mode Settings"
+            android:text="Window Mode Settings"
             android:textSize="18sp"
             android:textStyle="bold"
             android:textColor="@android:color/black"
@@ -223,7 +223,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="✏️ Stylus Handwriting (API 33+)"
+            android:text="Stylus Handwriting (API 33+)"
             android:textSize="18sp"
             android:textStyle="bold"
             android:textColor="@android:color/black"
@@ -261,7 +261,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="📋 Instructions"
+            android:text="Instructions"
             android:textSize="18sp"
             android:textStyle="bold"
             android:textColor="@android:color/black"

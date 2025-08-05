@@ -20,7 +20,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="🔋 Battery State Monitor Test\n배터리 상태 모니터 테스트"
+            android:text="Battery State Monitor Test\n배터리 상태 모니터 테스트"
             android:textSize="20sp"
             android:textStyle="bold"
             android:textColor="#333333"
@@ -44,7 +44,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="📋 권한 상태 / Permission Status"
+                    android:text="권한 상태 / Permission Status"
                     android:textStyle="bold"
                     android:textSize="16sp"
                     android:textColor="#333333"
@@ -82,7 +82,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="📊 실시간 배터리 정보 / Real-time Battery Info"
+                    android:text="실시간 배터리 정보 / Real-time Battery Info"
                     android:textStyle="bold"
                     android:textSize="16sp"
                     android:textColor="#333333"
@@ -146,7 +146,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🛡️ Fallback 메커니즘 테스트 / Fallback Mechanism Test"
+                    android:text="Fallback 메커니즘 테스트 / Fallback Mechanism Test"
                     android:textStyle="bold"
                     android:textSize="16sp"
                     android:textColor="#333333"
@@ -182,7 +182,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🎮 컨트롤 / Controls"
+                    android:text="컨트롤 / Controls"
                     android:textStyle="bold"
                     android:textSize="16sp"
                     android:textColor="#333333"
@@ -295,7 +295,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="📝 실행 로그 / Execution Log"
+                    android:text="실행 로그 / Execution Log"
                     android:textStyle="bold"
                     android:textSize="16sp"
                     android:textColor="#333333"
