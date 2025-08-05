@@ -129,7 +129,7 @@ public abstract class BaseSystemService(
      * Handles SecurityException and categorizes it appropriately.
      * SecurityException을 처리하고 적절하게 분류합니다.
      */
-    private fun handleSecurityException(e: SecurityException, operation: String): SystemServiceError {
+    protected fun handleSecurityException(e: SecurityException, operation: String): SystemServiceError {
         val message = e.message ?: ""
         
         return when {
