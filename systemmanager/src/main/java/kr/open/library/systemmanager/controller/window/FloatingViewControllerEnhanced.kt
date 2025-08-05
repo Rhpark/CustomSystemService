@@ -10,6 +10,7 @@ import kr.open.library.systemmanager.base.getUserMessage
 import kr.open.library.systemmanager.base.onSystemServiceFailure
 import kr.open.library.systemmanager.controller.window.floating.fixed.FloatingFixedView
 import kr.open.library.systemmanager.extenstions.getWindowManager
+import kr.open.library.logcat.Logx
 
 /**
  * Enhanced FloatingViewController demonstrating integration with the new BaseSystemService
@@ -277,7 +278,7 @@ class FloatingViewControllerUsageExample(private val context: Context) {
         // 상세한 오류 처리가 포함된 향상된 메서드 사용
         controller.addViewSafe(view, params)
             .onSuccess {
-                println("View added successfully")
+                Logx.d("View added successfully")
                 
                 // Chain another operation
                 // 다른 작업 연결
@@ -288,31 +289,31 @@ class FloatingViewControllerUsageExample(private val context: Context) {
                 
                 controller.updateViewSafe(view, newParams)
                     .onSystemServiceFailure { updateError ->
-                        println("Update failed: ${updateError.getDeveloperMessage()}")
+                        Logx.w("Update failed: ${updateError.getDeveloperMessage()}")
                     }
             }
             .onSystemServiceFailure { error ->
                 when (error) {
                     is SystemServiceError.Permission.SpecialPermissionRequired -> {
-                        println("Special permission required: ${error.permission}")
-                        println("Settings action: ${error.settingsAction}")
+                        Logx.w("Special permission required: ${error.permission}")
+                        Logx.i("Settings action: ${error.settingsAction}")
                         // Trigger permission request
                         // 권한 요청 트리거
                     }
                     is SystemServiceError.State.InvalidState -> {
-                        println("Invalid state: ${error.currentState} -> ${error.requiredState}")
+                        Logx.w("Invalid state: ${error.currentState} -> ${error.requiredState}")
                         // Handle state issue
                         // 상태 문제 처리
                     }
                     is SystemServiceError.Unknown.Exception -> {
                         if (error.cause is WindowManager.BadTokenException) {
-                            println("Bad window token - activity may be destroyed")
+                            Logx.e("Bad window token - activity may be destroyed")
                             // Handle activity lifecycle issue
                             // 액티비티 생명주기 문제 처리
                         }
                     }
                     else -> {
-                        println("Unexpected error: ${error.getUserMessage()}")
+                        Logx.e("Unexpected error: ${error.getUserMessage()}")
                     }
                 }
             }
@@ -327,19 +328,19 @@ class FloatingViewControllerUsageExample(private val context: Context) {
         val success = controller.setFloatingFixedViewWithHandling(
             FloatingFixedView(view, params.x, params.y),
             onPermissionRequired = {
-                println("Please grant overlay permission")
+                Logx.i("Please grant overlay permission")
                 // Show permission request UI
                 // 권한 요청 UI 표시
             },
             onError = { message ->
-                println("Error: $message")
+                Logx.e("Error: $message")
                 // Show error to user
                 // 사용자에게 오류 표시
             }
         )
 
         if (success) {
-            println("Floating view set successfully")
+            Logx.d("Floating view set successfully")
         }
     }
 }

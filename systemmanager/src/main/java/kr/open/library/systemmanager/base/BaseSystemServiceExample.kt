@@ -4,6 +4,7 @@ import android.content.Context
 import android.view.View
 import android.view.WindowManager
 import kr.open.library.systemmanager.extenstions.getWindowManager
+import kr.open.library.logcat.Logx
 
 /**
  * Example implementation showing how to use the enhanced BaseSystemService
@@ -99,18 +100,18 @@ class ExampleFloatingController(context: Context) :
     private fun handleSpecialPermissionRequired(error: SystemServiceError.Permission.SpecialPermissionRequired) {
         // Implementation would trigger permission request
         // 구현 시 권한 요청을 트리거함
-        println("Special permission required: ${error.permission}")
-        println("Settings action: ${error.settingsAction}")
+        Logx.w("Special permission required: ${error.permission}")
+        Logx.i("Settings action: ${error.settingsAction}")
     }
 
     private fun handleBadToken(view: View) {
         // Implementation would handle bad token scenario
         // 구현 시 잘못된 토큰 시나리오를 처리함
-        println("Bad token detected for view: $view")
+        Logx.e("Bad token detected for view: $view")
     }
 
     private fun logError(operation: String, error: SystemServiceError) {
-        println("$operation failed: ${error.getDeveloperMessage()}")
+        Logx.e("$operation failed: ${error.getDeveloperMessage()}")
     }
 }
 
@@ -130,9 +131,9 @@ class BaseSystemServiceUsageExample(private val context: Context) {
         // 전통적인 boolean 접근법 - 기존 코드와 호환 가능
         val success = controller.addViewLegacy(view, params)
         if (success) {
-            println("View added successfully")
+            Logx.d("View added successfully")
         } else {
-            println("Failed to add view - check logs for details")
+            Logx.w("Failed to add view - check logs for details")
         }
     }
 
@@ -144,33 +145,33 @@ class BaseSystemServiceUsageExample(private val context: Context) {
         // 현대적인 Result 패턴 접근법 - 상세한 오류 처리
         controller.addViewSafe(view, params)
             .onSuccess {
-                println("View added successfully")
+                Logx.d("View added successfully")
                 // Can chain additional operations
                 // 추가 작업을 연결할 수 있음
                 controller.updateViewSafe(view, params)
                     .onSystemServiceFailure { updateError ->
-                        println("Update failed: ${updateError.getUserMessage()}")
+                        Logx.w("Update failed: ${updateError.getUserMessage()}")
                     }
             }
             .onSystemServiceFailure { error ->
                 when (error) {
                     is SystemServiceError.Permission.SpecialPermissionRequired -> {
-                        println("Need special permission: ${error.permission}")
+                        Logx.w("Need special permission: ${error.permission}")
                         // Trigger permission request UI
                         // 권한 요청 UI 트리거
                     }
                     is SystemServiceError.Security.AccessDenied -> {
-                        println("Access denied: ${error.reason}")
+                        Logx.w("Access denied: ${error.reason}")
                         // Show user explanation
                         // 사용자에게 설명 표시
                     }
                     is SystemServiceError.Unknown.Exception -> {
-                        println("Unexpected error: ${error.cause.message}")
+                        Logx.e("Unexpected error: ${error.cause.message}")
                         // Log for debugging
                         // 디버깅을 위한 로그
                     }
                     else -> {
-                        println("Operation failed: ${error.getUserMessage()}")
+                        Logx.e("Operation failed: ${error.getUserMessage()}")
                     }
                 }
             }
@@ -187,7 +188,7 @@ class BaseSystemServiceUsageExample(private val context: Context) {
         // Just check success, errors are handled automatically
         // 성공 여부만 확인, 오류는 자동으로 처리됨
         if (success) {
-            println("View added and errors handled automatically")
+            Logx.d("View added and errors handled automatically")
         }
     }
 
@@ -196,7 +197,7 @@ class BaseSystemServiceUsageExample(private val context: Context) {
         // Result 패턴으로 여러 작업 연결
         controller.getScreenSize()
             .mapCatching { screenSize ->
-                println("Screen size: ${screenSize.x} x ${screenSize.y}")
+                Logx.d("Screen size: ${screenSize.x} x ${screenSize.y}")
                 
                 // Create view based on screen size
                 // 화면 크기를 기반으로 뷰 생성
@@ -213,10 +214,10 @@ class BaseSystemServiceUsageExample(private val context: Context) {
                 "Operation completed successfully"
             }
             .onSuccess { message ->
-                println(message)
+                Logx.d(message)
             }
             .onFailure { error ->
-                println("Chained operation failed: ${error.message}")
+                Logx.e("Chained operation failed: ${error.message}")
             }
     }
 
@@ -224,7 +225,7 @@ class BaseSystemServiceUsageExample(private val context: Context) {
         // Check permission status
         // 권한 상태 확인
         val permissionInfo = controller.getPermissionInfo()
-        println("Permission status: $permissionInfo")
+        Logx.d("Permission status: $permissionInfo")
 
         // Refresh permissions after user grants them
         // 사용자가 권한을 부여한 후 권한 새로고침
@@ -233,6 +234,6 @@ class BaseSystemServiceUsageExample(private val context: Context) {
         // Check specific permission
         // 특정 권한 확인
         val hasOverlayPermission = controller.isPermissionGranted(android.Manifest.permission.SYSTEM_ALERT_WINDOW)
-        println("Has overlay permission: $hasOverlayPermission")
+        Logx.d("Has overlay permission: $hasOverlayPermission")
     }
 }
