@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- DisplayTestActivity 레이아웃 -->
+<!-- Layout for DisplayTestActivity -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/scrollView"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:background="#F5F5F5">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
+
+        <!-- 제목 / Title -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="📱 Display Information Test\n디스플레이 정보 테스트"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="#333333"
+            android:gravity="center"
+            android:layout_marginBottom="24dp" />
+
+        <!-- 테스트 결과 표시 영역 / Test Result Display Area -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp">
+
+            <TextView
+                android:id="@+id/tv_result"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="16dp"
+                android:text="테스트 결과가 여기에 표시됩니다...\nTest results will be displayed here..."
+                android:textSize="14sp"
+                android:textColor="#333333"
+                android:fontFamily="monospace"
+                android:background="#FFFFFF"
+                android:minHeight="400dp"
+                android:gravity="top|start"
+                android:scrollbars="vertical" />
+
+        </androidx.cardview.widget.CardView>
+
+        <!-- 테스트 제어 버튼들 / Test Control Buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="8dp">
+
+            <Button
+                android:id="@+id/btn_run_tests"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:text="테스트 실행\nRun Tests"
+                android:textSize="12sp"
+                android:padding="12dp"
+                android:background="@drawable/button_primary"
+                android:textColor="#FFFFFF" />
+
+            <Button
+                android:id="@+id/btn_clear_log"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="로그 지우기\nClear Log"
+                android:textSize="12sp"
+                android:padding="12dp"
+                android:background="@drawable/button_secondary"
+                android:textColor="#333333" />
+
+        </LinearLayout>
+
+        <!-- 개별 테스트 버튼들 / Individual Test Buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="16dp">
+
+            <Button
+                android:id="@+id/btn_traditional_test"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:text="전통적 방식 테스트 / Traditional Approach Test"
+                android:textSize="12sp"
+                android:padding="12dp"
+                android:background="@drawable/button_outline"
+                android:textColor="#666666" />
+
+            <Button
+                android:id="@+id/btn_result_pattern_test"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:text="Result 패턴 테스트 / Result Pattern Test"
+                android:textSize="12sp"
+                android:padding="12dp"
+                android:background="@drawable/button_outline"
+                android:textColor="#666666" />
+
+            <Button
+                android:id="@+id/btn_convenient_test"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:text="편리한 방식 테스트 / Convenient Approach Test"
+                android:textSize="12sp"
+                android:padding="12dp"
+                android:background="@drawable/button_outline"
+                android:textColor="#666666" />
+
+            <Button
+                android:id="@+id/btn_chaining_test"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="메서드 체이닝 테스트 / Method Chaining Test"
+                android:textSize="12sp"
+                android:padding="12dp"
+                android:background="@drawable/button_outline"
+                android:textColor="#666666" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</ScrollView>

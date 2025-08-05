@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import kr.open.library.system_service.databinding.ActivitySoftKeyboardTestBinding
 import kr.open.library.systemmanager.controller.softkeyboard.SoftKeyboardController
 
 /**
@@ -23,32 +24,17 @@ import kr.open.library.systemmanager.controller.softkeyboard.SoftKeyboardControl
  */
 class SoftKeyboardTestActivity : AppCompatActivity() {
     
+    private lateinit var binding: ActivitySoftKeyboardTestBinding
     private lateinit var softKeyboardController: SoftKeyboardController
     
-    // UI Components
-    private lateinit var tvTitle: TextView
-    private lateinit var tvStatus: TextView
-    private lateinit var etTest1: EditText
-    private lateinit var etTest2: EditText
-    private lateinit var etStylusTest: EditText
-    private lateinit var btnShowKeyboard: Button
-    private lateinit var btnHideKeyboard: Button
-    private lateinit var btnShowWithDelay: Button
-    private lateinit var btnHideWithDelay: Button
-    private lateinit var btnShowCoroutineDelay: Button
-    private lateinit var btnHideCoroutineDelay: Button
-    private lateinit var btnSetAdjustPan: Button
-    private lateinit var btnSetAdjustResize: Button
-    private lateinit var btnStartStylusHandwriting: Button
-    private lateinit var btnStartStylusDelayed: Button
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContentView(R.layout.activity_soft_keyboard_test)
+        setupBinding()
         
         // Setup window insets
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(binding.main) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
@@ -56,8 +42,8 @@ class SoftKeyboardTestActivity : AppCompatActivity() {
         
         // Initialize controller and views
         initializeController()
-        initializeViews()
         setupClickListeners()
+        setupStylusSupport()
         updateStatus("SoftKeyboard Controller initialized")
     }
     
@@ -69,37 +55,22 @@ class SoftKeyboardTestActivity : AppCompatActivity() {
         softKeyboardController = SoftKeyboardController(this)
     }
     
-    /**
-     * Initializes all UI components.
-     * 모든 UI 구성 요소를 초기화합니다.
-     */
-    private fun initializeViews() {
-        tvTitle = findViewById(R.id.tvTitle)
-        tvStatus = findViewById(R.id.tvStatus)
-        etTest1 = findViewById(R.id.etTest1)
-        etTest2 = findViewById(R.id.etTest2)
-        etStylusTest = findViewById(R.id.etStylusTest)
-        btnShowKeyboard = findViewById(R.id.btnShowKeyboard)
-        btnHideKeyboard = findViewById(R.id.btnHideKeyboard)
-        btnShowWithDelay = findViewById(R.id.btnShowWithDelay)
-        btnHideWithDelay = findViewById(R.id.btnHideWithDelay)
-        btnShowCoroutineDelay = findViewById(R.id.btnShowCoroutineDelay)
-        btnHideCoroutineDelay = findViewById(R.id.btnHideCoroutineDelay)
-        btnSetAdjustPan = findViewById(R.id.btnSetAdjustPan)
-        btnSetAdjustResize = findViewById(R.id.btnSetAdjustResize)
-        btnStartStylusHandwriting = findViewById(R.id.btnStartStylusHandwriting)
-        btnStartStylusDelayed = findViewById(R.id.btnStartStylusDelayed)
-        
+    private fun setupBinding() {
+        binding = ActivitySoftKeyboardTestBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+    }
+    
+    private fun setupStylusSupport() {
         // Enable stylus handwriting buttons only on supported devices
         val isStylusSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
-        btnStartStylusHandwriting.isEnabled = isStylusSupported
-        btnStartStylusDelayed.isEnabled = isStylusSupported
-        etStylusTest.isEnabled = isStylusSupported
+        binding.btnStartStylusHandwriting.isEnabled = isStylusSupported
+        binding.btnStartStylusDelayed.isEnabled = isStylusSupported
+        binding.etStylusTest.isEnabled = isStylusSupported
         
         if (!isStylusSupported) {
-            btnStartStylusHandwriting.text = "Stylus (Requires API 33+)"
-            btnStartStylusDelayed.text = "Stylus Delayed (Requires API 33+)"
-            etStylusTest.hint = "Stylus handwriting not supported"
+            binding.btnStartStylusHandwriting.text = "Stylus (Requires API 33+)"
+            binding.btnStartStylusDelayed.text = "Stylus Delayed (Requires API 33+)"
+            binding.etStylusTest.hint = "Stylus handwriting not supported"
         }
     }
     
@@ -108,43 +79,43 @@ class SoftKeyboardTestActivity : AppCompatActivity() {
      * 모든 버튼에 대한 클릭 리스너를 설정합니다.
      */
     private fun setupClickListeners() {
-        btnShowKeyboard.setOnClickListener {
+        binding.btnShowKeyboard.setOnClickListener {
             demonstrateShowKeyboard()
         }
         
-        btnHideKeyboard.setOnClickListener {
+        binding.btnHideKeyboard.setOnClickListener {
             demonstrateHideKeyboard()
         }
         
-        btnShowWithDelay.setOnClickListener {
+        binding.btnShowWithDelay.setOnClickListener {
             demonstrateShowWithDelay()
         }
         
-        btnHideWithDelay.setOnClickListener {
+        binding.btnHideWithDelay.setOnClickListener {
             demonstrateHideWithDelay()
         }
         
-        btnShowCoroutineDelay.setOnClickListener {
+        binding.btnShowCoroutineDelay.setOnClickListener {
             demonstrateShowCoroutineDelay()
         }
         
-        btnHideCoroutineDelay.setOnClickListener {
+        binding.btnHideCoroutineDelay.setOnClickListener {
             demonstrateHideCoroutineDelay()
         }
         
-        btnSetAdjustPan.setOnClickListener {
+        binding.btnSetAdjustPan.setOnClickListener {
             demonstrateSetAdjustPan()
         }
         
-        btnSetAdjustResize.setOnClickListener {
+        binding.btnSetAdjustResize.setOnClickListener {
             demonstrateSetAdjustResize()
         }
         
-        btnStartStylusHandwriting.setOnClickListener {
+        binding.btnStartStylusHandwriting.setOnClickListener {
             demonstrateStartStylusHandwriting()
         }
         
-        btnStartStylusDelayed.setOnClickListener {
+        binding.btnStartStylusDelayed.setOnClickListener {
             demonstrateStartStylusDelayed()
         }
     }
@@ -154,7 +125,7 @@ class SoftKeyboardTestActivity : AppCompatActivity() {
      * 기본 키보드 표시 기능을 시연합니다.
      */
     private fun demonstrateShowKeyboard() {
-        val success = softKeyboardController.show(etTest1)
+        val success = softKeyboardController.show(binding.etTest1)
         val message = if (success) "Keyboard shown successfully" else "Failed to show keyboard"
         updateStatus(message)
         showToast(message)
@@ -165,7 +136,7 @@ class SoftKeyboardTestActivity : AppCompatActivity() {
      * 기본 키보드 숨김 기능을 시연합니다.
      */
     private fun demonstrateHideKeyboard() {
-        val success = softKeyboardController.hide(etTest1)
+        val success = softKeyboardController.hide(binding.etTest1)
         val message = if (success) "Keyboard hidden successfully" else "Failed to hide keyboard"
         updateStatus(message)
         showToast(message)
@@ -176,7 +147,7 @@ class SoftKeyboardTestActivity : AppCompatActivity() {
      * 지연이 있는 키보드 표시 기능을 시연합니다.
      */
     private fun demonstrateShowWithDelay() {
-        val success = softKeyboardController.showDelay(etTest2, 2000L)
+        val success = softKeyboardController.showDelay(binding.etTest2, 2000L)
         val message = if (success) "Keyboard will show in 2 seconds..." else "Failed to schedule keyboard show"
         updateStatus(message)
         showToast(message)
@@ -187,7 +158,7 @@ class SoftKeyboardTestActivity : AppCompatActivity() {
      * 지연이 있는 키보드 숨김 기능을 시연합니다.
      */
     private fun demonstrateHideWithDelay() {
-        val success = softKeyboardController.hideDelay(etTest2, 2000L)
+        val success = softKeyboardController.hideDelay(binding.etTest2, 2000L)
         val message = if (success) "Keyboard will hide in 2 seconds..." else "Failed to schedule keyboard hide"
         updateStatus(message)
         showToast(message)
@@ -198,7 +169,7 @@ class SoftKeyboardTestActivity : AppCompatActivity() {
      * 코루틴 기반 지연이 있는 키보드 표시를 시연합니다.
      */
     private fun demonstrateShowCoroutineDelay() {
-        softKeyboardController.showDelay(etTest1, 1500L, coroutineScope = lifecycleScope)
+        softKeyboardController.showDelay(binding.etTest1, 1500L, coroutineScope = lifecycleScope)
         val message = "Keyboard will show in 1.5 seconds (coroutine)..."
         updateStatus(message)
         showToast(message)
@@ -209,7 +180,7 @@ class SoftKeyboardTestActivity : AppCompatActivity() {
      * 코루틴 기반 지연이 있는 키보드 숨김을 시연합니다.
      */
     private fun demonstrateHideCoroutineDelay() {
-        softKeyboardController.hideDelay(etTest1, 1500L, coroutineScope = lifecycleScope)
+        softKeyboardController.hideDelay(binding.etTest1, 1500L, coroutineScope = lifecycleScope)
         val message = "Keyboard will hide in 1.5 seconds (coroutine)..."
         updateStatus(message)
         showToast(message)
@@ -246,7 +217,7 @@ class SoftKeyboardTestActivity : AppCompatActivity() {
      */
     private fun demonstrateStartStylusHandwriting() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val success = softKeyboardController.startStylusHandwriting(etStylusTest)
+            val success = softKeyboardController.startStylusHandwriting(binding.etStylusTest)
             val message = if (success) "Stylus handwriting started" else "Failed to start stylus handwriting"
             updateStatus(message)
             showToast(message)
@@ -263,7 +234,7 @@ class SoftKeyboardTestActivity : AppCompatActivity() {
      */
     private fun demonstrateStartStylusDelayed() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val success = softKeyboardController.startStylusHandwriting(etStylusTest, 2000L)
+            val success = softKeyboardController.startStylusHandwriting(binding.etStylusTest, 2000L)
             val message = if (success) "Stylus handwriting will start in 2 seconds..." else "Failed to schedule stylus handwriting"
             updateStatus(message)
             showToast(message)
@@ -279,7 +250,7 @@ class SoftKeyboardTestActivity : AppCompatActivity() {
      * 주어진 메시지로 상태 TextView를 업데이트합니다.
      */
     private fun updateStatus(message: String) {
-        tvStatus.text = "Status: $message"
+        binding.tvStatus.text = "Status: $message"
     }
     
     /**

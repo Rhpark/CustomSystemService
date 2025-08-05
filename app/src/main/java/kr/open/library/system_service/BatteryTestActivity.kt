@@ -14,6 +14,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
+import kr.open.library.system_service.databinding.ActivityBatteryTestBinding
 import kr.open.library.systemmanager.info.battery.BatteryStateInfo
 import kr.open.library.systemmanager.info.battery.BatteryStateEvent
 
@@ -34,34 +35,24 @@ import kr.open.library.systemmanager.info.battery.BatteryStateEvent
  */
 class BatteryTestActivity : AppCompatActivity() {
 
+    private lateinit var binding: ActivityBatteryTestBinding
     private lateinit var batteryStateInfo: BatteryStateInfo
-    private lateinit var logTextView: TextView
-    private lateinit var statusTextView: TextView
-    private lateinit var capacityTextView: TextView
-    private lateinit var temperatureTextView: TextView
-    private lateinit var voltageTextView: TextView
-    private lateinit var currentTextView: TextView
-    private lateinit var fallbackTestTextView: TextView
-    
-    // UI 컨트롤 요소들 / UI Control Elements
-    private lateinit var btnStartMonitoring: Button
-    private lateinit var btnStopMonitoring: Button
-    private lateinit var btnGetInstantInfo: Button
-    private lateinit var btnTestFallback: Button
-    private lateinit var btnCheckPermissions: Button
-    private lateinit var btnClearLog: Button
-    
     private var isMonitoring = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_battery_test)
         
+        setupBinding()
         setupUI()
         initializeBatteryController()
         
         logMessage("BatteryTestActivity initialized")
         logMessage("배터리 테스트 액티비티가 초기화되었습니다")
+    }
+    
+    private fun setupBinding() {
+        binding = ActivityBatteryTestBinding.inflate(layoutInflater)
+        setContentView(binding.root)
     }
 
     /**
@@ -69,23 +60,6 @@ class BatteryTestActivity : AppCompatActivity() {
      * UI setup and initialization
      */
     private fun setupUI() {
-        // XML에서 뷰들을 찾아서 연결
-        statusTextView = findViewById(R.id.tvPermissionStatus)
-        capacityTextView = findViewById(R.id.tvBatteryCapacity)
-        temperatureTextView = findViewById(R.id.tvBatteryTemperature)
-        voltageTextView = findViewById(R.id.tvBatteryVoltage)
-        currentTextView = findViewById(R.id.tvBatteryCurrent)
-        fallbackTestTextView = findViewById(R.id.tvFallbackTest)
-        logTextView = findViewById(R.id.tvExecutionLog)
-        
-        // 버튼들 연결
-        btnStartMonitoring = findViewById(R.id.btnStartMonitoring)
-        btnStopMonitoring = findViewById(R.id.btnStopMonitoring)
-        btnGetInstantInfo = findViewById(R.id.btnGetInstantInfo)
-        btnTestFallback = findViewById(R.id.btnTestFallback)
-        btnCheckPermissions = findViewById(R.id.btnCheckPermissions)
-        btnClearLog = findViewById(R.id.btnClearLog)
-        
         // 버튼 클릭 리스너 설정
         setupButtonListeners()
     }
@@ -95,12 +69,12 @@ class BatteryTestActivity : AppCompatActivity() {
      * Setup button click listeners
      */
     private fun setupButtonListeners() {
-        btnStartMonitoring.setOnClickListener { startBatteryMonitoring() }
-        btnStopMonitoring.setOnClickListener { stopBatteryMonitoring() }
-        btnGetInstantInfo.setOnClickListener { getInstantBatteryInfo() }
-        btnTestFallback.setOnClickListener { testFallbackMechanism() }
-        btnCheckPermissions.setOnClickListener { checkAndRequestPermissions() }
-        btnClearLog.setOnClickListener { clearLog() }
+        binding.btnStartMonitoring.setOnClickListener { startBatteryMonitoring() }
+        binding.btnStopMonitoring.setOnClickListener { stopBatteryMonitoring() }
+        binding.btnGetInstantInfo.setOnClickListener { getInstantBatteryInfo() }
+        binding.btnTestFallback.setOnClickListener { testFallbackMechanism() }
+        binding.btnCheckPermissions.setOnClickListener { checkAndRequestPermissions() }
+        binding.btnClearLog.setOnClickListener { clearLog() }
     }
 
 
@@ -133,12 +107,12 @@ class BatteryTestActivity : AppCompatActivity() {
         }
 
         if (hasPermission) {
-            statusTextView.text = "✅ 권한 확인됨 / Permissions Granted"
-            statusTextView.setTextColor(Color.parseColor("#4CAF50"))
+            binding.tvPermissionStatus.text = "✅ 권한 확인됨 / Permissions Granted"
+            binding.tvPermissionStatus.setTextColor(Color.parseColor("#4CAF50"))
             logMessage("✅ BATTERY_STATS permission granted")
         } else {
-            statusTextView.text = "ℹ️ 시스템 권한 / System Permission Only"
-            statusTextView.setTextColor(Color.parseColor("#FF9800"))
+            binding.tvPermissionStatus.text = "ℹ️ 시스템 권한 / System Permission Only"
+            binding.tvPermissionStatus.setTextColor(Color.parseColor("#FF9800"))
             
             logMessage("ℹ️ BATTERY_STATS is a system permission - not available for regular apps")
             logMessage("ℹ️ BATTERY_STATS는 시스템 권한입니다 - 일반 앱에서는 사용할 수 없음")
@@ -178,8 +152,8 @@ class BatteryTestActivity : AppCompatActivity() {
             observeBatteryStateFlow()
 
             isMonitoring = true
-            btnStartMonitoring.isEnabled = false
-            btnStopMonitoring.isEnabled = true
+            binding.btnStartMonitoring.isEnabled = false
+            binding.btnStopMonitoring.isEnabled = true
 
             logMessage("🚀 Battery monitoring started successfully")
             logMessage("🚀 배터리 모니터링이 성공적으로 시작되었습니다")
@@ -206,8 +180,8 @@ class BatteryTestActivity : AppCompatActivity() {
 
             if (stopResult && unregisterResult) {
                 isMonitoring = false
-                btnStartMonitoring.isEnabled = true
-                btnStopMonitoring.isEnabled = false
+                binding.btnStartMonitoring.isEnabled = true
+                binding.btnStopMonitoring.isEnabled = false
 
                 logMessage("🛑 Battery monitoring stopped successfully")
                 logMessage("🛑 배터리 모니터링이 성공적으로 중지되었습니다")
@@ -230,7 +204,7 @@ class BatteryTestActivity : AppCompatActivity() {
             batteryStateInfo.sfUpdate.collect { event ->
                 when (event) {
                     is BatteryStateEvent.OnCapacity -> {
-                        capacityTextView.text = "배터리 잔량 / Capacity: ${event.percent}%"
+                        binding.tvBatteryCapacity.text = "배터리 잔량 / Capacity: ${event.percent}%"
                         logMessage("📊 Capacity updated: ${event.percent}%")
                     }
                     is BatteryStateEvent.OnTemperature -> {
@@ -239,7 +213,7 @@ class BatteryTestActivity : AppCompatActivity() {
                         } else {
                             "${event.temperature}°C"
                         }
-                        temperatureTextView.text = "온도 / Temperature: $tempDisplay"
+                        binding.tvBatteryTemperature.text = "온도 / Temperature: $tempDisplay"
                         
                         if (event.temperature == -999.0) {
                             logMessage("🌡️ Temperature unavailable (sensor error or not supported)")
@@ -250,7 +224,7 @@ class BatteryTestActivity : AppCompatActivity() {
                         }
                     }
                     is BatteryStateEvent.OnVoltage -> {
-                        voltageTextView.text = "전압 / Voltage: ${event.voltage}V"
+                        binding.tvBatteryVoltage.text = "전압 / Voltage: ${event.voltage}V"
                         logMessage("⚡ Voltage updated: ${event.voltage}V")
                     }
                     is BatteryStateEvent.OnCurrentAmpere -> {
@@ -263,7 +237,7 @@ class BatteryTestActivity : AppCompatActivity() {
                             isCharging && chargePlug != batteryStateInfo.ERROR_VALUE -> "충전중 / Charging"
                             else -> "방전중 / Discharging"
                         }
-                        currentTextView.text = "전류 / Current: ${event.current}µA ($status)"
+                        binding.tvBatteryCurrent.text = "전류 / Current: ${event.current}µA ($status)"
                         logMessage("🔋 Current updated: ${event.current}µA ($status)")
                     }
                     is BatteryStateEvent.OnChargePlug -> {
@@ -341,7 +315,7 @@ class BatteryTestActivity : AppCompatActivity() {
             logMessage("=".repeat(50))
 
             // UI도 즉시 업데이트
-            capacityTextView.text = "배터리 잔량 / Capacity: ${capacity}%"
+            binding.tvBatteryCapacity.text = "배터리 잔량 / Capacity: ${capacity}%"
             
             val tempDisplay = if (temperature == -999.0) {
                 "사용할 수 없음 / Unavailable"
@@ -350,9 +324,9 @@ class BatteryTestActivity : AppCompatActivity() {
             } else {
                 "${temperature}°C"
             }
-            temperatureTextView.text = "온도 / Temperature: $tempDisplay"
-            voltageTextView.text = "전압 / Voltage: ${voltage}V"
-            currentTextView.text = "전류 / Current: ${current}µA ($actualChargingStatus)"
+            binding.tvBatteryTemperature.text = "온도 / Temperature: $tempDisplay"
+            binding.tvBatteryVoltage.text = "전압 / Voltage: ${voltage}V"
+            binding.tvBatteryCurrent.text = "전류 / Current: ${current}µA ($actualChargingStatus)"
 
         } catch (e: Exception) {
             logMessage("❌ Error getting instant battery info: ${e.message}")
@@ -390,7 +364,7 @@ class BatteryTestActivity : AppCompatActivity() {
                 "⚠️ PowerProfile 불가, Fallback 사용 / Unavailable, using Fallback"
             }
             
-            fallbackTestTextView.text = """
+            binding.tvFallbackTest.text = """
                 PowerProfile: $fallbackStatus
                 총 용량 / Total: ${totalCapacity}mAh
                 Android API: ${Build.VERSION.SDK_INT}
@@ -414,10 +388,10 @@ class BatteryTestActivity : AppCompatActivity() {
             val timestamp = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
                 .format(java.util.Date())
             val logEntry = "[$timestamp] $message\n"
-            logTextView.text = "${logTextView.text}$logEntry"
+            binding.tvExecutionLog.text = "${binding.tvExecutionLog.text}$logEntry"
             
             // XML 레이아웃에서 ScrollView를 찾아서 스크롤
-            val scrollView = logTextView.parent.parent as? ScrollView
+            val scrollView = binding.tvExecutionLog.parent.parent as? ScrollView
             scrollView?.post {
                 scrollView.fullScroll(View.FOCUS_DOWN)
             }
@@ -429,7 +403,7 @@ class BatteryTestActivity : AppCompatActivity() {
      * Clear log
      */
     private fun clearLog() {
-        logTextView.text = "로그가 지워졌습니다... / Log cleared...\n"
+        binding.tvExecutionLog.text = "로그가 지워졌습니다... / Log cleared...\n"
         logMessage("🗑️ Log cleared / 로그가 지워졌습니다")
     }
 

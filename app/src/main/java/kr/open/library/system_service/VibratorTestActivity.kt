@@ -16,6 +16,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import kr.open.library.system_service.databinding.ActivityVibratorTestBinding
 import kr.open.library.systemmanager.controller.vibrator.VibratorController
 
 /**
@@ -31,44 +32,17 @@ class VibratorTestActivity : AppCompatActivity() {
         private const val VIBRATION_PERMISSION_REQUEST_CODE = 1001
     }
     
+    private lateinit var binding: ActivityVibratorTestBinding
     private lateinit var vibratorController: VibratorController
     
-    // UI Components
-    private lateinit var tvTitle: TextView
-    private lateinit var tvStatus: TextView
-    private lateinit var tvApiLevel: TextView
-    private lateinit var etDuration: EditText
-    private lateinit var seekAmplitude: SeekBar
-    private lateinit var tvAmplitudeValue: TextView
-    
-    // Basic Vibration Buttons
-    private lateinit var btnBasicVibration: Button
-    private lateinit var btnCustomDuration: Button
-    private lateinit var btnCustomAmplitude: Button
-    
-    // Predefined Effects Buttons (API 29+)
-    private lateinit var btnEffectClick: Button
-    private lateinit var btnEffectDoubleClick: Button
-    private lateinit var btnEffectTick: Button
-    private lateinit var btnEffectHeavyClick: Button
-    
-    // Waveform Buttons (API 31+)
-    private lateinit var btnWaveformPulse: Button
-    private lateinit var btnWaveformHeartbeat: Button
-    private lateinit var btnWaveformSOS: Button
-    private lateinit var btnWaveformCustom: Button
-    
-    // Control Buttons
-    private lateinit var btnCancelVibration: Button
-    private lateinit var btnPermissionCheck: Button
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContentView(R.layout.activity_vibrator_test)
+        setupBinding()
         
         // Setup window insets
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(binding.main) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
@@ -76,11 +50,11 @@ class VibratorTestActivity : AppCompatActivity() {
         
         // Initialize controller and views
         initializeController()
-        initializeViews()
         setupClickListeners()
         setupSeekBar()
         checkVibrationPermission()
         updateApiLevelInfo()
+        enableButtonsBasedOnApiLevel()
         updateStatus("Vibrator Controller initialized")
     }
     
@@ -92,41 +66,9 @@ class VibratorTestActivity : AppCompatActivity() {
         vibratorController = VibratorController(this)
     }
     
-    /**
-     * Initializes all UI components.
-     * 모든 UI 구성 요소를 초기화합니다.
-     */
-    private fun initializeViews() {
-        tvTitle = findViewById(R.id.tvTitle)
-        tvStatus = findViewById(R.id.tvStatus)
-        tvApiLevel = findViewById(R.id.tvApiLevel)
-        etDuration = findViewById(R.id.etDuration)
-        seekAmplitude = findViewById(R.id.seekAmplitude)
-        tvAmplitudeValue = findViewById(R.id.tvAmplitudeValue)
-        
-        // Basic vibration buttons
-        btnBasicVibration = findViewById(R.id.btnBasicVibration)
-        btnCustomDuration = findViewById(R.id.btnCustomDuration)
-        btnCustomAmplitude = findViewById(R.id.btnCustomAmplitude)
-        
-        // Predefined effects buttons
-        btnEffectClick = findViewById(R.id.btnEffectClick)
-        btnEffectDoubleClick = findViewById(R.id.btnEffectDoubleClick)
-        btnEffectTick = findViewById(R.id.btnEffectTick)
-        btnEffectHeavyClick = findViewById(R.id.btnEffectHeavyClick)
-        
-        // Waveform buttons
-        btnWaveformPulse = findViewById(R.id.btnWaveformPulse)
-        btnWaveformHeartbeat = findViewById(R.id.btnWaveformHeartbeat)
-        btnWaveformSOS = findViewById(R.id.btnWaveformSOS)
-        btnWaveformCustom = findViewById(R.id.btnWaveformCustom)
-        
-        // Control buttons
-        btnCancelVibration = findViewById(R.id.btnCancelVibration)
-        btnPermissionCheck = findViewById(R.id.btnPermissionCheck)
-        
-        // Enable/disable buttons based on API level
-        enableButtonsBasedOnApiLevel()
+    private fun setupBinding() {
+        binding = ActivityVibratorTestBinding.inflate(layoutInflater)
+        setContentView(binding.root)
     }
     
     /**
@@ -138,30 +80,30 @@ class VibratorTestActivity : AppCompatActivity() {
         val isApi31Plus = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
         
         // Predefined effects require API 29+
-        btnEffectClick.isEnabled = isApi29Plus
-        btnEffectDoubleClick.isEnabled = isApi29Plus
-        btnEffectTick.isEnabled = isApi29Plus
-        btnEffectHeavyClick.isEnabled = isApi29Plus
+        binding.btnEffectClick.isEnabled = isApi29Plus
+        binding.btnEffectDoubleClick.isEnabled = isApi29Plus
+        binding.btnEffectTick.isEnabled = isApi29Plus
+        binding.btnEffectHeavyClick.isEnabled = isApi29Plus
         
         // Waveform patterns require API 31+
-        btnWaveformPulse.isEnabled = isApi31Plus
-        btnWaveformHeartbeat.isEnabled = isApi31Plus
-        btnWaveformSOS.isEnabled = isApi31Plus
-        btnWaveformCustom.isEnabled = isApi31Plus
+        binding.btnWaveformPulse.isEnabled = isApi31Plus
+        binding.btnWaveformHeartbeat.isEnabled = isApi31Plus
+        binding.btnWaveformSOS.isEnabled = isApi31Plus
+        binding.btnWaveformCustom.isEnabled = isApi31Plus
         
         // Update button text for unsupported features
         if (!isApi29Plus) {
-            btnEffectClick.text = "Click (API 29+)"
-            btnEffectDoubleClick.text = "Double Click (API 29+)"
-            btnEffectTick.text = "Tick (API 29+)"
-            btnEffectHeavyClick.text = "Heavy Click (API 29+)"
+            binding.btnEffectClick.text = "Click (API 29+)"
+            binding.btnEffectDoubleClick.text = "Double Click (API 29+)"
+            binding.btnEffectTick.text = "Tick (API 29+)"
+            binding.btnEffectHeavyClick.text = "Heavy Click (API 29+)"
         }
         
         if (!isApi31Plus) {
-            btnWaveformPulse.text = "Pulse (API 31+)"
-            btnWaveformHeartbeat.text = "Heartbeat (API 31+)"
-            btnWaveformSOS.text = "SOS (API 31+)"
-            btnWaveformCustom.text = "Custom (API 31+)"
+            binding.btnWaveformPulse.text = "Pulse (API 31+)"
+            binding.btnWaveformHeartbeat.text = "Heartbeat (API 31+)"
+            binding.btnWaveformSOS.text = "SOS (API 31+)"
+            binding.btnWaveformCustom.text = "Custom (API 31+)"
         }
     }
     
@@ -171,25 +113,25 @@ class VibratorTestActivity : AppCompatActivity() {
      */
     private fun setupClickListeners() {
         // Basic vibration
-        btnBasicVibration.setOnClickListener { demonstrateBasicVibration() }
-        btnCustomDuration.setOnClickListener { demonstrateCustomDuration() }
-        btnCustomAmplitude.setOnClickListener { demonstrateCustomAmplitude() }
+        binding.btnBasicVibration.setOnClickListener { demonstrateBasicVibration() }
+        binding.btnCustomDuration.setOnClickListener { demonstrateCustomDuration() }
+        binding.btnCustomAmplitude.setOnClickListener { demonstrateCustomAmplitude() }
         
         // Predefined effects
-        btnEffectClick.setOnClickListener { demonstratePredefinedEffect(VibrationEffect.EFFECT_CLICK, "Click") }
-        btnEffectDoubleClick.setOnClickListener { demonstratePredefinedEffect(VibrationEffect.EFFECT_DOUBLE_CLICK, "Double Click") }
-        btnEffectTick.setOnClickListener { demonstratePredefinedEffect(VibrationEffect.EFFECT_TICK, "Tick") }
-        btnEffectHeavyClick.setOnClickListener { demonstratePredefinedEffect(VibrationEffect.EFFECT_HEAVY_CLICK, "Heavy Click") }
+        binding.btnEffectClick.setOnClickListener { demonstratePredefinedEffect(VibrationEffect.EFFECT_CLICK, "Click") }
+        binding.btnEffectDoubleClick.setOnClickListener { demonstratePredefinedEffect(VibrationEffect.EFFECT_DOUBLE_CLICK, "Double Click") }
+        binding.btnEffectTick.setOnClickListener { demonstratePredefinedEffect(VibrationEffect.EFFECT_TICK, "Tick") }
+        binding.btnEffectHeavyClick.setOnClickListener { demonstratePredefinedEffect(VibrationEffect.EFFECT_HEAVY_CLICK, "Heavy Click") }
         
         // Waveform patterns
-        btnWaveformPulse.setOnClickListener { demonstrateWaveformPulse() }
-        btnWaveformHeartbeat.setOnClickListener { demonstrateWaveformHeartbeat() }
-        btnWaveformSOS.setOnClickListener { demonstrateWaveformSOS() }
-        btnWaveformCustom.setOnClickListener { demonstrateWaveformCustom() }
+        binding.btnWaveformPulse.setOnClickListener { demonstrateWaveformPulse() }
+        binding.btnWaveformHeartbeat.setOnClickListener { demonstrateWaveformHeartbeat() }
+        binding.btnWaveformSOS.setOnClickListener { demonstrateWaveformSOS() }
+        binding.btnWaveformCustom.setOnClickListener { demonstrateWaveformCustom() }
         
         // Control buttons
-        btnCancelVibration.setOnClickListener { demonstrateCancelVibration() }
-        btnPermissionCheck.setOnClickListener { checkVibrationPermission() }
+        binding.btnCancelVibration.setOnClickListener { demonstrateCancelVibration() }
+        binding.btnPermissionCheck.setOnClickListener { checkVibrationPermission() }
     }
     
     /**
@@ -197,13 +139,13 @@ class VibratorTestActivity : AppCompatActivity() {
      * 진폭 SeekBar를 설정합니다.
      */
     private fun setupSeekBar() {
-        seekAmplitude.max = 255
-        seekAmplitude.progress = 128
-        tvAmplitudeValue.text = "128"
+        binding.seekAmplitude.max = 255
+        binding.seekAmplitude.progress = 128
+        binding.tvAmplitudeValue.text = "128"
         
-        seekAmplitude.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+        binding.seekAmplitude.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                tvAmplitudeValue.text = progress.toString()
+                binding.tvAmplitudeValue.text = progress.toString()
             }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
             override fun onStopTrackingTouch(seekBar: SeekBar?) {}
@@ -226,7 +168,7 @@ class VibratorTestActivity : AppCompatActivity() {
      * 사용자 정의 지속 시간 진동을 시연합니다.
      */
     private fun demonstrateCustomDuration() {
-        val durationText = etDuration.text.toString()
+        val durationText = binding.etDuration.text.toString()
         val duration = durationText.toLongOrNull() ?: 1000L
         
         val success = vibratorController.createOneShot(duration)
@@ -240,8 +182,8 @@ class VibratorTestActivity : AppCompatActivity() {
      * 사용자 정의 진폭 진동을 시연합니다.
      */
     private fun demonstrateCustomAmplitude() {
-        val amplitude = seekAmplitude.progress
-        val duration = etDuration.text.toString().toLongOrNull() ?: 800L
+        val amplitude = binding.seekAmplitude.progress
+        val duration = binding.etDuration.text.toString().toLongOrNull() ?: 800L
         
         val success = vibratorController.createOneShot(duration, amplitude)
         val message = if (success) "Custom amplitude vibration (${duration}ms, amplitude: $amplitude) executed" 
@@ -402,7 +344,7 @@ class VibratorTestActivity : AppCompatActivity() {
             currentApi >= Build.VERSION_CODES.Q -> "API $currentApi - Predefined effects available"
             else -> "API $currentApi - Basic vibration only"
         }
-        tvApiLevel.text = apiInfo
+        binding.tvApiLevel.text = apiInfo
     }
     
     /**
@@ -410,7 +352,7 @@ class VibratorTestActivity : AppCompatActivity() {
      * 주어진 메시지로 상태 TextView를 업데이트합니다.
      */
     private fun updateStatus(message: String) {
-        tvStatus.text = "Status: $message"
+        binding.tvStatus.text = "Status: $message"
     }
     
     /**

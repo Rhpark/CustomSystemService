@@ -16,6 +16,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
+import kr.open.library.system_service.databinding.ActivityFloatingViewTestBinding
 import kr.open.library.systemmanager.controller.window.FloatingViewController
 import kr.open.library.systemmanager.controller.window.floating.drag.FloatingDragView
 import kr.open.library.systemmanager.controller.window.floating.fixed.FloatingFixedView
@@ -38,19 +39,8 @@ import kr.open.library.systemmanager.controller.window.floating.vo.FloatingViewT
  */
 class FloatingViewTestActivity : AppCompatActivity() {
 
+    private lateinit var binding: ActivityFloatingViewTestBinding
     private lateinit var floatingViewController: FloatingViewController
-    private lateinit var logTextView: TextView
-    private lateinit var statusTextView: TextView
-    private lateinit var collisionStatusTextView: TextView
-    
-    // UI 컨트롤 요소들 / UI Control Elements
-    private lateinit var btnAddFixedView: Button
-    private lateinit var btnRemoveFixedView: Button
-    private lateinit var btnAddDragView: Button
-    private lateinit var btnRemoveDragView: Button
-    private lateinit var btnRemoveAllViews: Button
-    private lateinit var btnCheckPermission: Button
-    private lateinit var btnRequestPermission: Button
     
     // 테스트용 뷰 관리 / Test View Management
     private var currentFixedView: FloatingFixedView? = null
@@ -60,7 +50,7 @@ class FloatingViewTestActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        setupUI()
+        setupBinding()
         initializeFloatingController()
         setupEventListeners()
         updatePermissionStatus()
@@ -77,26 +67,9 @@ class FloatingViewTestActivity : AppCompatActivity() {
         addLog("FloatingViewController 초기화 완료 / FloatingViewController initialized")
     }
 
-    /**
-     * UI 구성 요소 설정
-     * Setup UI components
-     */
-    private fun setupUI() {
-        setContentView(R.layout.activity_floating_view_test)
-        
-        // 뷰 초기화 / Initialize views
-        statusTextView = findViewById(R.id.tv_permission_status)
-        collisionStatusTextView = findViewById(R.id.tv_collision_status)
-        logTextView = findViewById(R.id.tv_log)
-        
-        // 버튼 초기화 / Initialize buttons
-        btnCheckPermission = findViewById(R.id.btn_check_permission)
-        btnRequestPermission = findViewById(R.id.btn_request_permission)
-        btnAddFixedView = findViewById(R.id.btn_add_fixed_view)
-        btnRemoveFixedView = findViewById(R.id.btn_remove_fixed_view)
-        btnAddDragView = findViewById(R.id.btn_add_drag_view)
-        btnRemoveDragView = findViewById(R.id.btn_remove_drag_view)
-        btnRemoveAllViews = findViewById(R.id.btn_remove_all_views)
+    private fun setupBinding() {
+        binding = ActivityFloatingViewTestBinding.inflate(layoutInflater)
+        setContentView(binding.root)
     }
 
     /**
@@ -104,32 +77,32 @@ class FloatingViewTestActivity : AppCompatActivity() {
      * Setup event listeners
      */
     private fun setupEventListeners() {
-        btnCheckPermission.setOnClickListener {
+        binding.btnCheckPermission.setOnClickListener {
             updatePermissionStatus()
             addLog("권한 상태 확인 / Permission status checked")
         }
 
-        btnRequestPermission.setOnClickListener {
+        binding.btnRequestPermission.setOnClickListener {
             requestOverlayPermission()
         }
 
-        btnAddFixedView.setOnClickListener {
+        binding.btnAddFixedView.setOnClickListener {
             addFixedFloatingView()
         }
 
-        btnRemoveFixedView.setOnClickListener {
+        binding.btnRemoveFixedView.setOnClickListener {
             removeFixedFloatingView()
         }
 
-        btnAddDragView.setOnClickListener {
+        binding.btnAddDragView.setOnClickListener {
             addDragFloatingView()
         }
 
-        btnRemoveDragView.setOnClickListener {
+        binding.btnRemoveDragView.setOnClickListener {
             removeDragFloatingView()
         }
 
-        btnRemoveAllViews.setOnClickListener {
+        binding.btnRemoveAllViews.setOnClickListener {
             removeAllFloatingViews()
         }
     }
@@ -151,16 +124,16 @@ class FloatingViewTestActivity : AppCompatActivity() {
             "권한 필요 ❌ / Permission Required ❌"
         }
 
-        statusTextView.text = statusText
-        statusTextView.setTextColor(if (hasPermission) Color.GREEN else Color.RED)
+        binding.tvPermissionStatus.text = statusText
+        binding.tvPermissionStatus.setTextColor(if (hasPermission) Color.GREEN else Color.RED)
 
         // 버튼 활성화 상태 조정 / Adjust button enabled state
         val isEnabled = hasPermission
-        btnAddFixedView.isEnabled = isEnabled
-        btnAddDragView.isEnabled = isEnabled
-        btnRemoveFixedView.isEnabled = isEnabled
-        btnRemoveDragView.isEnabled = isEnabled
-        btnRemoveAllViews.isEnabled = isEnabled
+        binding.btnAddFixedView.isEnabled = isEnabled
+        binding.btnAddDragView.isEnabled = isEnabled
+        binding.btnRemoveFixedView.isEnabled = isEnabled
+        binding.btnRemoveDragView.isEnabled = isEnabled
+        binding.btnRemoveAllViews.isEnabled = isEnabled
     }
 
     /**
@@ -315,8 +288,8 @@ class FloatingViewTestActivity : AppCompatActivity() {
             dragViews.clear()
             dragViewCounter = 0
             addLog("모든 플로팅 뷰 제거 완료 / All floating views removed")
-            collisionStatusTextView.text = "충돌 상태: 없음 / Collision: None"
-            collisionStatusTextView.setTextColor(Color.GREEN)
+            binding.tvCollisionStatus.text = "충돌 상태: 없음 / Collision: None"
+            binding.tvCollisionStatus.setTextColor(Color.GREEN)
         } else {
             addLog("플로팅 뷰 제거 실패 / Failed to remove floating views")
         }
@@ -333,8 +306,8 @@ class FloatingViewTestActivity : AppCompatActivity() {
         }
         
         runOnUiThread {
-            collisionStatusTextView.text = "[$phase] $typeText"
-            collisionStatusTextView.setTextColor(
+            binding.tvCollisionStatus.text = "[$phase] $typeText"
+            binding.tvCollisionStatus.setTextColor(
                 when (type) {
                     FloatingViewCollisionsType.OCCURING -> Color.RED
                     FloatingViewCollisionsType.UNCOLLISIONS -> Color.GREEN
@@ -361,8 +334,8 @@ class FloatingViewTestActivity : AppCompatActivity() {
             FloatingViewCollisionsType.UNCOLLISIONS -> "충돌 없음 / No Collision"
         }
         
-        collisionStatusTextView.text = "StateFlow: [$touchText] $collisionText"
-        collisionStatusTextView.setTextColor(
+        binding.tvCollisionStatus.text = "StateFlow: [$touchText] $collisionText"
+        binding.tvCollisionStatus.setTextColor(
             when (collisionType) {
                 FloatingViewCollisionsType.OCCURING -> Color.RED
                 FloatingViewCollisionsType.UNCOLLISIONS -> Color.GREEN
@@ -378,7 +351,7 @@ class FloatingViewTestActivity : AppCompatActivity() {
         val timestamp = System.currentTimeMillis()
         val logEntry = "[$timestamp] $message\n"
         runOnUiThread {
-            logTextView.append(logEntry)
+            binding.tvLog.append(logEntry)
         }
     }
 

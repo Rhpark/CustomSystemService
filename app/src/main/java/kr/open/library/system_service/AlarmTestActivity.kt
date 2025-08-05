@@ -16,6 +16,7 @@ import androidx.core.content.ContextCompat
 import kotlinx.coroutines.*
 import kr.open.library.logcat.Logx
 import kr.open.library.permissions.PermissionManager
+import kr.open.library.system_service.databinding.ActivityAlarmTestBinding
 import kr.open.library.systemmanager.controller.alarm.AlarmController
 import kr.open.library.systemmanager.controller.alarm.dto.AlarmDTO
 import kr.open.library.systemmanager.extenstions.checkSdkVersion
@@ -31,6 +32,7 @@ import java.util.*
  */
 class AlarmTestActivity : AppCompatActivity() {
 
+    private lateinit var binding: ActivityAlarmTestBinding
     private lateinit var alarmController: AlarmController
     private val testAlarmId = 12345
     private val dateFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
@@ -47,24 +49,6 @@ class AlarmTestActivity : AppCompatActivity() {
         PermissionManager.getInstance()
     }
 
-    // UI Components
-    private lateinit var etHour: EditText
-    private lateinit var etMinute: EditText
-    private lateinit var etSecond: EditText
-    private lateinit var etTitle: EditText
-    private lateinit var etMessage: EditText
-    private lateinit var cbAllowIdle: CheckBox
-    private lateinit var rgAlarmType: RadioGroup
-    private lateinit var rbAlarmClock: RadioButton
-    private lateinit var rbExactIdle: RadioButton
-    private lateinit var rbAllowIdle: RadioButton
-    private lateinit var btnSetAlarm: Button
-    private lateinit var btnCancelAlarm: Button
-    private lateinit var btnClearLogs: Button
-    private lateinit var btnTest30sec: Button
-    private lateinit var btnTest1min: Button
-    private lateinit var btnTest5min: Button
-    private lateinit var tvStatus: TextView
     
     private val activityScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     
@@ -84,14 +68,14 @@ class AlarmTestActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_alarm_test)
+        setupBinding()
         
         // Initialize AlarmController
         alarmController = AlarmController(this)
         
         // Initialize UI
-        initializeViews()
         setupClickListeners()
+        initializeDefaultValues()
         
         // Check permissions
         checkAndRequestPermissions()
@@ -101,72 +85,59 @@ class AlarmTestActivity : AppCompatActivity() {
         logMessage("AlarmController ready for testing")
     }
 
-    private fun initializeViews() {
-        etHour = findViewById(R.id.etHour)
-        etMinute = findViewById(R.id.etMinute)
-        etSecond = findViewById(R.id.etSecond)
-        etTitle = findViewById(R.id.etTitle)
-        etMessage = findViewById(R.id.etMessage)
-        cbAllowIdle = findViewById(R.id.cbAllowIdle)
-        rgAlarmType = findViewById(R.id.rgAlarmType)
-        rbAlarmClock = findViewById(R.id.rbAlarmClock)
-        rbExactIdle = findViewById(R.id.rbExactIdle)
-        rbAllowIdle = findViewById(R.id.rbAllowIdle)
-        btnSetAlarm = findViewById(R.id.btnSetAlarm)
-        btnCancelAlarm = findViewById(R.id.btnCancelAlarm)
-        btnClearLogs = findViewById(R.id.btnClearLogs)
-        btnTest30sec = findViewById(R.id.btnTest30sec)
-        btnTest1min = findViewById(R.id.btnTest1min)
-        btnTest5min = findViewById(R.id.btnTest5min)
-        tvStatus = findViewById(R.id.tvStatus)
-        
+    private fun setupBinding() {
+        binding = ActivityAlarmTestBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+    }
+    
+    private fun initializeDefaultValues() {
         // Set default values
-        etTitle.setText("Test Alarm")
-        etMessage.setText("This is a test alarm notification")
+        binding.etTitle.setText("Test Alarm")
+        binding.etMessage.setText("This is a test alarm notification")
         
         // Set current time + 1 minute as default
         val calendar = Calendar.getInstance()
         calendar.add(Calendar.MINUTE, 1)
-        etHour.setText(String.format("%02d", calendar.get(Calendar.HOUR_OF_DAY)))
-        etMinute.setText(String.format("%02d", calendar.get(Calendar.MINUTE)))
-        etSecond.setText("00")
+        binding.etHour.setText(String.format("%02d", calendar.get(Calendar.HOUR_OF_DAY)))
+        binding.etMinute.setText(String.format("%02d", calendar.get(Calendar.MINUTE)))
+        binding.etSecond.setText("00")
     }
 
     private fun setupClickListeners() {
-        btnSetAlarm.setOnClickListener {
+        binding.btnSetAlarm.setOnClickListener {
             if (validateInputs()) {
                 setAlarm()
             }
         }
         
-        btnCancelAlarm.setOnClickListener {
+        binding.btnCancelAlarm.setOnClickListener {
             cancelAlarm()
         }
         
-        btnClearLogs.setOnClickListener {
-            tvStatus.text = "Logs cleared at ${dateFormat.format(Date())}"
+        binding.btnClearLogs.setOnClickListener {
+            binding.tvStatus.text = "Logs cleared at ${dateFormat.format(Date())}"
         }
         
-        btnTest30sec.setOnClickListener {
+        binding.btnTest30sec.setOnClickListener {
             setQuickTestAlarm(30)
         }
         
-        btnTest1min.setOnClickListener {
+        binding.btnTest1min.setOnClickListener {
             setQuickTestAlarm(60)
         }
         
-        btnTest5min.setOnClickListener {
+        binding.btnTest5min.setOnClickListener {
             setQuickTestAlarm(300)
         }
     }
 
     private fun validateInputs(): Boolean {
         try {
-            val hour = etHour.text.toString().toIntOrNull()
-            val minute = etMinute.text.toString().toIntOrNull()
-            val second = etSecond.text.toString().toIntOrNull()
-            val title = etTitle.text.toString()
-            val message = etMessage.text.toString()
+            val hour = binding.etHour.text.toString().toIntOrNull()
+            val minute = binding.etMinute.text.toString().toIntOrNull()
+            val second = binding.etSecond.text.toString().toIntOrNull()
+            val title = binding.etTitle.text.toString()
+            val message = binding.etMessage.text.toString()
             
             when {
                 hour == null || hour !in 0..23 -> {
@@ -251,11 +222,11 @@ class AlarmTestActivity : AppCompatActivity() {
         val calendar = Calendar.getInstance()
         calendar.add(Calendar.SECOND, delaySeconds)
         
-        etHour.setText(String.format("%02d", calendar.get(Calendar.HOUR_OF_DAY)))
-        etMinute.setText(String.format("%02d", calendar.get(Calendar.MINUTE)))
-        etSecond.setText(String.format("%02d", calendar.get(Calendar.SECOND)))
-        etTitle.setText("Quick Test Alarm")
-        etMessage.setText("Test alarm triggered in ${delaySeconds}s")
+        binding.etHour.setText(String.format("%02d", calendar.get(Calendar.HOUR_OF_DAY)))
+        binding.etMinute.setText(String.format("%02d", calendar.get(Calendar.MINUTE)))
+        binding.etSecond.setText(String.format("%02d", calendar.get(Calendar.SECOND)))
+        binding.etTitle.setText("Quick Test Alarm")
+        binding.etMessage.setText("Test alarm triggered in ${delaySeconds}s")
         
         logMessage("Quick test alarm set for ${delaySeconds}s from now")
         
@@ -267,18 +238,18 @@ class AlarmTestActivity : AppCompatActivity() {
     private fun createAlarmDTO(): AlarmDTO {
         return AlarmDTO(
             key = testAlarmId,
-            title = etTitle.text.toString(),
-            message = etMessage.text.toString(),
+            title = binding.etTitle.text.toString(),
+            message = binding.etMessage.text.toString(),
             isActive = true,
-            isAllowIdle = cbAllowIdle.isChecked,
-            hour = etHour.text.toString().toInt(),
-            minute = etMinute.text.toString().toInt(),
-            second = etSecond.text.toString().toInt()
+            isAllowIdle = binding.cbAllowIdle.isChecked,
+            hour = binding.etHour.text.toString().toInt(),
+            minute = binding.etMinute.text.toString().toInt(),
+            second = binding.etSecond.text.toString().toInt()
         )
     }
 
     private fun getSelectedAlarmType(): String {
-        return when (rgAlarmType.checkedRadioButtonId) {
+        return when (binding.rgAlarmType.checkedRadioButtonId) {
             R.id.rbAlarmClock -> "ALARM_CLOCK"
             R.id.rbExactIdle -> "EXACT_IDLE"
             R.id.rbAllowIdle -> "ALLOW_IDLE"
@@ -291,13 +262,13 @@ class AlarmTestActivity : AppCompatActivity() {
         val logEntry = "[$timestamp] $message"
         
         runOnUiThread {
-            val currentText = tvStatus.text.toString()
+            val currentText = binding.tvStatus.text.toString()
             val newText = if (currentText == "Ready to set alarm") {
                 logEntry
             } else {
                 "$currentText\n$logEntry"
             }
-            tvStatus.text = newText
+            binding.tvStatus.text = newText
         }
     }
 

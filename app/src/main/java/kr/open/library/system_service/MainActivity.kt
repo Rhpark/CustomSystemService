@@ -2,11 +2,11 @@ package kr.open.library.system_service
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Button
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import kr.open.library.system_service.databinding.ActivityMainBinding
 
 /**
  * Main activity that serves as the entry point for testing SystemManager library components.
@@ -17,62 +17,56 @@ import androidx.core.view.WindowInsetsCompat
  */
 class MainActivity : AppCompatActivity() {
     
-    private lateinit var btnAlarmTest: Button
-    private lateinit var btnNotificationTest: Button
-    private lateinit var btnSoftKeyboardTest: Button
-    private lateinit var btnVibratorTest: Button
-    private lateinit var btnFloatingViewTest: Button
-    private lateinit var btnBatteryTest: Button
+    private lateinit var binding: ActivityMainBinding
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContentView(R.layout.activity_main)
+        setupBinding()
         
         // Setup window insets
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(binding.main) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
         
-        // Initialize views
-        initializeViews()
+        // Setup click listeners
         setupClickListeners()
     }
     
-    private fun initializeViews() {
-        btnAlarmTest = findViewById(R.id.btnAlarmTest)
-        btnNotificationTest = findViewById(R.id.btnNotificationTest)
-        btnSoftKeyboardTest = findViewById(R.id.btnSoftKeyboardTest)
-        btnVibratorTest = findViewById(R.id.btnVibratorTest)
-        btnFloatingViewTest = findViewById(R.id.btnFloatingViewTest)
-        btnBatteryTest = findViewById(R.id.btnBatteryTest)
+    private fun setupBinding() {
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
     }
     
     private fun setupClickListeners() {
-        btnAlarmTest.setOnClickListener {
+        binding.btnAlarmTest.setOnClickListener {
             navigateToAlarmTest()
         }
         
-        btnNotificationTest.setOnClickListener {
+        binding.btnNotificationTest.setOnClickListener {
             navigateToNotificationTest()
         }
         
-        btnSoftKeyboardTest.setOnClickListener {
+        binding.btnSoftKeyboardTest.setOnClickListener {
             navigateToSoftKeyboardTest()
         }
         
-        btnVibratorTest.setOnClickListener {
+        binding.btnVibratorTest.setOnClickListener {
             navigateToVibratorTest()
         }
         
-        btnFloatingViewTest.setOnClickListener {
+        binding.btnFloatingViewTest.setOnClickListener {
             navigateToFloatingViewTest()
         }
         
-        btnBatteryTest.setOnClickListener {
+        binding.btnBatteryTest.setOnClickListener {
             navigateToBatteryTest()
+        }
+        
+        binding.btnDisplayTest.setOnClickListener {
+            navigateToDisplayTest()
         }
     }
     
@@ -127,6 +121,15 @@ class MainActivity : AppCompatActivity() {
      */
     private fun navigateToBatteryTest() {
         val intent = Intent(this, BatteryTestActivity::class.java)
+        startActivity(intent)
+    }
+    
+    /**
+     * Navigates to the DisplayTestActivity for testing display information functionality.
+     * 디스플레이 정보 기능을 테스트하기 위해 DisplayTestActivity로 이동합니다.
+     */
+    private fun navigateToDisplayTest() {
+        val intent = Intent(this, DisplayTestActivity::class.java)
         startActivity(intent)
     }
 }

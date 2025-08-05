@@ -4,12 +4,9 @@ import android.graphics.Color
 import android.graphics.Point
 import android.os.Bundle
 import android.view.View
-import android.view.ViewGroup
-import android.widget.Button
-import android.widget.ScrollView
-import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import kr.open.library.logcat.Logx
+import kr.open.library.system_service.databinding.ActivityDisplayTestBinding
 import kr.open.library.systemmanager.info.display.DisplayInfo
 import kr.open.library.systemmanager.base.SystemServiceError
 import kr.open.library.systemmanager.base.onSystemServiceFailure
@@ -32,15 +29,21 @@ import kr.open.library.systemmanager.base.getUserMessage
  */
 class DisplayTestActivity : AppCompatActivity() {
 
+    private lateinit var binding: ActivityDisplayTestBinding
     private lateinit var displayInfo: DisplayInfo
-    private lateinit var resultTextView: TextView
-    private lateinit var scrollView: ScrollView
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
+        setupBinding()
         setupDisplayInfo()
         setupUI()
+        runAllTests()
+    }
+
+    private fun setupBinding() {
+        binding = ActivityDisplayTestBinding.inflate(layoutInflater)
+        setContentView(binding.root)
     }
 
     private fun setupDisplayInfo() {
@@ -49,68 +52,94 @@ class DisplayTestActivity : AppCompatActivity() {
     }
 
     private fun setupUI() {
-        // 스크롤 가능한 텍스트뷰를 포함한 간단한 레이아웃 생성
-        scrollView = ScrollView(this).apply {
-            layoutParams = ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-            )
+        // 버튼 클릭 리스너 설정
+        binding.btnRunTests.setOnClickListener {
+            runAllTests()
         }
         
-        resultTextView = TextView(this).apply {
-            layoutParams = ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            )
-            setPadding(32, 32, 32, 32)
-            textSize = 14f
-            setTextColor(Color.BLACK)
-            setBackgroundColor(Color.WHITE)
+        binding.btnClearLog.setOnClickListener {
+            clearLog()
         }
         
-        scrollView.addView(resultTextView)
-        setContentView(scrollView)
+        binding.btnTraditionalTest.setOnClickListener {
+            runTraditionalTest()
+        }
         
-        // 테스트 시작
-        runAllTests()
+        binding.btnResultPatternTest.setOnClickListener {
+            runResultPatternTest()
+        }
+        
+        binding.btnConvenientTest.setOnClickListener {
+            runConvenientTest()
+        }
+        
+        binding.btnChainingTest.setOnClickListener {
+            runChainingTest()
+        }
     }
 
     private fun runAllTests() {
-        val results = StringBuilder()
-        results.append("🔍 DisplayInfo 종합 테스트\n")
-        results.append("=" * 50 + "\n\n")
+        clearLog()
+        appendLog("🔍 DisplayInfo 종합 테스트")
+        appendLog("=" * 50)
+        appendLog("")
         
-        // 1. 전통적 방식 테스트
-        results.append("📊 1. 전통적 접근법 (Traditional Approach)\n")
-        results.append("-" * 40 + "\n")
-        testTraditionalApproach(results)
+        runTraditionalTest()
+        runResultPatternTest() 
+        runConvenientTest()
+        runChainingTest()
         
-        results.append("\n")
-        
-        // 2. Result 패턴 테스트
-        results.append("🚀 2. Result 패턴 (Result Pattern)\n")
-        results.append("-" * 40 + "\n")
-        testResultPatternApproach(results)
-        
-        results.append("\n")
-        
-        // 3. 편리한 방식 테스트
-        results.append("⚡ 3. 편리한 접근법 (Convenient Approach)\n")
-        results.append("-" * 40 + "\n")
-        testConvenientApproach(results)
-        
-        results.append("\n")
-        
-        // 4. 체이닝 테스트
-        results.append("🔗 4. 메서드 체이닝 (Method Chaining)\n")
-        results.append("-" * 40 + "\n")
-        testMethodChaining(results)
-        
-        results.append("\n")
-        results.append("✅ 모든 테스트 완료!\n")
-        
-        resultTextView.text = results.toString()
+        appendLog("")
+        appendLog("✅ 모든 테스트 완료!")
         Logx.d("All DisplayInfo tests completed")
+    }
+    
+    private fun runTraditionalTest() {
+        appendLog("📊 1. 전통적 접근법 (Traditional Approach)")
+        appendLog("-" * 40)
+        val results = StringBuilder()
+        testTraditionalApproach(results)
+        appendLog(results.toString())
+        appendLog("")
+    }
+    
+    private fun runResultPatternTest() {
+        appendLog("🚀 2. Result 패턴 (Result Pattern)")
+        appendLog("-" * 40)
+        val results = StringBuilder()
+        testResultPatternApproach(results)
+        appendLog(results.toString())
+        appendLog("")
+    }
+    
+    private fun runConvenientTest() {
+        appendLog("⚡ 3. 편리한 접근법 (Convenient Approach)")
+        appendLog("-" * 40)
+        val results = StringBuilder()
+        testConvenientApproach(results)
+        appendLog(results.toString())
+        appendLog("")
+    }
+    
+    private fun runChainingTest() {
+        appendLog("🔗 4. 메서드 체이닝 (Method Chaining)")
+        appendLog("-" * 40)
+        val results = StringBuilder()
+        testMethodChaining(results)
+        appendLog(results.toString())
+    }
+    
+    private fun clearLog() {
+        binding.tvResult.text = ""
+    }
+    
+    private fun appendLog(message: String) {
+        val currentText = binding.tvResult.text.toString()
+        binding.tvResult.text = if (currentText.isEmpty()) {
+            message
+        } else {
+            "$currentText\n$message"
+        }
     }
 
     private fun testTraditionalApproach(results: StringBuilder) {
