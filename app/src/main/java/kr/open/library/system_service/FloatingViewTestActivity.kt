@@ -14,8 +14,10 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
+import kr.open.library.system_service.R
 import kr.open.library.system_service.databinding.ActivityFloatingViewTestBinding
 import kr.open.library.systemmanager.controller.window.FloatingViewController
 import kr.open.library.systemmanager.controller.window.floating.drag.FloatingDragView
@@ -68,8 +70,7 @@ class FloatingViewTestActivity : AppCompatActivity() {
     }
 
     private fun setupBinding() {
-        binding = ActivityFloatingViewTestBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_floating_view_test)
     }
 
     /**

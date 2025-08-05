@@ -1,109 +1,123 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    xmlns:tools="http://schemas.android.com/tools">
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/main"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:padding="32dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        android:layout_height="match_parent"
+        tools:context=".MainActivity">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="SystemManager Demo"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="16dp"
-            android:textColor="@android:color/black" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Test the SystemManager library components"
-            android:textSize="16sp"
-            android:layout_marginBottom="32dp"
-            android:textAlignment="center"
-            android:textColor="@android:color/darker_gray" />
-
-        <Button
-            android:id="@+id/btnAlarmTest"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="🔔 Test Alarm Controller"
-            android:textSize="18sp"
-            android:padding="16dp"
-            android:layout_marginBottom="16dp"
-            android:backgroundTint="@android:color/holo_blue_dark" />
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="32dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
 
-        <Button
-            android:id="@+id/btnNotificationTest"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="🔔 Test Notification Controller"
-            android:textSize="18sp"
-            android:padding="16dp"
-            android:layout_marginBottom="16dp"
-            android:backgroundTint="@android:color/holo_green_dark" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="SystemManager Demo"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="16dp"
+                android:textColor="@android:color/black" />
 
-        <Button
-            android:id="@+id/btnSoftKeyboardTest"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="⌨️ Test SoftKeyboard Controller"
-            android:textSize="18sp"
-            android:padding="16dp"
-            android:layout_marginBottom="16dp"
-            android:backgroundTint="@android:color/holo_orange_dark" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Test the SystemManager library components"
+                android:textSize="16sp"
+                android:layout_marginBottom="32dp"
+                android:textAlignment="center"
+                android:textColor="@android:color/darker_gray" />
 
-        <Button
-            android:id="@+id/btnVibratorTest"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="📳 Test Vibrator Controller"
-            android:textSize="18sp"
-            android:padding="16dp"
-            android:layout_marginBottom="16dp"
-            android:backgroundTint="@android:color/holo_purple" />
+            <Button
+                android:id="@+id/btnAlarmTest"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="🔔 Test Alarm Controller"
+                android:textSize="18sp"
+                android:padding="16dp"
+                android:layout_marginBottom="16dp"
+                android:backgroundTint="@android:color/holo_blue_dark" />
 
-        <Button
-            android:id="@+id/btnFloatingViewTest"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="🎈 Test FloatingView Controller"
-            android:textSize="18sp"
-            android:padding="16dp"
-            android:layout_marginBottom="16dp"
-            android:backgroundTint="@android:color/holo_red_dark" />
+            <Button
+                android:id="@+id/btnNotificationTest"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="🔔 Test Notification Controller"
+                android:textSize="18sp"
+                android:padding="16dp"
+                android:layout_marginBottom="16dp"
+                android:backgroundTint="@android:color/holo_green_dark" />
 
-        <Button
-            android:id="@+id/btnBatteryTest"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="🔋 Test Battery State Monitor"
-            android:textSize="18sp"
-            android:padding="16dp"
-            android:layout_marginBottom="16dp"
-            android:backgroundTint="@android:color/holo_blue_bright" />
+            <Button
+                android:id="@+id/btnSoftKeyboardTest"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="⌨️ Test SoftKeyboard Controller"
+                android:textSize="18sp"
+                android:padding="16dp"
+                android:layout_marginBottom="16dp"
+                android:backgroundTint="@android:color/holo_orange_dark" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="All SystemManager components ready for testing!"
-            android:textSize="14sp"
-            android:textStyle="italic"
-            android:textColor="@android:color/darker_gray" />
+            <Button
+                android:id="@+id/btnVibratorTest"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="📳 Test Vibrator Controller"
+                android:textSize="18sp"
+                android:padding="16dp"
+                android:layout_marginBottom="16dp"
+                android:backgroundTint="@android:color/holo_purple" />
 
-    </LinearLayout>
+            <Button
+                android:id="@+id/btnFloatingViewTest"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="🎈 Test FloatingView Controller"
+                android:textSize="18sp"
+                android:padding="16dp"
+                android:layout_marginBottom="16dp"
+                android:backgroundTint="@android:color/holo_red_dark" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+            <Button
+                android:id="@+id/btnBatteryTest"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="🔋 Test Battery State Monitor"
+                android:textSize="18sp"
+                android:padding="16dp"
+                android:layout_marginBottom="16dp"
+                android:backgroundTint="@android:color/holo_blue_bright" />
+
+            <Button
+                android:id="@+id/btnDisplayTest"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="📱 Test Display Information"
+                android:textSize="18sp"
+                android:padding="16dp"
+                android:layout_marginBottom="16dp"
+                android:backgroundTint="@android:color/holo_green_light" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="All SystemManager components ready for testing!"
+                android:textSize="14sp"
+                android:textStyle="italic"
+                android:textColor="@android:color/darker_gray" />
+
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</layout>

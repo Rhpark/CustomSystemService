@@ -11,7 +11,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.lifecycleScope
+import kr.open.library.system_service.R
 import kr.open.library.system_service.databinding.ActivitySoftKeyboardTestBinding
 import kr.open.library.systemmanager.controller.softkeyboard.SoftKeyboardController
 
@@ -56,8 +58,7 @@ class SoftKeyboardTestActivity : AppCompatActivity() {
     }
     
     private fun setupBinding() {
-        binding = ActivitySoftKeyboardTestBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_soft_keyboard_test)
     }
     
     private fun setupStylusSupport() {

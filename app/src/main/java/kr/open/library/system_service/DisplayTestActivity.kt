@@ -5,7 +5,9 @@ import android.graphics.Point
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.databinding.DataBindingUtil
 import kr.open.library.logcat.Logx
+import kr.open.library.system_service.R
 import kr.open.library.system_service.databinding.ActivityDisplayTestBinding
 import kr.open.library.systemmanager.info.display.DisplayInfo
 import kr.open.library.systemmanager.base.SystemServiceError
@@ -42,8 +44,7 @@ class DisplayTestActivity : AppCompatActivity() {
     }
 
     private fun setupBinding() {
-        binding = ActivityDisplayTestBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_display_test)
     }
 
     private fun setupDisplayInfo() {

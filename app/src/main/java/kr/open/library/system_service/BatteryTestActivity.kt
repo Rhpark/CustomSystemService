@@ -12,8 +12,10 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
+import kr.open.library.system_service.R
 import kr.open.library.system_service.databinding.ActivityBatteryTestBinding
 import kr.open.library.systemmanager.info.battery.BatteryStateInfo
 import kr.open.library.systemmanager.info.battery.BatteryStateEvent
@@ -51,8 +53,7 @@ class BatteryTestActivity : AppCompatActivity() {
     }
     
     private fun setupBinding() {
-        binding = ActivityBatteryTestBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_battery_test)
     }
 
     /**

@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- BatteryTestActivity 레이아웃 -->
 <!-- Layout for BatteryTestActivity -->
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:padding="16dp"
-    android:background="#F5F5F5">
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="16dp"
+        android:background="#F5F5F5">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -322,4 +324,6 @@
 
     </LinearLayout>
 
-</ScrollView>
+    </ScrollView>
+
+</layout>

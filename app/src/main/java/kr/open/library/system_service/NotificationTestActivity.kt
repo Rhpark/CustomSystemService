@@ -11,9 +11,11 @@ import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.databinding.DataBindingUtil
 import kotlinx.coroutines.*
 import kr.open.library.logcat.Logx
 import kr.open.library.permissions.PermissionManager
+import kr.open.library.system_service.R
 import kr.open.library.system_service.databinding.ActivityNotificationTestBinding
 import kr.open.library.systemmanager.controller.notification.SimpleNotificationController
 import kr.open.library.systemmanager.controller.notification.dto.SimpleNotificationOption
@@ -74,8 +76,7 @@ class NotificationTestActivity : AppCompatActivity() {
     }
 
     private fun setupBinding() {
-        binding = ActivityNotificationTestBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_notification_test)
     }
     
     private fun initializeDefaultValues() {

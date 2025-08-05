@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- FloatingViewTestActivity 레이아웃 -->
 <!-- Layout for FloatingViewTestActivity -->
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+
+<ScrollView
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp"
@@ -315,3 +317,5 @@
     </LinearLayout>
 
 </ScrollView>
+
+</layout>

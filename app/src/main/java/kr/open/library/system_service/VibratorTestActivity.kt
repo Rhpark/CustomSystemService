@@ -16,6 +16,8 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.databinding.DataBindingUtil
+import kr.open.library.system_service.R
 import kr.open.library.system_service.databinding.ActivityVibratorTestBinding
 import kr.open.library.systemmanager.controller.vibrator.VibratorController
 
@@ -67,8 +69,7 @@ class VibratorTestActivity : AppCompatActivity() {
     }
     
     private fun setupBinding() {
-        binding = ActivityVibratorTestBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_vibrator_test)
     }
     
     /**
