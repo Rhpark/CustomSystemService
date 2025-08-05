@@ -1,8 +1,10 @@
 package kr.open.library.system_service
 
 import android.graphics.Color
+import android.graphics.Point
 import android.os.Bundle
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ScrollView
 import android.widget.TextView
@@ -49,16 +51,16 @@ class DisplayTestActivity : AppCompatActivity() {
     private fun setupUI() {
         // 스크롤 가능한 텍스트뷰를 포함한 간단한 레이아웃 생성
         scrollView = ScrollView(this).apply {
-            layoutParams = ScrollView.LayoutParams(
-                ScrollView.LayoutParams.MATCH_PARENT,
-                ScrollView.LayoutParams.MATCH_PARENT
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
             )
         }
         
         resultTextView = TextView(this).apply {
-            layoutParams = ScrollView.LayoutParams(
-                ScrollView.LayoutParams.MATCH_PARENT,
-                ScrollView.LayoutParams.WRAP_CONTENT
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
             )
             setPadding(32, 32, 32, 32)
             textSize = 14f
@@ -168,7 +170,7 @@ class DisplayTestActivity : AppCompatActivity() {
     private fun testConvenientApproach(results: StringBuilder) {
         val statusBarHeight = displayInfo.getStatusBarHeightOrDefault(0)
         val navigationBarHeight = displayInfo.getNavigationBarHeightOrDefault(0)
-        val screenSize = displayInfo.getScreenOrDefault(android.graphics.Point(0, 0))
+        val screenSize = displayInfo.getScreenOrDefault(Point(0, 0))
         
         results.append("📱 기본값 포함 결과:\n")
         results.append("   • 상태바 높이: ${statusBarHeight}px ${if (statusBarHeight == 0) "(기본값)" else ""}\n")
@@ -186,7 +188,7 @@ class DisplayTestActivity : AppCompatActivity() {
         if (statusBarResult.isSuccess && navigationBarResult.isSuccess && screenResult.isSuccess) {
             val statusBar = statusBarResult.getOrDefault(0)
             val navigationBar = navigationBarResult.getOrDefault(0)
-            val screen = screenResult.getOrDefault(android.graphics.Point(0, 0))
+            val screen = screenResult.getOrDefault(Point(0, 0))
             
             val totalSystemUI = statusBar + navigationBar
             val contentHeight = screen.y - totalSystemUI
