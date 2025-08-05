@@ -224,7 +224,7 @@ public abstract class BaseSystemService(
      * Checks if a specific permission is granted.
      * 특정 권한이 부여되었는지 확인합니다.
      */
-    protected fun isPermissionGranted(permission: String): Boolean {
+    public fun isPermissionGranted(permission: String): Boolean {
         return !remainPermissions.contains(permission)
     }
 

@@ -322,7 +322,7 @@ class FloatingViewControllerUsageExample(private val context: Context) {
         // Using the convenient method with automatic error handling
         // 자동 오류 처리가 포함된 편리한 메서드 사용
         val success = controller.setFloatingFixedViewWithHandling(
-            FloatingFixedView(view, params),
+            FloatingFixedView(view, params.x, params.y),
             onPermissionRequired = {
                 println("Please grant overlay permission")
                 // Show permission request UI
