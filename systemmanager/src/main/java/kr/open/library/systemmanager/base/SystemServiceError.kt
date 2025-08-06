@@ -147,6 +147,30 @@ public sealed class SystemServiceError {
         /** Unexpected system behavior / 예상치 못한 시스템 동작 */
         public data class UnexpectedBehavior(val description: String, val context: String? = null) : Unknown()
     }
+    
+    /**
+     * Location service specific errors.
+     * 위치 서비스별 특정 오류입니다.
+     */
+    public sealed class Location : SystemServiceError() {
+        /** Location provider is not available / 위치 제공자를 사용할 수 없음 */
+        public data class ProviderNotAvailable(val provider: String) : Location()
+        
+        /** Location provider is disabled / 위치 제공자가 비활성화됨 */
+        public data class ProviderDisabled(val provider: String) : Location()
+        
+        /** Location updates failed to start / 위치 업데이트 시작 실패 */
+        public data class UpdateStartFailed(val provider: String, val reason: String) : Location()
+        
+        /** Location calculation failed / 위치 계산 실패 */
+        public data class CalculationFailed(val operation: String, val reason: String) : Location()
+        
+        /** GPS timeout / GPS 시간 초과 */
+        public data class GpsTimeout(val timeoutMs: Long) : Location()
+        
+        /** Location accuracy insufficient / 위치 정확도 부충분 */
+        public data class InsufficientAccuracy(val requiredAccuracy: Float, val actualAccuracy: Float) : Location()
+    }
 }
 
 /**
@@ -186,6 +210,12 @@ public fun SystemServiceError.getUserMessage(): String = when (this) {
         "이 기기는 $feature 기능을 지원하지 않습니다"
     is SystemServiceError.Network.NotConnected -> 
         "네트워크에 연결되어 있지 않습니다"
+    is SystemServiceError.Location.ProviderNotAvailable -> 
+        "위치 제공자(${provider})를 사용할 수 없습니다"
+    is SystemServiceError.Location.ProviderDisabled -> 
+        "위치 서비스(${provider})가 비활성화되어 있습니다"
+    is SystemServiceError.Location.GpsTimeout -> 
+        "GPS 신호를 찾을 수 없습니다 (${timeoutMs}ms 초과)"
     else -> "시스템 오류가 발생했습니다"
 }
 
@@ -202,6 +232,14 @@ public fun SystemServiceError.getDeveloperMessage(): String = when (this) {
         "Hardware feature '$feature' not supported on this device"
     is SystemServiceError.Configuration.InvalidParameter -> 
         "Invalid parameter '$parameterName' = $value: $reason"
+    is SystemServiceError.Location.ProviderNotAvailable -> 
+        "Location provider '${provider}' not available on this device"
+    is SystemServiceError.Location.UpdateStartFailed -> 
+        "Failed to start location updates for provider '${provider}': ${reason}"
+    is SystemServiceError.Location.CalculationFailed -> 
+        "Location calculation failed for operation '${operation}': ${reason}"
+    is SystemServiceError.Location.InsufficientAccuracy -> 
+        "Location accuracy insufficient: required ${requiredAccuracy}m, actual ${actualAccuracy}m"
     is SystemServiceError.Unknown.Exception -> 
         "Unexpected exception${context?.let { " in $it" } ?: ""}: ${cause.message}"
     else -> toString()
@@ -242,26 +280,26 @@ public class SystemServiceException(
 }
 
 /**
- * Extension functions for Result<T> to work with SystemServiceError.
- * SystemServiceError와 함께 사용하기 위한 Result<T> 확장 함수들입니다.
+ * Location service specific errors.
+ * 위치 서비스별 특정 오류입니다.
  */
+public sealed class LocationError : SystemServiceError() {
+    /** Location provider is not available / 위치 제공자를 사용할 수 없음 */
+    public data class ProviderNotAvailable(val provider: String) : LocationError()
+    
+    /** Location provider is disabled / 위치 제공자가 비활성화됨 */
+    public data class ProviderDisabled(val provider: String) : LocationError()
+    
+    /** Location updates failed to start / 위치 업데이트 시작 실패 */
+    public data class UpdateStartFailed(val provider: String, val reason: String) : LocationError()
+    
+    /** Location calculation failed / 위치 계산 실패 */
+    public data class CalculationFailed(val operation: String, val reason: String) : LocationError()
+    
+    /** GPS timeout / GPS 시간 초과 */
+    public data class GpsTimeout(val timeoutMs: Long) : LocationError()
+    
+    /** Location accuracy insufficient / 위치 정확도 불충분 */
+    public data class InsufficientAccuracy(val requiredAccuracy: Float, val actualAccuracy: Float) : LocationError()
+}
 
-/**
- * Calls the specified function [action] with the SystemServiceError if this Result is failure.
- * Result가 실패인 경우 SystemServiceError와 함께 지정된 함수 [action]을 호출합니다.
- */
-public inline fun <T> Result<T>.onSystemServiceFailure(action: (error: SystemServiceError) -> Unit): Result<T> = 
-    onFailure { throwable ->
-        if (throwable is SystemServiceException) {
-            action(throwable.error)
-        }
-    }
-
-/**
- * Gets the SystemServiceError from this Result if it's a failure with SystemServiceException.
- * SystemServiceException으로 실패한 Result에서 SystemServiceError를 가져옵니다.
- */
-public fun <T> Result<T>.getSystemServiceError(): SystemServiceError? = 
-    exceptionOrNull()?.let { throwable ->
-        if (throwable is SystemServiceException) throwable.error else null
-    }

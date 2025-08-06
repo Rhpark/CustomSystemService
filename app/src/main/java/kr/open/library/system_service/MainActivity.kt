@@ -69,6 +69,10 @@ class MainActivity : AppCompatActivity() {
         binding.btnDisplayTest.setOnClickListener {
             navigateToDisplayTest()
         }
+        
+        binding.btnLocationTest.setOnClickListener {
+            navigateToLocationTest()
+        }
     }
     
     /**
@@ -131,6 +135,15 @@ class MainActivity : AppCompatActivity() {
      */
     private fun navigateToDisplayTest() {
         val intent = Intent(this, DisplayTestActivity::class.java)
+        startActivity(intent)
+    }
+    
+    /**
+     * Navigates to the LocationTestActivity for testing location service functionality.
+     * 위치 서비스 기능을 테스트하기 위해 LocationTestActivity로 이동합니다.
+     */
+    private fun navigateToLocationTest() {
+        val intent = Intent(this, LocationTestActivity::class.java)
         startActivity(intent)
     }
 }

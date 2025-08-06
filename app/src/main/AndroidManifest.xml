@@ -11,6 +11,11 @@
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.BATTERY_STATS" />
+    
+    <!-- Location permissions -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
 
     <application
         android:allowBackup="true"
@@ -85,6 +90,20 @@
             android:name=".BatteryTestActivity"
             android:exported="false"
             android:label="Battery State Monitor Test"
+            android:parentActivityName=".MainActivity" />
+
+        <!-- Display Test Activity -->
+        <activity
+            android:name=".DisplayTestActivity"
+            android:exported="false"
+            android:label="Display Information Test"
+            android:parentActivityName=".MainActivity" />
+
+        <!-- Location Test Activity -->
+        <activity
+            android:name=".LocationTestActivity"
+            android:exported="false"
+            android:label="Location Service Test"
             android:parentActivityName=".MainActivity" />
     </application>
 

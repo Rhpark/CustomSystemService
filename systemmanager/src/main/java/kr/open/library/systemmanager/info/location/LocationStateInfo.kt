@@ -25,6 +25,8 @@ import kr.open.library.systemmanager.base.BaseSystemService
 import kr.open.library.systemmanager.base.DataUpdate
 import kr.open.library.systemmanager.extenstions.checkSdkVersion
 import kr.open.library.systemmanager.extenstions.getLocationManager
+import kr.open.library.systemmanager.base.SystemServiceError
+import kr.open.library.systemmanager.base.SystemServiceException
 
 public open class LocationStateInfo(
     context: Context,
@@ -38,10 +40,10 @@ public open class LocationStateInfo(
     public val sfUpdate: StateFlow<LocationStateEvent> = msfUpdate.asStateFlow()
 
     private val locationChanged = DataUpdate<Location?>(getLocation())
-    private val isGpsEnabled = DataUpdate<Boolean>(isGpsEnable())
-    private val isNetworkEnabled = DataUpdate<Boolean>(isNetworkEnable())
-    private val isPassiveEnabled = DataUpdate<Boolean>(isPassiveEnable())
-    private val isFusedEnabled = DataUpdate<Boolean>(isFusedEnable())
+    private val isGpsEnabled = DataUpdate<Boolean>(isGpsEnabled())
+    private val isNetworkEnabled = DataUpdate<Boolean>(isNetworkEnabled())
+    private val isPassiveEnabled = DataUpdate<Boolean>(isPassiveEnabled())
+    private val isFusedEnabled = DataUpdate<Boolean>(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) isFusedEnabled() else false)
 
     init {
         setupDataFlows()
@@ -71,14 +73,41 @@ public open class LocationStateInfo(
 
     private val locationListener = object : LocationListener {
         override fun onLocationChanged(location: Location) {
+            Logx.d("Location updated: lat=${location.latitude}, lng=${location.longitude}, accuracy=${location.accuracy}m")
             locationChanged.update(location)
         }
 
-        override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {        }
+        override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
+            Logx.d("Location status changed: provider=$provider, status=$status")
+        }
 
-        override fun onProviderEnabled(provider: String) {        }
+        override fun onProviderEnabled(provider: String) {
+            Logx.i("Location provider enabled: $provider")
+            when (provider) {
+                LocationManager.GPS_PROVIDER -> isGpsEnabled.update(true)
+                LocationManager.NETWORK_PROVIDER -> isNetworkEnabled.update(true)
+                LocationManager.PASSIVE_PROVIDER -> isPassiveEnabled.update(true)
+                LocationManager.FUSED_PROVIDER -> {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        isFusedEnabled.update(true)
+                    }
+                }
+            }
+        }
 
-        override fun onProviderDisabled(provider: String) {        }
+        override fun onProviderDisabled(provider: String) {
+            Logx.i("Location provider disabled: $provider")
+            when (provider) {
+                LocationManager.GPS_PROVIDER -> isGpsEnabled.update(false)
+                LocationManager.NETWORK_PROVIDER -> isNetworkEnabled.update(false)
+                LocationManager.PASSIVE_PROVIDER -> isPassiveEnabled.update(false)
+                LocationManager.FUSED_PROVIDER -> {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        isFusedEnabled.update(false)
+                    }
+                }
+            }
+        }
     }
 
     private fun sendFlow(event: LocationStateEvent) = coroutineScope.launch { msfUpdate.emit(event) }
@@ -97,20 +126,121 @@ public open class LocationStateInfo(
         gpsStateBroadcastReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
                 if (intent.action.equals(LocationManager.PROVIDERS_CHANGED_ACTION)) {
-                    isGpsEnabled.update(isGpsEnable())
-                    isNetworkEnabled.update(isNetworkEnable())
-                    isPassiveEnabled.update(isPassiveEnable())
-                    isFusedEnabled.update(isFusedEnable())
+                    isGpsEnabled.update(isGpsEnabled())
+                    isNetworkEnabled.update(isNetworkEnabled())
+                    isPassiveEnabled.update(isPassiveEnabled())
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        isFusedEnabled.update(isFusedEnabled())
+                    }
                 }
             }
         }
         context.registerReceiver(gpsStateBroadcastReceiver, intentFilter)
     }
 
-    public fun isGpsEnable():Boolean = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
-    public fun isNetworkEnable():Boolean = locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
-    public fun isPassiveEnable():Boolean = locationManager.isProviderEnabled(LocationManager.PASSIVE_PROVIDER)
-    public fun isFusedEnable():Boolean = locationManager.isProviderEnabled(LocationManager.FUSED_PROVIDER)
+
+    public fun getLocationResult(): Result<Location?> {
+        return try {
+            if (!isAnyEnabled()) {
+                val errorMessage = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    "No location providers enabled: GPS=${isGpsEnabled()}, Network=${isNetworkEnabled()}, Passive=${isPassiveEnabled()}, Fused=${isFusedEnabled()}"
+                } else {
+                    "No location providers enabled: GPS=${isGpsEnabled()}, Network=${isNetworkEnabled()}, Passive=${isPassiveEnabled()}"
+                }
+                Result.failure(SystemServiceException(SystemServiceError.Location.ProviderNotAvailable("any")))
+            } else if (context.hasPermissions(ACCESS_COARSE_LOCATION) || context.hasPermissions(ACCESS_FINE_LOCATION)) {
+                val location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+                Result.success(location)
+            } else {
+                Result.failure(SystemServiceException(SystemServiceError.Permission.NotGranted(listOf(ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION))))
+            }
+        } catch (e: SecurityException) {
+            Result.failure(SystemServiceException(SystemServiceError.Permission.NotGranted(listOf(ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION)), e))
+        } catch (e: Exception) {
+            Result.failure(SystemServiceException(SystemServiceError.Unknown.Exception(e, "getLocationResult")))
+        }
+    }
+
+    public fun isGpsEnabledResult(): Result<Boolean> {
+        return try {
+            Result.success(locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
+        } catch (e: Exception) {
+            Result.failure(SystemServiceException(SystemServiceError.Unknown.Exception(e, "isGpsEnabledResult")))
+        }
+    }
+
+    public fun isNetworkEnabledResult(): Result<Boolean> {
+        return try {
+            Result.success(locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER))
+        } catch (e: Exception) {
+            Result.failure(SystemServiceException(SystemServiceError.Unknown.Exception(e, "isNetworkEnabledResult")))
+        }
+    }
+
+    public fun isPassiveEnabledResult(): Result<Boolean> {
+        return try {
+            Result.success(locationManager.isProviderEnabled(LocationManager.PASSIVE_PROVIDER))
+        } catch (e: Exception) {
+            Result.failure(SystemServiceException(SystemServiceError.Unknown.Exception(e, "isPassiveEnabledResult")))
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.S)
+    public fun isFusedEnabledResult(): Result<Boolean> {
+        return try {
+            Result.success(locationManager.isProviderEnabled(LocationManager.FUSED_PROVIDER))
+        } catch (e: Exception) {
+            Result.failure(SystemServiceException(SystemServiceError.Unknown.Exception(e, "isFusedEnabledResult")))
+        }
+    }
+
+    @RequiresPermission(anyOf = [ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION])
+    public fun registerLocationUpdateStartResult(locationProvider: String, minTimeMs: Long, minDistanceM: Float): Result<Unit> {
+        return try {
+            if (!locationManager.isProviderEnabled(locationProvider)) {
+                Result.failure(SystemServiceException(SystemServiceError.Location.ProviderDisabled(locationProvider)))
+            } else {
+                locationManager.requestLocationUpdates(locationProvider, minTimeMs, minDistanceM, locationListener)
+                Result.success(Unit)
+            }
+        } catch (e: SecurityException) {
+            Result.failure(SystemServiceException(SystemServiceError.Permission.NotGranted(listOf(ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION)), e))
+        } catch (e: IllegalArgumentException) {
+            Result.failure(SystemServiceException(SystemServiceError.Location.UpdateStartFailed(locationProvider, e.message ?: "Invalid parameters"), e))
+        } catch (e: Exception) {
+            Result.failure(SystemServiceException(SystemServiceError.Location.UpdateStartFailed(locationProvider, e.message ?: "Unknown error"), e))
+        }
+    }
+
+    public fun calculateDistanceResult(fromLocation: Location, toLocation: Location): Result<Float> {
+        return try {
+            val distance = fromLocation.distanceTo(toLocation)
+            Result.success(distance)
+        } catch (e: Exception) {
+            Result.failure(SystemServiceException(SystemServiceError.Location.CalculationFailed("distance calculation", e.message ?: "Unknown error"), e))
+        }
+    }
+
+    public fun calculateBearingResult(fromLocation: Location, toLocation: Location): Result<Float> {
+        return try {
+            val bearing = fromLocation.bearingTo(toLocation)
+            Result.success(bearing)
+        } catch (e: Exception) {
+            Result.failure(SystemServiceException(SystemServiceError.Location.CalculationFailed("bearing calculation", e.message ?: "Unknown error"), e))
+        }
+    }
+
+    public fun isLocationWithRadiusResult(fromLocation: Location, toLocation: Location, radius: Float): Result<Boolean> {
+        return try {
+            val distance = calculateDistanceResult(fromLocation, toLocation).getOrThrow()
+            Result.success(distance <= radius)
+        } catch (e: Exception) {
+            when (e) {
+                is SystemServiceException -> Result.failure(e)
+                else -> Result.failure(SystemServiceException(SystemServiceError.Location.CalculationFailed("radius check", e.message ?: "Unknown error"), e))
+            }
+        }
+    }
 
     /**
      *
@@ -128,16 +258,41 @@ public open class LocationStateInfo(
     public fun unregisterLocationUpdateListener() {
         try {
             locationManager.removeUpdates(locationListener)
-        } catch (e:Exception) {        }
+        } catch (e: Exception) {
+            Logx.w("Failed to unregister location updates: ${e.message}", e)
+        }
+    }
+
+    public fun unregisterLocationUpdateListenerResult(): Result<Unit> {
+        return try {
+            locationManager.removeUpdates(locationListener)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(SystemServiceException(SystemServiceError.Unknown.Exception(e, "unregisterLocationUpdateListener")))
+        }
     }
 
     public fun unregisterGpsState() {
         gpsStateBroadcastReceiver?.let {
             try {
                 context.unregisterReceiver(it)
-            } catch (e:Exception) {}
+            } catch (e: Exception) {
+                Logx.w("Failed to unregister GPS state receiver: ${e.message}", e)
+            }
         }
         gpsStateBroadcastReceiver = null
+    }
+
+    public fun unregisterGpsStateResult(): Result<Unit> {
+        return try {
+            gpsStateBroadcastReceiver?.let {
+                context.unregisterReceiver(it)
+            }
+            gpsStateBroadcastReceiver = null
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(SystemServiceException(SystemServiceError.Unknown.Exception(e, "unregisterGpsState")))
+        }
     }
 
     public fun isLocationEnabled(): Boolean =
@@ -146,14 +301,11 @@ public open class LocationStateInfo(
     public fun isGpsEnabled(): Boolean =
         locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
 
-
     public fun isNetworkEnabled(): Boolean =
         locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
 
-
     public fun isPassiveEnabled(): Boolean =
         locationManager.isProviderEnabled(LocationManager.PASSIVE_PROVIDER)
-
 
     @RequiresApi(Build.VERSION_CODES.S)
     public fun isFusedEnabled(): Boolean =
@@ -198,14 +350,33 @@ public open class LocationStateInfo(
 
     public fun isLocationWithRadius(fromLocation: Location, toLocation: Location, radius: Float): Boolean =
         calculateDistance(fromLocation, toLocation) <= radius
-//
-//    public fun saveApplyLocation(key: String, location: Location) {
-//        LocationSharedPreference(context).saveApplyLocation(key,location)
-//    }
-//
-//    public suspend fun saveCommitLocation(key:String, location: Location) {
-//        LocationSharedPreference(context).saveCommitLocation(key,location)
-//    }
-//
-//    public fun loadLocation(key: String): Location? = LocationSharedPreference(context).loadLocation(key)
+    private val locationStorage by lazy { LocationSharedPreference(context) }
+
+    public fun saveApplyLocationResult(key: String, location: Location): Result<Unit> {
+        return locationStorage.saveApplyLocation(key, location)
+    }
+
+    public suspend fun saveCommitLocationResult(key: String, location: Location): Result<Unit> {
+        return locationStorage.saveCommitLocation(key, location)
+    }
+
+    public fun loadLocationResult(key: String): Result<Location?> {
+        return locationStorage.loadLocation(key)
+    }
+
+    public fun removeLocationResult(key: String): Result<Unit> {
+        return locationStorage.removeLocation(key)
+    }
+
+    public fun getAllLocationKeysResult(): Result<List<String>> {
+        return locationStorage.getAllLocationKeys()
+    }
+
+    public fun hasLocationResult(key: String): Result<Boolean> {
+        return locationStorage.hasLocation(key)
+    }
+
+    public fun clearAllLocationsResult(): Result<Unit> {
+        return locationStorage.clearAllLocations()
+    }
 }
