@@ -261,7 +261,7 @@ public abstract class BaseSystemService(
      */
     protected inline fun <T> safeExecuteWithPermissionGuidance(
         operation: String,
-        onPermissionRequired: ((SystemServiceError.Permission.SpecialPermissionRequired) -> Unit)? = null,
+        noinline onPermissionRequired: ((SystemServiceError.Permission.SpecialPermissionRequired) -> Unit)? = null,
         block: () -> T
     ): Result<T> {
         return runCatching {
