@@ -5,7 +5,6 @@ import android.telephony.TelephonyDisplayInfo
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import android.Manifest.permission.READ_PHONE_STATE
-import kr.open.library.systemmanager.base.Result
 import kr.open.library.systemmanager.info.network.telephony.data.current.CurrentCellInfo
 import kr.open.library.systemmanager.info.network.telephony.data.current.CurrentServiceState
 import kr.open.library.systemmanager.info.network.telephony.data.current.CurrentSignalStrength

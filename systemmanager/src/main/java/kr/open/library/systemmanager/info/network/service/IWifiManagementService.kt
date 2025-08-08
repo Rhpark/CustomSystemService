@@ -1,6 +1,5 @@
 package kr.open.library.systemmanager.info.network.service
 
-import kr.open.library.systemmanager.base.Result
 
 /**
  * WiFi 관리 서비스 인터페이스

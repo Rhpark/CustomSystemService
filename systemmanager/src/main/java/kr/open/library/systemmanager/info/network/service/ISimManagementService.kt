@@ -5,7 +5,6 @@ import android.telephony.TelephonyManager
 import androidx.annotation.RequiresPermission
 import android.Manifest.permission.READ_PHONE_STATE
 import android.Manifest.permission.READ_PHONE_NUMBERS
-import kr.open.library.systemmanager.base.Result
 
 /**
  * SIM 카드 및 구독 정보 관리 서비스 인터페이스

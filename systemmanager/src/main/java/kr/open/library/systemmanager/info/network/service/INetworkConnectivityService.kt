@@ -8,7 +8,6 @@ import android.os.Handler
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import android.Manifest.permission.ACCESS_NETWORK_STATE
-import kr.open.library.systemmanager.base.Result
 import kr.open.library.systemmanager.info.network.connectivity.data.NetworkCapabilitiesData
 import kr.open.library.systemmanager.info.network.connectivity.data.NetworkLinkPropertiesData
 

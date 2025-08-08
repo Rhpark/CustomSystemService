@@ -8,7 +8,6 @@ import android.net.NetworkCapabilities
 import android.telephony.SubscriptionInfo
 import android.telephony.TelephonyManager
 import androidx.annotation.RequiresPermission
-import kr.open.library.systemmanager.base.Result
 import kr.open.library.systemmanager.base.SystemServiceError
 import kr.open.library.systemmanager.base.SystemServiceException
 

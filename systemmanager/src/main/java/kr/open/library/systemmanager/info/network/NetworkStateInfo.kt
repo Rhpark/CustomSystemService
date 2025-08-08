@@ -27,7 +27,7 @@ import androidx.core.util.forEach
 import kr.open.library.logcat.Logx
 import kr.open.library.permissions.extensions.hasPermissions
 import kr.open.library.systemmanager.base.BaseSystemService
-import kr.open.library.systemmanager.base.Result
+
 import kr.open.library.systemmanager.extenstions.checkSdkVersion
 import kr.open.library.systemmanager.extenstions.getConnectivityManager
 import kr.open.library.systemmanager.extenstions.getEuiccManager
