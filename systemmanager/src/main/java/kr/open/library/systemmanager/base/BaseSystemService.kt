@@ -229,6 +229,76 @@ public abstract class BaseSystemService(
     }
 
     /**
+     * Creates a detailed permission error with user guidance.
+     * 사용자 안내가 포함된 상세한 권한 오류를 생성합니다.
+     */
+    protected fun createPermissionErrorWithGuidance(): SystemServiceError.Permission.SpecialPermissionRequired {
+        return when {
+            remainPermissions.contains(android.Manifest.permission.SYSTEM_ALERT_WINDOW) -> {
+                SystemServiceError.Permission.SpecialPermissionRequired(
+                    "SYSTEM_ALERT_WINDOW",
+                    "android.settings.action.MANAGE_OVERLAY_PERMISSION"
+                )
+            }
+            remainPermissions.contains(android.Manifest.permission.SCHEDULE_EXACT_ALARM) -> {
+                SystemServiceError.Permission.SpecialPermissionRequired(
+                    "SCHEDULE_EXACT_ALARM", 
+                    "android.settings.REQUEST_SCHEDULE_EXACT_ALARM"
+                )
+            }
+            else -> {
+                SystemServiceError.Permission.SpecialPermissionRequired(
+                    remainPermissions.firstOrNull() ?: "UNKNOWN",
+                    null
+                )
+            }
+        }
+    }
+
+    /**
+     * Executes an operation with enhanced permission handling and user guidance.
+     * 향상된 권한 처리와 사용자 안내가 포함된 작업을 실행합니다.
+     */
+    protected inline fun <T> safeExecuteWithPermissionGuidance(
+        operation: String,
+        onPermissionRequired: ((SystemServiceError.Permission.SpecialPermissionRequired) -> Unit)? = null,
+        block: () -> T
+    ): Result<T> {
+        return runCatching {
+            // Check permissions first
+            if (!isPermissionAllGranted()) {
+                val permissionError = createPermissionErrorWithGuidance()
+                Logx.w("${this::class.simpleName}.$operation: Permission required - ${permissionError.permission}")
+                
+                // Notify caller about permission requirement
+                onPermissionRequired?.invoke(permissionError)
+                
+                throw SystemServiceException(permissionError)
+            }
+            
+            // Execute operation with standard error handling
+            safeExecute(operation, requiresPermission = true, block).getOrThrow()
+        }
+    }
+
+    /**
+     * Gets user-friendly permission guidance message.
+     * 사용자 친화적인 권한 안내 메시지를 가져옵니다.
+     */
+    public fun getPermissionGuidanceMessage(): String? {
+        if (isPermissionAllGranted()) return null
+        
+        return when {
+            remainPermissions.contains(android.Manifest.permission.SYSTEM_ALERT_WINDOW) -> 
+                "다른 앱 위에 표시 권한이 필요합니다. 설정에서 권한을 허용해 주세요."
+            remainPermissions.contains(android.Manifest.permission.SCHEDULE_EXACT_ALARM) ->
+                "정확한 알람 권한이 필요합니다. 설정에서 권한을 허용해 주세요."
+            else -> 
+                "이 기능을 사용하려면 다음 권한이 필요합니다: ${remainPermissions.joinToString(", ")}"
+        }
+    }
+
+    /**
      * Called when the service is being destroyed. Override to perform cleanup.
      * 서비스가 소멸될 때 호출됩니다. 정리 작업을 수행하려면 재정의하세요.
      */

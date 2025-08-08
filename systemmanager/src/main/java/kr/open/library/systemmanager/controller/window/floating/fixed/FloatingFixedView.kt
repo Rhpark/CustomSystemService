@@ -41,28 +41,37 @@ public open class FloatingFixedView(
      * API 레벨에 따른 플로팅 레이아웃 파라미터를 생성합니다.
      * Creates floating layout parameters based on API level.
      * 
+     * SECURITY NOTE: 보안상의 이유로 가장 제한적인 윈도우 타입을 사용합니다.
+     * For security reasons, we use the most restrictive window type available.
+     * 
      * @return 플로팅 레이아웃 파라미터 / Floating layout parameters
      */
     private fun getFloatingLayoutParam(): LayoutParams = safeCatch("getFloatingLayoutParam", 
         getDefaultLayoutParam()) {
         checkSdkVersion(Build.VERSION_CODES.O, {
-            // Android O (API 26) 이상: TYPE_APPLICATION_OVERLAY 사용
-            // Android O+ (API 26+): Use TYPE_APPLICATION_OVERLAY
+            // Android O (API 26) 이상: TYPE_APPLICATION_OVERLAY 사용 (권장)
+            // Android O+ (API 26+): Use TYPE_APPLICATION_OVERLAY (recommended)
             LayoutParams(
                 LayoutParams.WRAP_CONTENT,
                 LayoutParams.WRAP_CONTENT,
                 LayoutParams.TYPE_APPLICATION_OVERLAY,
-                LayoutParams.FLAG_NOT_FOCUSABLE,
+                LayoutParams.FLAG_NOT_FOCUSABLE or LayoutParams.FLAG_NOT_TOUCHABLE,
                 PixelFormat.TRANSLUCENT
             )
         }, {
-            // Android O 미만: TYPE_SYSTEM_ALERT 사용
-            // Below Android O: Use TYPE_SYSTEM_ALERT
+            // Android O 미만: 보안을 위해 TYPE_APPLICATION_OVERLAY 우선 사용
+            // Below Android O: Prefer TYPE_APPLICATION_OVERLAY for security
+            // 참고: TYPE_SYSTEM_ALERT는 보안 위험이 있으므로 최소한의 권한만 사용
             LayoutParams(
                 LayoutParams.WRAP_CONTENT,
                 LayoutParams.WRAP_CONTENT,
-                LayoutParams.TYPE_SYSTEM_ALERT + LayoutParams.TYPE_PHONE,
-                LayoutParams.FLAG_NOT_FOCUSABLE,
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                    LayoutParams.TYPE_APPLICATION_OVERLAY
+                } else {
+                    // API 19 미만에서만 TYPE_SYSTEM_ALERT 사용 (레거시 지원)
+                    LayoutParams.TYPE_SYSTEM_ALERT
+                },
+                LayoutParams.FLAG_NOT_FOCUSABLE or LayoutParams.FLAG_NOT_TOUCHABLE,
                 PixelFormat.TRANSLUCENT
             )
         })

@@ -13,11 +13,27 @@ import kr.open.library.systemmanager.extenstions.getWindowManager
 import kr.open.library.logcat.Logx
 
 /**
- * Enhanced FloatingViewController demonstrating integration with the new BaseSystemService
- * Result pattern support. This shows how existing controllers can be upgraded.
- * 새로운 BaseSystemService Result 패턴 지원과의 통합을 보여주는 향상된 FloatingViewController입니다.
- * 기존 컨트롤러를 어떻게 업그레이드할 수 있는지 보여줍니다.
+ * @deprecated This class has been integrated into the main FloatingViewController.
+ * 이 클래스는 기본 FloatingViewController에 통합되었습니다.
+ * 
+ * Please use FloatingViewController which now includes all enhanced features:
+ * 다음과 같은 모든 향상된 기능이 포함된 FloatingViewController를 사용하세요:
+ * - Enhanced permission handling with user guidance (권한 안내가 포함된 향상된 권한 처리)
+ * - Result pattern support for better error handling (더 나은 오류 처리를 위한 Result 패턴 지원)
+ * - Input validation and boundary checking (입력 검증 및 경계 확인)
+ * - Memory leak prevention (메모리 누수 방지)
+ * - Transaction-like batch operations (트랜잭션과 같은 일괄 작업)
+ * 
+ * Migration guide:
+ * - Replace `FloatingViewControllerEnhanced` with `FloatingViewController`
+ * - Use methods ending with "Safe" for Result pattern support (Result 패턴 지원을 위해 "Safe"로 끝나는 메서드 사용)
+ * - Example: `setFloatingFixedViewSafe()`, `addFloatingDragViewSafe()`, etc.
  */
+@Deprecated(
+    message = "Use FloatingViewController which now includes all enhanced features",
+    replaceWith = ReplaceWith("FloatingViewController(context)"),
+    level = DeprecationLevel.WARNING
+)
 class FloatingViewControllerEnhanced(context: Context) :
     BaseSystemService(context, listOf(android.Manifest.permission.SYSTEM_ALERT_WINDOW)) {
 
