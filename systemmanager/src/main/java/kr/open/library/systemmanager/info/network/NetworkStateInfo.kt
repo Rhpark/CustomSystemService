@@ -53,7 +53,7 @@ public open class NetworkStateInfo(
     context: Context,
 ) : BaseSystemService(
     context,
-    listOf(READ_PHONE_STATE, READ_PHONE_NUMBERS, ACCESS_FINE_LOCATION, ACCESS_FINE_LOCATION)
+    listOf(READ_PHONE_STATE, READ_PHONE_NUMBERS, ACCESS_FINE_LOCATION)
 ) {
     public val telephonyManager: TelephonyManager by lazy { context.getTelephonyManager() }
     public val subscriptionManager: SubscriptionManager by lazy {   context.getSubscriptionManager() }
@@ -61,7 +61,7 @@ public open class NetworkStateInfo(
     public val wifiManager: WifiManager by lazy {   context.getWifiManager() }
     public val euiccManager: EuiccManager by lazy { context.getEuiccManager() }
 
-    private val uSimTelepnohyManagerList = SparseArray<TelephonyManager>()
+    private val uSimTelephonyManagerList = SparseArray<TelephonyManager>()
     private val uSimTelephonyCallbackList =  SparseArray<CommonTelephonyCallback>()
     private val isRegistered =  SparseArray<Boolean>()
 
@@ -84,7 +84,7 @@ public open class NetworkStateInfo(
         initialization()
     }
 
-    @SuppressLint("MissingPermission")
+    @RequiresPermission(READ_PHONE_STATE)
     private fun initialization() {
         if(!context.hasPermissions(READ_PHONE_STATE)) {
             Logx.e("Can not read uSim Chip!")
@@ -114,8 +114,8 @@ public open class NetworkStateInfo(
         Logx.d("USimInfo","activeSubscriptionInfoList size ${getActiveSubscriptionInfoList().size}")
         getActiveSubscriptionInfoList().forEach {
             Logx.d("USimInfo","SubID ${it.toString()}\n")
-            uSimTelepnohyManagerList[it.simSlotIndex] = telephonyManager.createForSubscriptionId(it.subscriptionId)
-            uSimTelephonyCallbackList[it.simSlotIndex] = CommonTelephonyCallback(uSimTelepnohyManagerList[it.simSlotIndex])
+            uSimTelephonyManagerList[it.simSlotIndex] = telephonyManager.createForSubscriptionId(it.subscriptionId)
+            uSimTelephonyCallbackList[it.simSlotIndex] = CommonTelephonyCallback(uSimTelephonyManagerList[it.simSlotIndex])
         }
     }
 
@@ -176,7 +176,7 @@ public open class NetworkStateInfo(
     @RequiresPermission(READ_PHONE_STATE)
     public fun getSubId(simSlotIndex: Int): Int? = try {
         checkSdkVersion(Build.VERSION_CODES.R,
-            positiveWork = {   uSimTelepnohyManagerList[simSlotIndex]?.subscriptionId    },
+            positiveWork = {   uSimTelephonyManagerList[simSlotIndex]?.subscriptionId    },
             negativeWork = {    getActiveSubscriptionInfoSimSlot(simSlotIndex)?.subscriptionId   }
         )
     } catch (e: NoSuchMethodError) {
@@ -301,7 +301,7 @@ public open class NetworkStateInfo(
         getTelephonyManagerFromUSim(slotIndex)?.line1Number /* line1Number Required SDK Version 1 ~ 33 */
             ?: getActiveSubscriptionInfoSimSlot(slotIndex)?.number /* number Required SDK Version 30 ~ 33 */
 
-    public fun getTelephonyManagerFromUSim(slotIndex: Int): TelephonyManager? = uSimTelepnohyManagerList[slotIndex]
+    public fun getTelephonyManagerFromUSim(slotIndex: Int): TelephonyManager? = uSimTelephonyManagerList[slotIndex]
 
     @RequiresPermission(READ_PHONE_STATE)
     public fun getDisplayNameFromDefaultUSim(): String? = getSubscriptionInfoSubIdFromDefaultUSim()?.displayName?.toString()
@@ -352,7 +352,7 @@ public open class NetworkStateInfo(
         onDisplayInfo: ((telephonyDisplayInfo: TelephonyDisplayInfo) -> Unit)? = null,
         onTelephonyNetworkState: ((telephonyNetworkState: TelephonyNetworkState) -> Unit)? = null
     ) {
-        val tm = uSimTelepnohyManagerList[simSlotIndex] ?: throw IllegalStateException("TelephonyManager [$simSlotIndex] is null")
+        val tm = uSimTelephonyManagerList[simSlotIndex] ?: throw IllegalStateException("TelephonyManager [$simSlotIndex] is null")
         val callback = uSimTelephonyCallbackList[simSlotIndex] ?: throw IllegalStateException("telephonyCallbackList [$simSlotIndex] is null")
 
         unregisterCallBack(simSlotIndex)
@@ -412,7 +412,7 @@ public open class NetworkStateInfo(
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             Logx.w("SDK_INT >= Build.VERSION_CODES.S Your Version is ${Build.VERSION.SDK_INT}")
         }
-        val tm =uSimTelepnohyManagerList[simSlotIndex]
+        val tm =uSimTelephonyManagerList[simSlotIndex]
         val callback =uSimTelephonyCallbackList[simSlotIndex]
         if(callback == null || tm == null) {
             throw Exception("telephonyCallbackList[$simSlotIndex] is null")
@@ -453,7 +453,7 @@ public open class NetworkStateInfo(
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             throw Exception("SDK_INT >= Build.VERSION_CODES.S Your Version is ${Build.VERSION.SDK_INT}")
         }
-        val tm =uSimTelepnohyManagerList[simSlotIndex]
+        val tm =uSimTelephonyManagerList[simSlotIndex]
         val callback =uSimTelephonyCallbackList[simSlotIndex]
         if(callback == null || tm == null) {
             throw Exception("telephonyCallbackList[$simSlotIndex] is null")
@@ -491,7 +491,7 @@ public open class NetworkStateInfo(
 
     @RequiresApi(Build.VERSION_CODES.S)
     public fun unregisterCallBack(simSlotIndex: Int) {
-        val tm = uSimTelepnohyManagerList[simSlotIndex]
+        val tm = uSimTelephonyManagerList[simSlotIndex]
         val callback = uSimTelephonyCallbackList[simSlotIndex]
         if (callback == null || tm == null) {
             throw Exception("telephonyCallbackList[$simSlotIndex] is null")
