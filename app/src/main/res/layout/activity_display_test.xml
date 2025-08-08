@@ -69,7 +69,6 @@
                 android:text="테스트 실행\nRun Tests"
                 android:textSize="12sp"
                 android:padding="12dp"
-                android:background="@drawable/button_primary"
                 android:textColor="#FFFFFF" />
 
             <Button
@@ -81,7 +80,6 @@
                 android:text="로그 지우기\nClear Log"
                 android:textSize="12sp"
                 android:padding="12dp"
-                android:background="@drawable/button_secondary"
                 android:textColor="#333333" />
 
         </LinearLayout>
@@ -101,7 +99,6 @@
                 android:text="전통적 방식 테스트 / Traditional Approach Test"
                 android:textSize="12sp"
                 android:padding="12dp"
-                android:background="@drawable/button_outline"
                 android:textColor="#666666" />
 
             <Button
@@ -112,7 +109,6 @@
                 android:text="Result 패턴 테스트 / Result Pattern Test"
                 android:textSize="12sp"
                 android:padding="12dp"
-                android:background="@drawable/button_outline"
                 android:textColor="#666666" />
 
             <Button
@@ -123,7 +119,6 @@
                 android:text="편리한 방식 테스트 / Convenient Approach Test"
                 android:textSize="12sp"
                 android:padding="12dp"
-                android:background="@drawable/button_outline"
                 android:textColor="#666666" />
 
             <Button
@@ -133,7 +128,6 @@
                 android:text="메서드 체이닝 테스트 / Method Chaining Test"
                 android:textSize="12sp"
                 android:padding="12dp"
-                android:background="@drawable/button_outline"
                 android:textColor="#666666" />
 
         </LinearLayout>
