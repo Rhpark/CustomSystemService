@@ -27,6 +27,7 @@ import androidx.core.util.forEach
 import kr.open.library.logcat.Logx
 import kr.open.library.permissions.extensions.hasPermissions
 import kr.open.library.systemmanager.base.BaseSystemService
+import kr.open.library.systemmanager.base.Result
 import kr.open.library.systemmanager.extenstions.checkSdkVersion
 import kr.open.library.systemmanager.extenstions.getConnectivityManager
 import kr.open.library.systemmanager.extenstions.getEuiccManager
@@ -103,7 +104,21 @@ public open class NetworkStateInfo(
     public fun getMaximumUSimCount(): Int = subscriptionManager.activeSubscriptionInfoCountMax
 
     @RequiresPermission(READ_PHONE_STATE)
-    public fun getActiveSimCount():Int = subscriptionManager.activeSubscriptionInfoCount
+    public fun getActiveSimCount(): Int = getActiveSimCountInternal().getOrElse { 0 }
+    
+    /**
+     * 활성 SIM 수 반환 (Result 패턴)
+     * Get active SIM count (Result pattern)
+     */
+    @RequiresPermission(READ_PHONE_STATE)
+    private fun getActiveSimCountInternal(): Result<Int> {
+        return NetworkStateInfoInternal.safeExecuteWithPermission(
+            operation = "getActiveSimCount",
+            requiredPermissions = listOf(READ_PHONE_STATE)
+        ) {
+            subscriptionManager.activeSubscriptionInfoCount
+        }
+    }
 
 
     @RequiresPermission(READ_PHONE_STATE)
@@ -157,20 +172,26 @@ public open class NetworkStateInfo(
      * @return Default subscription ID or null
      */
     @RequiresPermission(READ_PHONE_STATE)
-    public fun getSubIdFromDefaultUSim(): Int? = try {
-        isReadSimInfoFromDefaultUSim = false
+    public fun getSubIdFromDefaultUSim(): Int? = getSubIdFromDefaultUSimInternal().getOrNull()
+    
+    /**
+     * 기본 subscription ID를 반환 (Result 패턴)
+     * Returns the default subscription ID (Result pattern)
+     */
+    @RequiresPermission(READ_PHONE_STATE)
+    private fun getSubIdFromDefaultUSimInternal(): Result<Int?> {
+        return NetworkStateInfoInternal.safeExecuteTelephonyOperation(
+            operation = "getSubIdFromDefaultUSim"
+        ) {
+            isReadSimInfoFromDefaultUSim = false
 
-        val id  = checkSdkVersion(Build.VERSION_CODES.R,
-            positiveWork = {    telephonyManager.subscriptionId    },
-            negativeWork = {    getActiveSubscriptionInfoList().firstOrNull()?.subscriptionId /* 첫 번째 활성화된 subscription의 ID 반환*/  }
-        )
-        isReadSimInfoFromDefaultUSim = if(id == null)  false
-        else true
-        id
-    } catch (e: NoSuchMethodError) {
-        Logx.e("Can not read uSim Chip, subId = -1, e = $e")
-        isReadSimInfoFromDefaultUSim = false
-        null
+            val id = checkSdkVersion(Build.VERSION_CODES.R,
+                positiveWork = { telephonyManager.subscriptionId },
+                negativeWork = { getActiveSubscriptionInfoListInternal().getOrNull()?.firstOrNull()?.subscriptionId }
+            )
+            isReadSimInfoFromDefaultUSim = id != null
+            id
+        }
     }
 
     @RequiresPermission(READ_PHONE_STATE)
@@ -196,8 +217,22 @@ public open class NetworkStateInfo(
      * @return List of active subscription information
      */
     @RequiresPermission(READ_PHONE_STATE)
-    public fun getActiveSubscriptionInfoList(): List<SubscriptionInfo> =
-        subscriptionManager.activeSubscriptionInfoList ?: emptyList()
+    public fun getActiveSubscriptionInfoList(): List<SubscriptionInfo> = 
+        getActiveSubscriptionInfoListInternal().getOrElse { emptyList() }
+    
+    /**
+     * 활성화된 모든 subscription 정보 목록 반환 (Result 패턴)
+     * Returns a list of all active subscription information (Result pattern)
+     */
+    @RequiresPermission(READ_PHONE_STATE)
+    private fun getActiveSubscriptionInfoListInternal(): Result<List<SubscriptionInfo>> {
+        return NetworkStateInfoInternal.safeExecuteWithPermission(
+            operation = "getActiveSubscriptionInfoList",
+            requiredPermissions = listOf(READ_PHONE_STATE)
+        ) {
+            subscriptionManager.activeSubscriptionInfoList ?: emptyList()
+        }
+    }
 
 
     /**
@@ -685,12 +720,19 @@ public open class NetworkStateInfo(
      * @Returns true if the network is connected.
      */
     @RequiresPermission(ACCESS_NETWORK_STATE)
-    public fun isNetworkConnected() :Boolean {
-
-        val caps = getCapabilities()
-        val linkProperties = getLinkProperties()
-
-        return (caps != null) && (linkProperties != null)
+    public fun isNetworkConnected(): Boolean = isNetworkConnectedInternal().getOrElse { false }
+    
+    /**
+     * 네트워크 연결 여부를 확인 (Result 패턴)
+     * Checks if the network is connected (Result pattern)
+     */
+    @RequiresPermission(ACCESS_NETWORK_STATE)
+    private fun isNetworkConnectedInternal(): Result<Boolean> {
+        return NetworkStateInfoInternal.safeExecuteNetworkOperation("isNetworkConnected") {
+            val caps = getCapabilitiesInternal().getOrNull()
+            val linkProperties = getLinkPropertiesInternal().getOrNull()
+            (caps != null) && (linkProperties != null)
+        }
     }
 
     /**
@@ -698,10 +740,32 @@ public open class NetworkStateInfo(
      * Returns the NetworkCapabilities of the current network.
      */
     @RequiresPermission(ACCESS_NETWORK_STATE)
-    public fun getCapabilities() : NetworkCapabilities? = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
+    public fun getCapabilities(): NetworkCapabilities? = getCapabilitiesInternal().getOrNull()
+    
+    /**
+     * 현재 네트워크의 NetworkCapabilities를 반환 (Result 패턴)
+     * Returns the NetworkCapabilities of the current network (Result pattern)
+     */
+    @RequiresPermission(ACCESS_NETWORK_STATE)
+    private fun getCapabilitiesInternal(): Result<NetworkCapabilities?> {
+        return NetworkStateInfoInternal.safeExecuteNetworkOperation("getCapabilities") {
+            connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
+        }
+    }
 
     @RequiresPermission(ACCESS_NETWORK_STATE)
-    public fun getLinkProperties() : LinkProperties? = connectivityManager.getLinkProperties(connectivityManager.activeNetwork)
+    public fun getLinkProperties(): LinkProperties? = getLinkPropertiesInternal().getOrNull()
+    
+    /**
+     * 현재 네트워크의 LinkProperties를 반환 (Result 패턴)
+     * Returns the LinkProperties of the current network (Result pattern)
+     */
+    @RequiresPermission(ACCESS_NETWORK_STATE)
+    private fun getLinkPropertiesInternal(): Result<LinkProperties?> {
+        return NetworkStateInfoInternal.safeExecuteNetworkOperation("getLinkProperties") {
+            connectivityManager.getLinkProperties(connectivityManager.activeNetwork)
+        }
+    }
 
     @RequiresPermission(ACCESS_NETWORK_STATE)
     public fun isConnectedWifi(): Boolean = getCapabilities()?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ?: false
