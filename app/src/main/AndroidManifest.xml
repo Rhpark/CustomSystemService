@@ -105,13 +105,6 @@
             android:exported="false"
             android:label="Location Service Test"
             android:parentActivityName=".MainActivity" />
-
-        <!-- Display Test Activity -->
-        <activity
-            android:name=".DisplayTestActivity"
-            android:exported="false"
-            android:label="Display Test"
-            android:parentActivityName=".MainActivity" />
     </application>
 
 </manifest>
