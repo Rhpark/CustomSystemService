@@ -1,4 +1,4 @@
-package kr.open.rhpark.library.domain.common.systemmanager.info.network
+package kr.open.library.systemmanager.info.network
 
 import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.Manifest.permission.ACCESS_NETWORK_STATE
