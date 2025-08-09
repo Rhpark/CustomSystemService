@@ -11,7 +11,6 @@ import android.net.LinkProperties
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
-import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.Handler
 import android.telephony.PhoneStateListener
@@ -33,7 +32,7 @@ import kr.open.library.systemmanager.extenstions.getConnectivityManager
 import kr.open.library.systemmanager.extenstions.getEuiccManager
 import kr.open.library.systemmanager.extenstions.getSubscriptionManager
 import kr.open.library.systemmanager.extenstions.getTelephonyManager
-import kr.open.library.systemmanager.extenstions.getWifiManager
+import kr.open.library.systemmanager.controller.wifi.WifiController
 import kr.open.library.systemmanager.info.network.connectivity.callback.NetworkStateCallback
 import kr.open.library.systemmanager.info.network.connectivity.data.NetworkCapabilitiesData
 import kr.open.library.systemmanager.info.network.connectivity.data.NetworkLinkPropertiesData
@@ -59,7 +58,7 @@ public open class NetworkStateInfo(
     public val telephonyManager: TelephonyManager by lazy { context.getTelephonyManager() }
     public val subscriptionManager: SubscriptionManager by lazy {   context.getSubscriptionManager() }
     public val connectivityManager: ConnectivityManager by lazy {   context.getConnectivityManager() }
-    public val wifiManager: WifiManager by lazy {   context.getWifiManager() }
+    public val wifiController: WifiController by lazy { WifiController(context) }
     public val euiccManager: EuiccManager by lazy { context.getEuiccManager() }
 
     private val uSimTelephonyManagerList = SparseArray<TelephonyManager>()
@@ -792,7 +791,7 @@ public open class NetworkStateInfo(
     @RequiresApi(Build.VERSION_CODES.S)
     public fun isConnectedUSB(): Boolean = getCapabilities()?.hasTransport(NetworkCapabilities.TRANSPORT_USB) ?: false
 
-    public fun isWifiOn(): Boolean = wifiManager.isWifiEnabled
+    public fun isWifiOn(): Boolean = wifiController.isWifiEnabled()
 
     /**
      * 네트워크 상태 콜백을 등록.
@@ -879,6 +878,7 @@ public open class NetworkStateInfo(
         }
         unregisterNetworkCallback()
         unregisterDefaultNetworkCallback()
+        wifiController.onDestroy()
     }
 
     /**

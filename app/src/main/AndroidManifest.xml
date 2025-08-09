@@ -105,6 +105,13 @@
             android:exported="false"
             android:label="Location Service Test"
             android:parentActivityName=".MainActivity" />
+
+        <!-- WiFi Test Activity -->
+        <activity
+            android:name=".WifiTestActivity"
+            android:exported="false"
+            android:label="WiFi Controller Test"
+            android:parentActivityName=".MainActivity" />
     </application>
 
 </manifest>

@@ -73,6 +73,10 @@ class MainActivity : AppCompatActivity() {
         binding.btnLocationTest.setOnClickListener {
             navigateToLocationTest()
         }
+        
+        binding.btnWifiTest.setOnClickListener {
+            navigateToWifiTest()
+        }
     }
     
     /**
@@ -144,6 +148,15 @@ class MainActivity : AppCompatActivity() {
      */
     private fun navigateToLocationTest() {
         val intent = Intent(this, LocationTestActivity::class.java)
+        startActivity(intent)
+    }
+    
+    /**
+     * Navigates to the WifiTestActivity for testing WiFi controller functionality.
+     * WiFi 컨트롤러 기능을 테스트하기 위해 WifiTestActivity로 이동합니다.
+     */
+    private fun navigateToWifiTest() {
+        val intent = Intent(this, WifiTestActivity::class.java)
         startActivity(intent)
     }
 }
