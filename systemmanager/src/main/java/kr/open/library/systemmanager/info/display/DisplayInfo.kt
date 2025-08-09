@@ -34,15 +34,16 @@ import kr.open.library.systemmanager.extenstions.getWindowManager
  * 
  * // Safe approach with Result pattern
  * // Result 패턴을 사용한 안전한 방식
- * displayInfo.getStatusBarHeightSafe()
- *     .onSuccess { height -> 
+ * displayInfo.getStatusBarHeightSafe().fold(
+ *     onSuccess = { height -> 
  *         // Use height safely
  *         // 높이를 안전하게 사용
- *     }
- *     .onFailure { error -> 
+ *     },
+ *     onFailure = { error -> 
  *         // Handle error gracefully
  *         // 오류를 우아하게 처리
  *     }
+ * )
  * 
  * // Convenient approach with default values
  * // 기본값을 사용한 편리한 방식

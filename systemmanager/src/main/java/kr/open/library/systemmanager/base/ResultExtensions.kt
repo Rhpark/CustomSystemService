@@ -13,7 +13,14 @@ package kr.open.library.systemmanager.base
  * @param action Result에 SystemServiceError가 포함된 경우 실행할 액션
  * @return The original Result for chaining
  * @return 체이닝을 위한 원래 Result
+ * 
+ * @deprecated Use fold() pattern instead: result.fold(onSuccess = { ... }, onFailure = { error -> when(error) { is SystemServiceException -> ... } })
+ * @deprecated fold() 패턴을 사용하세요: result.fold(onSuccess = { ... }, onFailure = { error -> when(error) { is SystemServiceException -> ... } })
  */
+@Deprecated(
+    message = "Use fold() pattern instead for better functional programming style and consistency",
+    replaceWith = ReplaceWith("fold(onSuccess = { /* success handler */ }, onFailure = { error -> when (error) { is SystemServiceException -> action(error.error) } })")
+)
 inline fun <T> Result<T>.onSystemServiceFailure(action: (error: SystemServiceError) -> Unit): Result<T> {
     if (isFailure) {
         val exception = exceptionOrNull()
@@ -38,7 +45,14 @@ inline fun <T> Result<T>.onSystemServiceFailure(action: (error: SystemServiceErr
 /**
  * Extension function similar to onFailure but specifically for SystemServiceException.
  * onFailure와 유사하지만 SystemServiceException을 위한 확장 함수입니다.
+ * 
+ * @deprecated Use fold() pattern instead: result.fold(onSuccess = { ... }, onFailure = { error -> when(error) { is SystemServiceException -> action(error) } })
+ * @deprecated fold() 패턴을 사용하세요: result.fold(onSuccess = { ... }, onFailure = { error -> when(error) { is SystemServiceException -> action(error) } })
  */
+@Deprecated(
+    message = "Use fold() pattern instead for better functional programming style and consistency",
+    replaceWith = ReplaceWith("fold(onSuccess = { /* success handler */ }, onFailure = { error -> when (error) { is SystemServiceException -> action(error) } })")
+)
 inline fun <T> Result<T>.onSystemServiceException(action: (exception: SystemServiceException) -> Unit): Result<T> {
     if (isFailure) {
         val exception = exceptionOrNull()

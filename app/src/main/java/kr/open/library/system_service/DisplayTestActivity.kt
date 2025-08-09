@@ -11,7 +11,7 @@ import kr.open.library.system_service.R
 import kr.open.library.system_service.databinding.ActivityDisplayTestBinding
 import kr.open.library.systemmanager.info.display.DisplayInfo
 import kr.open.library.systemmanager.base.SystemServiceError
-import kr.open.library.systemmanager.base.onSystemServiceFailure
+import kr.open.library.systemmanager.base.SystemServiceException
 import kr.open.library.systemmanager.base.getDeveloperMessage
 import kr.open.library.systemmanager.base.getUserMessage
 
@@ -164,37 +164,64 @@ class DisplayTestActivity : AppCompatActivity() {
 
     private fun testResultPatternApproach(results: StringBuilder) {
         // 상태바 높이 테스트
-        displayInfo.getStatusBarHeightSafe()
-            .onSuccess { height ->
+        displayInfo.getStatusBarHeightSafe().fold(
+            onSuccess = { height ->
                 results.append("✅ 상태바 높이: ${height}px\n")
                 Logx.d("Status bar height: ${height}px")
+            },
+            onFailure = { throwable ->
+                when (throwable) {
+                    is SystemServiceException -> {
+                        results.append("❌ 상태바 높이 조회 실패: ${throwable.error.getUserMessage()}\n")
+                        Logx.w("Status bar height failed: ${throwable.error.getDeveloperMessage()}")
+                    }
+                    else -> {
+                        results.append("❌ 상태바 높이 조회 실패: ${throwable.message}\n")
+                        Logx.w("Status bar height failed: ${throwable.message}")
+                    }
+                }
             }
-            .onSystemServiceFailure { error ->
-                results.append("❌ 상태바 높이 조회 실패: ${error.getUserMessage()}\n")
-                Logx.w("Status bar height failed: ${error.getDeveloperMessage()}")
-            }
+        )
 
         // 네비게이션바 높이 테스트
-        displayInfo.getNavigationBarHeightSafe()
-            .onSuccess { height ->
+        displayInfo.getNavigationBarHeightSafe().fold(
+            onSuccess = { height ->
                 results.append("✅ 네비게이션바 높이: ${height}px\n")
                 Logx.d("Navigation bar height: ${height}px")
+            },
+            onFailure = { throwable ->
+                when (throwable) {
+                    is SystemServiceException -> {
+                        results.append("❌ 네비게이션바 높이 조회 실패: ${throwable.error.getUserMessage()}\n")
+                        Logx.w("Navigation bar height failed: ${throwable.error.getDeveloperMessage()}")
+                    }
+                    else -> {
+                        results.append("❌ 네비게이션바 높이 조회 실패: ${throwable.message}\n")
+                        Logx.w("Navigation bar height failed: ${throwable.message}")
+                    }
+                }
             }
-            .onSystemServiceFailure { error ->
-                results.append("❌ 네비게이션바 높이 조회 실패: ${error.getUserMessage()}\n")
-                Logx.w("Navigation bar height failed: ${error.getDeveloperMessage()}")
-            }
+        )
 
         // 화면 크기 테스트
-        displayInfo.getScreenSafe()
-            .onSuccess { screen ->
+        displayInfo.getScreenSafe().fold(
+            onSuccess = { screen ->
                 results.append("✅ 화면 크기: ${screen.x} x ${screen.y}\n")
                 Logx.d("Screen size: ${screen.x} x ${screen.y}")
+            },
+            onFailure = { throwable ->
+                when (throwable) {
+                    is SystemServiceException -> {
+                        results.append("❌ 화면 크기 조회 실패: ${throwable.error.getUserMessage()}\n")
+                        Logx.w("Screen size failed: ${throwable.error.getDeveloperMessage()}")
+                    }
+                    else -> {
+                        results.append("❌ 화면 크기 조회 실패: ${throwable.message}\n")
+                        Logx.w("Screen size failed: ${throwable.message}")
+                    }
+                }
             }
-            .onSystemServiceFailure { error ->
-                results.append("❌ 화면 크기 조회 실패: ${error.getUserMessage()}\n")
-                Logx.w("Screen size failed: ${error.getDeveloperMessage()}")
-            }
+        )
     }
 
     private fun testConvenientApproach(results: StringBuilder) {

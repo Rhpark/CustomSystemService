@@ -179,18 +179,19 @@ class LocationTestActivity : AppCompatActivity() {
 
     private fun getCurrentLocation() {
         lifecycleScope.launch {
-            locationStateInfo.getLocationResult()
-                .onSuccess { location ->
+            locationStateInfo.getLocationResult().fold(
+                onSuccess = { location ->
                     if (location != null) {
                         updateLocationDisplay(location)
                         appendLog("📍 현재 위치 조회 성공: ${location.latitude}, ${location.longitude}")
                     } else {
                         appendLog("❌ 현재 위치를 찾을 수 없음")
                     }
-                }
-                .onFailure { throwable ->
+                },
+                onFailure = { throwable ->
                     appendLog("❌ 위치 조회 실패: ${throwable.message}")
                 }
+            )
         }
     }
 
@@ -208,89 +209,105 @@ class LocationTestActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             locationStateInfo.registerLocationUpdateStartResult(provider, 1000L, 1.0f)
-                .onSuccess {
-                    appendLog("✅ 위치 업데이트 시작됨 (${provider})")
-                    binding.btnStopLocationUpdates.isEnabled = true
-                    binding.btnStartLocationUpdates.isEnabled = false
-                }
-                .onFailure { throwable ->
-                    appendLog("❌ 위치 업데이트 시작 실패: ${throwable.message}")
-                }
+                .fold(
+                    onSuccess = {
+                        appendLog("✅ 위치 업데이트 시작됨 (${provider})")
+                        binding.btnStopLocationUpdates.isEnabled = true
+                        binding.btnStartLocationUpdates.isEnabled = false
+                    },
+                    onFailure = { throwable ->
+                        appendLog("❌ 위치 업데이트 시작 실패: ${throwable.message}")
+                    }
+                )
         }
     }
 
     private fun stopLocationUpdates() {
         lifecycleScope.launch {
             locationStateInfo.unregisterLocationUpdateListenerResult()
-                .onSuccess {
-                    appendLog("⏹️ 위치 업데이트 중지됨")
-                    binding.btnStopLocationUpdates.isEnabled = false
-                    binding.btnStartLocationUpdates.isEnabled = true
-                }
-                .onFailure { throwable ->
-                    appendLog("❌ 위치 업데이트 중지 실패: ${throwable.message}")
-                }
+                .fold(
+                    onSuccess = {
+                        appendLog("⏹️ 위치 업데이트 중지됨")
+                        binding.btnStopLocationUpdates.isEnabled = false
+                        binding.btnStartLocationUpdates.isEnabled = true
+                    },
+                    onFailure = { throwable ->
+                        appendLog("❌ 위치 업데이트 중지 실패: ${throwable.message}")
+                    }
+                )
         }
     }
 
     private fun saveCurrentLocation() {
         lifecycleScope.launch {
             locationStateInfo.getLocationResult()
-                .onSuccess { location ->
-                    if (location != null) {
-                        val key = "current_location_${System.currentTimeMillis()}"
-                        locationStateInfo.saveApplyLocationResult(key, location)
-                            .onSuccess {
-                                appendLog("💾 위치 저장됨: $key")
-                                savedLocation = location
-                            }
-                            .onFailure { throwable ->
-                                appendLog("❌ 위치 저장 실패: ${throwable.message}")
-                            }
-                    } else {
-                        appendLog("❌ 저장할 위치 정보가 없음")
-                    }
-                }
+                .fold(
+                    onSuccess = { location ->
+                        if (location != null) {
+                            val key = "current_location_${System.currentTimeMillis()}"
+                            locationStateInfo.saveApplyLocationResult(key, location)
+                                .fold(
+                                    onSuccess = {
+                                        appendLog("💾 위치 저장됨: $key")
+                                        savedLocation = location
+                                    },
+                                    onFailure = { throwable ->
+                                        appendLog("❌ 위치 저장 실패: ${throwable.message}")
+                                    }
+                                )
+                        } else {
+                            appendLog("❌ 저장할 위치 정보가 없음")
+                        }
+                    },
+                    onFailure = { }
+                )
         }
     }
 
     private fun loadSavedLocation() {
         lifecycleScope.launch {
             locationStateInfo.getAllLocationKeysResult()
-                .onSuccess { keys ->
-                    if (keys.isNotEmpty()) {
-                        val latestKey = keys.last()
-                        locationStateInfo.loadLocationResult(latestKey)
-                            .onSuccess { location ->
-                                if (location != null) {
-                                    savedLocation = location
-                                    appendLog("📂 저장된 위치 로드됨: ${location.latitude}, ${location.longitude}")
-                                    binding.tvSavedLocation.text = "저장된 위치: ${location.latitude}, ${location.longitude}"
-                                } else {
-                                    appendLog("❌ 저장된 위치가 없음")
-                                }
-                            }
-                            .onFailure { throwable ->
-                                appendLog("❌ 위치 로드 실패: ${throwable.message}")
-                            }
-                    } else {
-                        appendLog("❌ 저장된 위치가 없음")
-                    }
-                }
+                .fold(
+                    onSuccess = { keys ->
+                        if (keys.isNotEmpty()) {
+                            val latestKey = keys.last()
+                            locationStateInfo.loadLocationResult(latestKey)
+                                .fold(
+                                    onSuccess = { location ->
+                                        if (location != null) {
+                                            savedLocation = location
+                                            appendLog("📂 저장된 위치 로드됨: ${location.latitude}, ${location.longitude}")
+                                            binding.tvSavedLocation.text = "저장된 위치: ${location.latitude}, ${location.longitude}"
+                                        } else {
+                                            appendLog("❌ 저장된 위치가 없음")
+                                        }
+                                    },
+                                    onFailure = { throwable ->
+                                        appendLog("❌ 위치 로드 실패: ${throwable.message}")
+                                    }
+                                )
+                        } else {
+                            appendLog("❌ 저장된 위치가 없음")
+                        }
+                    },
+                    onFailure = { }
+                )
         }
     }
 
     private fun clearAllSavedLocations() {
         lifecycleScope.launch {
             locationStateInfo.clearAllLocationsResult()
-                .onSuccess {
-                    appendLog("🗑️ 모든 저장된 위치 삭제됨")
-                    binding.tvSavedLocation.text = "저장된 위치: 없음"
-                    savedLocation = null
-                }
-                .onFailure { throwable ->
-                    appendLog("❌ 위치 삭제 실패: ${throwable.message}")
-                }
+                .fold(
+                    onSuccess = {
+                        appendLog("🗑️ 모든 저장된 위치 삭제됨")
+                        binding.tvSavedLocation.text = "저장된 위치: 없음"
+                        savedLocation = null
+                    },
+                    onFailure = { throwable ->
+                        appendLog("❌ 위치 삭제 실패: ${throwable.message}")
+                    }
+                )
         }
     }
 
@@ -303,26 +320,34 @@ class LocationTestActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             locationStateInfo.getLocationResult()
-                .onSuccess { currentLocation ->
-                    if (currentLocation != null) {
-                        locationStateInfo.calculateDistanceResult(currentLocation, saved)
-                            .onSuccess { distance ->
-                                locationStateInfo.calculateBearingResult(currentLocation, saved)
-                                    .onSuccess { bearing ->
-                                        appendLog("📏 현재 위치에서 저장된 위치까지:")
-                                        appendLog("   거리: ${distance.toInt()}m")
-                                        appendLog("   방향: ${bearing.toInt()}°")
-                                        
-                                        binding.tvDistanceInfo.text = "거리: ${distance.toInt()}m, 방향: ${bearing.toInt()}°"
+                .fold(
+                    onSuccess = { currentLocation ->
+                        if (currentLocation != null) {
+                            locationStateInfo.calculateDistanceResult(currentLocation, saved)
+                                .fold(
+                                    onSuccess = { distance ->
+                                        locationStateInfo.calculateBearingResult(currentLocation, saved)
+                                            .fold(
+                                                onSuccess = { bearing ->
+                                                    appendLog("📏 현재 위치에서 저장된 위치까지:")
+                                                    appendLog("   거리: ${distance.toInt()}m")
+                                                    appendLog("   방향: ${bearing.toInt()}°")
+                                                    
+                                                    binding.tvDistanceInfo.text = "거리: ${distance.toInt()}m, 방향: ${bearing.toInt()}°"
+                                                },
+                                                onFailure = { }
+                                            )
+                                    },
+                                    onFailure = { throwable ->
+                                        appendLog("❌ 계산 실패: ${throwable.message}")
                                     }
-                            }
-                            .onFailure { throwable ->
-                                appendLog("❌ 계산 실패: ${throwable.message}")
-                            }
-                    } else {
-                        appendLog("❌ 현재 위치를 찾을 수 없음")
-                    }
-                }
+                                )
+                        } else {
+                            appendLog("❌ 현재 위치를 찾을 수 없음")
+                        }
+                    },
+                    onFailure = { }
+                )
         }
     }
 
@@ -338,17 +363,29 @@ class LocationTestActivity : AppCompatActivity() {
             val results = mutableListOf<String>()
             
             locationStateInfo.isGpsEnabledResult()
-                .onSuccess { enabled -> results.add("GPS: ${if (enabled) "활성화" else "비활성화"}") }
+                .fold(
+                    onSuccess = { enabled -> results.add("GPS: ${if (enabled) "활성화" else "비활성화"}") },
+                    onFailure = { }
+                )
                 
             locationStateInfo.isNetworkEnabledResult()
-                .onSuccess { enabled -> results.add("Network: ${if (enabled) "활성화" else "비활성화"}") }
+                .fold(
+                    onSuccess = { enabled -> results.add("Network: ${if (enabled) "활성화" else "비활성화"}") },
+                    onFailure = { }
+                )
                 
             locationStateInfo.isPassiveEnabledResult()
-                .onSuccess { enabled -> results.add("Passive: ${if (enabled) "활성화" else "비활성화"}") }
+                .fold(
+                    onSuccess = { enabled -> results.add("Passive: ${if (enabled) "활성화" else "비활성화"}") },
+                    onFailure = { }
+                )
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 locationStateInfo.isFusedEnabledResult()
-                    .onSuccess { enabled -> results.add("Fused: ${if (enabled) "활성화" else "비활성화"}") }
+                    .fold(
+                        onSuccess = { enabled -> results.add("Fused: ${if (enabled) "활성화" else "비활성화"}") },
+                        onFailure = { }
+                    )
             }
 
             appendLog("📊 Provider 상태:")
