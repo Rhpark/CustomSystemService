@@ -20,6 +20,7 @@ import kr.open.library.logcat.Logx
 import kr.open.library.systemmanager.base.BaseSystemService
 import kr.open.library.systemmanager.base.SystemServiceError
 import kr.open.library.systemmanager.base.SystemServiceException
+import kr.open.library.systemmanager.controller.proxy.WifiCompatibilityProxy
 import kr.open.library.systemmanager.extenstions.getWifiManager
 import kr.open.library.systemmanager.extenstions.safeCatch
 import kr.open.library.systemmanager.extenstions.getConnectivityManager
@@ -49,6 +50,9 @@ public open class WifiController(context: Context) : BaseSystemService(
 
     public val wifiManager: WifiManager by lazy { context.getWifiManager() }
     private val connectivityManager by lazy { context.getConnectivityManager() }
+    
+    // WiFi 호환성 프록시 인스턴스
+    private val wifiCompatibilityProxy = WifiCompatibilityProxy(context)
 
     /**
      * WiFi 활성화 여부를 확인합니다.
@@ -110,14 +114,8 @@ public open class WifiController(context: Context) : BaseSystemService(
      * @return 설정 성공 여부 / Setting success status
      */
     @RequiresPermission(CHANGE_WIFI_STATE)
-    public fun setWifiEnabled(enabled: Boolean): Boolean = safeCatch("setWifiEnabled", false) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            Logx.w("WiFi control is deprecated on API 29+. User must enable manually.")
-            return@safeCatch false
-        }
-        
-        @Suppress("DEPRECATION")
-        wifiManager.setWifiEnabled(enabled)
+    public fun setWifiEnabled(enabled: Boolean): Boolean {
+        return wifiCompatibilityProxy.setWifiEnabled(enabled)
     }
 
     /**
@@ -161,35 +159,10 @@ public open class WifiController(context: Context) : BaseSystemService(
      * @return WiFi 연결 정보 또는 null / WiFi connection info or null
      */
     @RequiresPermission(ACCESS_WIFI_STATE)
-    public fun getConnectionInfo(): WifiInfo? = safeCatch("getConnectionInfo", null) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            // API 31+에서는 NetworkCallback을 통해 정보를 가져와야 함
-            Logx.w("WifiInfo may be restricted on API 31+. Consider using getConnectionInfoFromNetwork()")
-            return@safeCatch getConnectionInfoFromNetwork()
-        }
-        @Suppress("DEPRECATION")
-        wifiManager.connectionInfo
+    public fun getConnectionInfo(): WifiInfo? {
+        return wifiCompatibilityProxy.getConnectionInfo()
     }
 
-    /**
-     * NetworkCallback을 사용하여 현재 WiFi 연결 정보를 가져옵니다 (API 31+).
-     * Gets current WiFi connection information using NetworkCallback (API 31+).
-     * 
-     * @return WiFi 연결 정보 또는 null / WiFi connection info or null
-     */
-    @RequiresApi(Build.VERSION_CODES.S)
-    @RequiresPermission(ACCESS_WIFI_STATE)
-    private fun getConnectionInfoFromNetwork(): WifiInfo? = safeCatch("getConnectionInfoFromNetwork", null) {
-        val activeNetwork = connectivityManager.activeNetwork
-        val networkCapabilities = connectivityManager.getNetworkCapabilities(activeNetwork)
-        
-        if (networkCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true) {
-            // API 31+에서는 WifiInfo를 직접 가져올 수 없으므로 제한된 정보만 제공
-            // 실제 구현에서는 NetworkCallback을 등록하여 정보를 수집해야 함
-            return@safeCatch null
-        }
-        null
-    }
 
     /**
      * 현재 WiFi 연결 정보를 안전하게 가져옵니다 (Result 패턴).
@@ -202,12 +175,7 @@ public open class WifiController(context: Context) : BaseSystemService(
         return safeExecuteWithPermissionGuidance(
             operation = "getConnectionInfoSafe"
         ) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                Logx.w("WifiInfo may be restricted on API 31+. Using network-based approach")
-                return@safeExecuteWithPermissionGuidance getConnectionInfoFromNetwork()
-            }
-            @Suppress("DEPRECATION")
-            wifiManager.connectionInfo
+            wifiCompatibilityProxy.getConnectionInfo()
         }
     }
 
@@ -229,8 +197,8 @@ public open class WifiController(context: Context) : BaseSystemService(
      * @return 스캔 시작 성공 여부 / Scan start success status
      */
     @RequiresPermission(CHANGE_WIFI_STATE)
-    public fun startScan(): Boolean = safeCatch("startScan", false) {
-        wifiManager.startScan()
+    public fun startScan(): Boolean {
+        return wifiCompatibilityProxy.startScan()
     }
 
     /**
@@ -287,52 +255,10 @@ public open class WifiController(context: Context) : BaseSystemService(
      * @return 설정된 네트워크 목록 / List of configured networks
      */
     @RequiresPermission(allOf = [ACCESS_WIFI_STATE, ACCESS_FINE_LOCATION])
-    public fun getConfiguredNetworks(): List<WifiConfiguration> = safeCatch("getConfiguredNetworks", emptyList()) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            Logx.w("getConfiguredNetworks is deprecated on API 29+. Use WiFi suggestion API or WifiNetworkSuggestion instead.")
-            return@safeCatch emptyList()
-        }
-        
-        @Suppress("DEPRECATION")
-        wifiManager.configuredNetworks ?: emptyList()
+    public fun getConfiguredNetworks(): List<WifiConfiguration> {
+        return wifiCompatibilityProxy.getConfiguredNetworks()
     }
 
-    /**
-     * 현재 연결된 네트워크의 기본 정보를 가져옵니다 (API 29+).
-     * Gets basic information of currently connected network (API 29+).
-     * 
-     * @return 현재 연결된 네트워크 정보 또는 null / Current connected network info or null
-     */
-    @RequiresApi(Build.VERSION_CODES.Q)
-    @RequiresPermission(ACCESS_WIFI_STATE)
-    public fun getCurrentNetworkInfo(): NetworkInfo? = safeCatch("getCurrentNetworkInfo", null) {
-        val activeNetwork = connectivityManager.activeNetwork
-        val networkCapabilities = connectivityManager.getNetworkCapabilities(activeNetwork)
-        
-        if (networkCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true) {
-            // NetworkCapabilities를 통해 기본적인 네트워크 정보를 제공
-            return@safeCatch NetworkInfo(
-                isConnected = true,
-                hasInternet = networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET),
-                isValidated = networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED),
-                linkDownstreamBandwidthKbps = networkCapabilities.linkDownstreamBandwidthKbps,
-                linkUpstreamBandwidthKbps = networkCapabilities.linkUpstreamBandwidthKbps
-            )
-        }
-        null
-    }
-
-    /**
-     * 네트워크 정보를 나타내는 데이터 클래스
-     * Data class representing network information
-     */
-    data class NetworkInfo(
-        val isConnected: Boolean,
-        val hasInternet: Boolean,
-        val isValidated: Boolean,
-        val linkDownstreamBandwidthKbps: Int,
-        val linkUpstreamBandwidthKbps: Int
-    )
 
     /**
      * WiFi 연결 여부를 확인합니다.
@@ -508,55 +434,30 @@ public open class WifiController(context: Context) : BaseSystemService(
     }
 
     /**
-     * 현재 WiFi 네트워크의 상세 정보를 안전하게 가져옵니다 (API 31+용 현대적 접근).
-     * Safely gets detailed WiFi network information (modern approach for API 31+).
+     * 현대적 방식으로 WiFi 네트워크 상세 정보를 가져옵니다.
+     * Gets detailed WiFi network information using modern approach.
+     * 
+     * @return WifiNetworkDetails? WiFi 네트워크 상세 정보 / WiFi network details
+     */
+    @RequiresPermission(ACCESS_WIFI_STATE)
+    public fun getModernNetworkDetails(): WifiCompatibilityProxy.WifiNetworkDetails? {
+        return wifiCompatibilityProxy.getModernNetworkDetails()
+    }
+    
+    /**
+     * 현재 WiFi 네트워크의 상세 정보를 안전하게 가져옵니다 (Result 패턴).
+     * Safely gets detailed WiFi network information (Result pattern).
      * 
      * @return Result<WifiNetworkDetails?> WiFi 네트워크 상세 정보 / WiFi network details
      */
-    @RequiresApi(Build.VERSION_CODES.S)
     @RequiresPermission(ACCESS_WIFI_STATE)
-    public fun getWifiNetworkDetailsSafe(): Result<WifiNetworkDetails?> {
+    public fun getWifiNetworkDetailsSafe(): Result<WifiCompatibilityProxy.WifiNetworkDetails?> {
         return safeExecuteWithPermissionGuidance(
             operation = "getWifiNetworkDetailsSafe"
         ) {
-            val activeNetwork = connectivityManager.activeNetwork
-            val networkCapabilities = connectivityManager.getNetworkCapabilities(activeNetwork)
-            
-            if (networkCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true) {
-                val linkProperties = connectivityManager.getLinkProperties(activeNetwork)
-                
-                WifiNetworkDetails(
-                    isConnected = true,
-                    hasInternet = networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET),
-                    isValidated = networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED),
-                    isMetered = networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED).not(),
-                    linkDownstreamBandwidthKbps = networkCapabilities.linkDownstreamBandwidthKbps,
-                    linkUpstreamBandwidthKbps = networkCapabilities.linkUpstreamBandwidthKbps,
-                    interfaceName = linkProperties?.interfaceName,
-                    dnsServers = linkProperties?.dnsServers?.mapNotNull { it.hostAddress } ?: emptyList(),
-                    domains = linkProperties?.domains
-                )
-            } else {
-                null
-            }
+            wifiCompatibilityProxy.getModernNetworkDetails()
         }
     }
-
-    /**
-     * WiFi 네트워크 상세 정보를 나타내는 데이터 클래스 (현대적 접근용)
-     * Data class representing detailed WiFi network information (for modern approach)
-     */
-    data class WifiNetworkDetails(
-        val isConnected: Boolean,
-        val hasInternet: Boolean,
-        val isValidated: Boolean,
-        val isMetered: Boolean,
-        val linkDownstreamBandwidthKbps: Int,
-        val linkUpstreamBandwidthKbps: Int,
-        val interfaceName: String?,
-        val dnsServers: List<String>,
-        val domains: String?
-    )
 
     /**
      * 현재 연결된 WiFi의 기본 SSID를 안전하게 가져옵니다 (API 제한 고려).

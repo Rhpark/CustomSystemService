@@ -10,6 +10,7 @@ import android.os.VibratorManager
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import kr.open.library.systemmanager.base.BaseSystemService
+import kr.open.library.systemmanager.controller.proxy.VibratorCompatibilityProxy
 import kr.open.library.systemmanager.extenstions.checkSdkVersion
 import kr.open.library.systemmanager.extenstions.getVibrator
 import kr.open.library.systemmanager.extenstions.getVibratorManager
@@ -61,6 +62,9 @@ public open class VibratorController(context: Context) :
             )
         }
     }
+    
+    // 진동 호환성 프록시 인스턴스
+    private val vibratorCompatibilityProxy = VibratorCompatibilityProxy(context)
 
     /**
      * Creates a one-shot vibration with specified duration and amplitude.
@@ -74,21 +78,18 @@ public open class VibratorController(context: Context) :
      */
     @RequiresPermission(VIBRATE)
     public fun createOneShot(timer: Long, effect: Int = VibrationEffect.DEFAULT_AMPLITUDE): Boolean {
-        return safeCatch("createOneShot", false) {
-            checkSdkVersion(
-                Build.VERSION_CODES.Q,
-                positiveWork = {
-                    val oneShot = VibrationEffect.createOneShot(timer, effect)
-                    checkSdkVersion(
-                        Build.VERSION_CODES.S,
-                        positiveWork = { vibratorManager.vibrate(CombinedVibration.createParallel(oneShot)) },
-                        negativeWork = { vibrator.vibrate(oneShot) }
-                    )
-                },
-                negativeWork = { vibrator.vibrate(timer) }
-            )
-            true
-        }
+        return vibratorCompatibilityProxy.createOneShot(timer, effect)
+    }
+    
+    /**
+     * 단순 진동 실행 (지속시간만 지정)
+     * Simple vibration execution (duration only)
+     * 
+     * @param milliseconds 진동 지속 시간 (밀리초) / Vibration duration in milliseconds
+     */
+    @RequiresPermission(VIBRATE)
+    public fun vibrate(milliseconds: Long): Boolean {
+        return vibratorCompatibilityProxy.vibrate(milliseconds)
     }
 
     /**
@@ -100,48 +101,37 @@ public open class VibratorController(context: Context) :
      * 
      * @param vibrationEffectClick Predefined effect constant (e.g., VibrationEffect.EFFECT_CLICK)
      */
-    @RequiresApi(Build.VERSION_CODES.Q)
     @RequiresPermission(VIBRATE)
     public fun createPredefined(vibrationEffectClick: Int): Boolean {
-        return safeCatch("createPredefined", false) {
-            val effect = VibrationEffect.createPredefined(vibrationEffectClick)
-            checkSdkVersion(
-                Build.VERSION_CODES.S,
-                positiveWork = {
-                    vibratorManager.vibrate(CombinedVibration.createParallel(effect))
-                },
-                negativeWork = {
-                    vibrator.vibrate(effect)
-                }
-            )
-            true
-        }
+        return vibratorCompatibilityProxy.createPredefined(vibrationEffectClick)
     }
 
     /**
      * Creates a complex waveform vibration pattern with custom timing and amplitudes.
-     * Only available on Android 12+ (SDK 31+) with VibratorManager.
+     * Supports different APIs based on SDK version for backward compatibility.
      * 
      * 사용자 정의 타이밍과 강도로 복잡한 웨이브폼 진동 패턴을 생성합니다.
-     * 안드로이드 12+ (SDK 31+)의 VibratorManager에서만 사용 가능합니다.
+     * 하위 호환성을 위해 SDK 버전에 따라 다른 API를 지원합니다.
      *
      * @param times Timing values in milliseconds (타이밍 값, 밀리초 단위)
      * @param amplitudes Amplitude values (0-255) where 0 = motor off (강도 값 0-255, 0은 모터 끔)
      * @param repeat Index to start repeating from, -1 for no repeat (반복 시작 인덱스, -1은 반복 없음)
-     *               예: repeat=1이면 배열의 1번 인덱스부터 무한 반복
      */
-    @RequiresApi(Build.VERSION_CODES.S)
     @RequiresPermission(VIBRATE)
     public fun createWaveform(times: LongArray, amplitudes: IntArray, repeat: Int = -1): Boolean {
-        return safeCatch("createWaveform", false) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                val effectWave = VibrationEffect.createWaveform(times, amplitudes, repeat)
-                vibratorManager.vibrate(CombinedVibration.createParallel(effectWave))
-                true
-            } else {
-                false
-            }
-        }
+        return vibratorCompatibilityProxy.createWaveform(times, amplitudes, repeat)
+    }
+    
+    /**
+     * 패턴 진동 실행 (타이밍 배열만 사용)
+     * Pattern vibration execution (timing array only)
+     * 
+     * @param pattern 진동 패턴 배열 / Vibration pattern array
+     * @param repeat 반복 시작 인덱스, -1은 반복 없음 / Repeat start index, -1 for no repeat
+     */
+    @RequiresPermission(VIBRATE)
+    public fun vibratePattern(pattern: LongArray, repeat: Int = -1): Boolean {
+        return vibratorCompatibilityProxy.vibratePattern(pattern, repeat)
     }
 
     /**
@@ -153,13 +143,14 @@ public open class VibratorController(context: Context) :
      */
     @RequiresPermission(VIBRATE)
     public fun cancel(): Boolean {
-        return safeCatch("cancel", false) {
-            checkSdkVersion(
-                Build.VERSION_CODES.S,
-                positiveWork = { vibratorManager.cancel() },
-                negativeWork = { vibrator.cancel() }
-            )
-            true
-        }
+        return vibratorCompatibilityProxy.cancel()
+    }
+    
+    /**
+     * 진동 지원 여부를 확인합니다.
+     * Check if vibration is supported on this device.
+     */
+    public fun hasVibrator(): Boolean {
+        return vibratorCompatibilityProxy.hasVibrator()
     }
 }

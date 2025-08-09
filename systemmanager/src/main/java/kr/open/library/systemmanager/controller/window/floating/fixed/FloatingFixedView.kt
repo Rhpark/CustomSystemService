@@ -6,6 +6,7 @@ import android.os.Build
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager.LayoutParams
+import kr.open.library.systemmanager.controller.proxy.WindowCompatibilityProxy
 import kr.open.library.systemmanager.extenstions.checkSdkVersion
 import kr.open.library.systemmanager.extenstions.safeCatch
 
@@ -26,6 +27,9 @@ public open class FloatingFixedView(
     public val startX: Int,
     public val startY: Int
 ) {
+
+    // 윈도우 호환성 프록시 인스턴스 
+    private val windowCompatibilityProxy = WindowCompatibilityProxy(view.context)
 
     /**
      * 플로팅 뷰의 레이아웃 파라미터
@@ -48,33 +52,11 @@ public open class FloatingFixedView(
      */
     private fun getFloatingLayoutParam(): LayoutParams = safeCatch("getFloatingLayoutParam", 
         getDefaultLayoutParam()) {
-        checkSdkVersion(Build.VERSION_CODES.O, {
-            // Android O (API 26) 이상: TYPE_APPLICATION_OVERLAY 사용 (권장)
-            // Android O+ (API 26+): Use TYPE_APPLICATION_OVERLAY (recommended)
-            LayoutParams(
-                LayoutParams.WRAP_CONTENT,
-                LayoutParams.WRAP_CONTENT,
-                LayoutParams.TYPE_APPLICATION_OVERLAY,
-                LayoutParams.FLAG_NOT_FOCUSABLE or LayoutParams.FLAG_NOT_TOUCHABLE,
-                PixelFormat.TRANSLUCENT
-            )
-        }, {
-            // Android O 미만: 보안을 위해 TYPE_APPLICATION_OVERLAY 우선 사용
-            // Below Android O: Prefer TYPE_APPLICATION_OVERLAY for security
-            // 참고: TYPE_SYSTEM_ALERT는 보안 위험이 있으므로 최소한의 권한만 사용
-            LayoutParams(
-                LayoutParams.WRAP_CONTENT,
-                LayoutParams.WRAP_CONTENT,
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                    LayoutParams.TYPE_APPLICATION_OVERLAY
-                } else {
-                    // API 19 미만에서만 TYPE_SYSTEM_ALERT 사용 (레거시 지원)
-                    LayoutParams.TYPE_SYSTEM_ALERT
-                },
-                LayoutParams.FLAG_NOT_FOCUSABLE or LayoutParams.FLAG_NOT_TOUCHABLE,
-                PixelFormat.TRANSLUCENT
-            )
-        })
+        windowCompatibilityProxy.createSecureFloatingLayoutParams(
+            LayoutParams.WRAP_CONTENT,
+            LayoutParams.WRAP_CONTENT,
+            LayoutParams.FLAG_NOT_FOCUSABLE or LayoutParams.FLAG_NOT_TOUCHABLE
+        )
     }
 
     /**
@@ -102,4 +84,24 @@ public open class FloatingFixedView(
         LayoutParams.FLAG_NOT_FOCUSABLE,
         PixelFormat.TRANSLUCENT
     )
+    
+    /**
+     * 시스템 오버레이 권한이 필요한지 확인합니다.
+     * Check if system overlay permission is required.
+     * 
+     * @return 권한 필요 여부 / Whether permission is required
+     */
+    public fun requiresOverlayPermission(): Boolean {
+        return windowCompatibilityProxy.requiresOverlayPermission()
+    }
+    
+    /**
+     * 현재 윈도우 타입의 보안 레벨을 확인합니다.
+     * Check the security level of current window type.
+     * 
+     * @return 보안 레벨 / Security level
+     */
+    public fun getSecurityLevel(): WindowCompatibilityProxy.SecurityLevel {
+        return windowCompatibilityProxy.getWindowTypeSecurityLevel(params.type)
+    }
 }
