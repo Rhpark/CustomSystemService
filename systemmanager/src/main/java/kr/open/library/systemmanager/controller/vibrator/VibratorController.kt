@@ -10,7 +10,6 @@ import android.os.VibratorManager
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import kr.open.library.systemmanager.base.BaseSystemService
-import kr.open.library.systemmanager.controller.proxy.VibratorCompatibilityProxy
 import kr.open.library.systemmanager.extenstions.checkSdkVersion
 import kr.open.library.systemmanager.extenstions.getVibrator
 import kr.open.library.systemmanager.extenstions.getVibratorManager
@@ -62,9 +61,6 @@ public open class VibratorController(context: Context) :
             )
         }
     }
-    
-    // 진동 호환성 프록시 인스턴스
-    private val vibratorCompatibilityProxy = VibratorCompatibilityProxy(context)
 
     /**
      * Creates a one-shot vibration with specified duration and amplitude.
@@ -78,7 +74,24 @@ public open class VibratorController(context: Context) :
      */
     @RequiresPermission(VIBRATE)
     public fun createOneShot(timer: Long, effect: Int = VibrationEffect.DEFAULT_AMPLITUDE): Boolean {
-        return vibratorCompatibilityProxy.createOneShot(timer, effect)
+        return executeWithApiCompatibility(
+            operation = "createOneShot",
+            supportedApiLevel = Build.VERSION_CODES.Q,
+            modernApi = {
+                val oneShot = VibrationEffect.createOneShot(timer, effect)
+                if (isModernApiSupported(Build.VERSION_CODES.S)) {
+                    vibratorManager.vibrate(CombinedVibration.createParallel(oneShot))
+                } else {
+                    vibrator.vibrate(oneShot)
+                }
+                true
+            },
+            legacyApi = {
+                @Suppress("DEPRECATION")
+                vibrator.vibrate(timer)
+                true
+            }
+        ).getOrDefault(false)
     }
     
     /**
@@ -89,7 +102,24 @@ public open class VibratorController(context: Context) :
      */
     @RequiresPermission(VIBRATE)
     public fun vibrate(milliseconds: Long): Boolean {
-        return vibratorCompatibilityProxy.vibrate(milliseconds)
+        return executeWithDeprecatedFallback(
+            operation = "vibrate",
+            minimumApiLevel = Build.VERSION_CODES.Q,
+            modernBlock = {
+                val effect = VibrationEffect.createOneShot(milliseconds, VibrationEffect.DEFAULT_AMPLITUDE)
+                if (isModernApiSupported(Build.VERSION_CODES.S)) {
+                    vibratorManager.vibrate(CombinedVibration.createParallel(effect))
+                } else {
+                    vibrator.vibrate(effect)
+                }
+                true
+            },
+            deprecatedBlock = {
+                @Suppress("DEPRECATION")
+                vibrator.vibrate(milliseconds)
+                true
+            }
+        ).getOrDefault(false)
     }
 
     /**
@@ -103,7 +133,25 @@ public open class VibratorController(context: Context) :
      */
     @RequiresPermission(VIBRATE)
     public fun createPredefined(vibrationEffectClick: Int): Boolean {
-        return vibratorCompatibilityProxy.createPredefined(vibrationEffectClick)
+        return executeWithApiCompatibility(
+            operation = "createPredefined",
+            supportedApiLevel = Build.VERSION_CODES.Q,
+            modernApi = {
+                val predefinedEffect = VibrationEffect.createPredefined(vibrationEffectClick)
+                if (isModernApiSupported(Build.VERSION_CODES.S)) {
+                    vibratorManager.vibrate(CombinedVibration.createParallel(predefinedEffect))
+                } else {
+                    vibrator.vibrate(predefinedEffect)
+                }
+                true
+            },
+            legacyApi = {
+                // Fallback for older APIs - use simple vibration
+                @Suppress("DEPRECATION")
+                vibrator.vibrate(100) // Default 100ms for predefined effects
+                true
+            }
+        ).getOrDefault(false)
     }
 
     /**
@@ -119,7 +167,25 @@ public open class VibratorController(context: Context) :
      */
     @RequiresPermission(VIBRATE)
     public fun createWaveform(times: LongArray, amplitudes: IntArray, repeat: Int = -1): Boolean {
-        return vibratorCompatibilityProxy.createWaveform(times, amplitudes, repeat)
+        return executeWithApiCompatibility(
+            operation = "createWaveform",
+            supportedApiLevel = Build.VERSION_CODES.O,
+            modernApi = {
+                val waveformEffect = VibrationEffect.createWaveform(times, amplitudes, repeat)
+                if (isModernApiSupported(Build.VERSION_CODES.S)) {
+                    vibratorManager.vibrate(CombinedVibration.createParallel(waveformEffect))
+                } else {
+                    vibrator.vibrate(waveformEffect)
+                }
+                true
+            },
+            legacyApi = {
+                // Fallback for older APIs - use pattern vibration without amplitudes
+                @Suppress("DEPRECATION")
+                vibrator.vibrate(times, repeat)
+                true
+            }
+        ).getOrDefault(false)
     }
     
     /**
@@ -131,7 +197,24 @@ public open class VibratorController(context: Context) :
      */
     @RequiresPermission(VIBRATE)
     public fun vibratePattern(pattern: LongArray, repeat: Int = -1): Boolean {
-        return vibratorCompatibilityProxy.vibratePattern(pattern, repeat)
+        return executeWithDeprecatedFallback(
+            operation = "vibratePattern",
+            minimumApiLevel = Build.VERSION_CODES.O,
+            modernBlock = {
+                val waveformEffect = VibrationEffect.createWaveform(pattern, repeat)
+                if (isModernApiSupported(Build.VERSION_CODES.S)) {
+                    vibratorManager.vibrate(CombinedVibration.createParallel(waveformEffect))
+                } else {
+                    vibrator.vibrate(waveformEffect)
+                }
+                true
+            },
+            deprecatedBlock = {
+                @Suppress("DEPRECATION")
+                vibrator.vibrate(pattern, repeat)
+                true
+            }
+        ).getOrDefault(false)
     }
 
     /**
@@ -143,7 +226,19 @@ public open class VibratorController(context: Context) :
      */
     @RequiresPermission(VIBRATE)
     public fun cancel(): Boolean {
-        return vibratorCompatibilityProxy.cancel()
+        return executeWithApiCompatibility(
+            operation = "cancel",
+            supportedApiLevel = Build.VERSION_CODES.S,
+            modernApi = {
+                vibratorManager.cancel()
+                true
+            },
+            legacyApi = {
+                vibrator.cancel()
+                true
+            },
+            requiresPermission = true
+        ).getOrDefault(false)
     }
     
     /**
@@ -151,6 +246,16 @@ public open class VibratorController(context: Context) :
      * Check if vibration is supported on this device.
      */
     public fun hasVibrator(): Boolean {
-        return vibratorCompatibilityProxy.hasVibrator()
+        return executeWithApiCompatibility(
+            operation = "hasVibrator",
+            supportedApiLevel = Build.VERSION_CODES.S,
+            modernApi = {
+                vibratorManager.defaultVibrator.hasVibrator()
+            },
+            legacyApi = {
+                vibrator.hasVibrator()
+            },
+            requiresPermission = false
+        ).getOrDefault(false)
     }
 }

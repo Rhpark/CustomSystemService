@@ -298,6 +298,143 @@ public abstract class BaseSystemService(
         }
     }
 
+    // =================================================
+    // API Compatibility Support
+    // API 호환성 지원
+    // =================================================
+    
+    /**
+     * Executes operation with API level-specific fallback support.
+     * API 레벨별 대체 지원과 함께 작업을 실행합니다.
+     * 
+     * @param operation Operation name for logging / 로깅용 작업 이름
+     * @param supportedApiLevel Minimum API level for modern approach / 현대적 접근법을 위한 최소 API 레벨
+     * @param modernApi Modern API implementation / 현대적 API 구현
+     * @param legacyApi Legacy API implementation / 레거시 API 구현
+     * @param requiresPermission Whether this operation requires permissions / 이 작업에 권한이 필요한지 여부
+     */
+    protected inline fun <T> executeWithApiCompatibility(
+        operation: String,
+        supportedApiLevel: Int,
+        crossinline modernApi: () -> T,
+        crossinline legacyApi: () -> T,
+        requiresPermission: Boolean = true
+    ): Result<T> {
+        return safeExecute(operation, requiresPermission) {
+            if (Build.VERSION.SDK_INT >= supportedApiLevel) {
+                try {
+                    modernApi()
+                } catch (e: UnsupportedOperationException) {
+                    Logx.w("${this::class.simpleName}.$operation: Modern API failed, falling back to legacy")
+                    legacyApi()
+                } catch (e: NoSuchMethodError) {
+                    Logx.w("${this::class.simpleName}.$operation: Modern API not available, falling back to legacy")
+                    legacyApi()
+                }
+            } else {
+                legacyApi()
+            }
+        }
+    }
+    
+    /**
+     * Executes deprecated API with proper suppression and logging.
+     * 적절한 억제 및 로깅과 함께 deprecated API를 실행합니다.
+     * 
+     * @param operation Operation name / 작업 이름
+     * @param apiName Name of the deprecated API / deprecated API 이름
+     * @param replacementInfo Information about modern replacement / 현대적 대체재 정보
+     * @param requiresPermission Whether this operation requires permissions / 권한 필요 여부
+     * @param block Deprecated API call / deprecated API 호출
+     */
+    protected inline fun <T> executeDeprecatedApi(
+        operation: String,
+        apiName: String,
+        replacementInfo: String? = null,
+        requiresPermission: Boolean = true,
+        crossinline block: () -> T
+    ): Result<T> {
+        return safeExecute(operation, requiresPermission) {
+            if (replacementInfo != null) {
+                Logx.w("${this::class.simpleName}.$operation: Using deprecated $apiName. Consider migrating to $replacementInfo")
+            } else {
+                Logx.w("${this::class.simpleName}.$operation: Using deprecated $apiName")
+            }
+            block()
+        }
+    }
+    
+    /**
+     * Executes modern API with automatic fallback to deprecated version.
+     * deprecated 버전에 대한 자동 대체와 함께 현대적 API를 실행합니다.
+     * 
+     * @param operation Operation name / 작업 이름
+     * @param minimumApiLevel Minimum API level for modern implementation / 현대적 구현을 위한 최소 API 레벨
+     * @param modernBlock Modern API implementation / 현대적 API 구현
+     * @param deprecatedBlock Deprecated API fallback / deprecated API 대체
+     * @param requiresPermission Whether this operation requires permissions / 권한 필요 여부
+     */
+    protected inline fun <T> executeWithDeprecatedFallback(
+        operation: String,
+        minimumApiLevel: Int,
+        crossinline modernBlock: () -> T,
+        crossinline deprecatedBlock: () -> T,
+        requiresPermission: Boolean = true
+    ): Result<T> {
+        return safeExecute(operation, requiresPermission) {
+            if (Build.VERSION.SDK_INT >= minimumApiLevel) {
+                try {
+                    val result = modernBlock()
+                    Logx.d("${this::class.simpleName}.$operation: Using modern API (SDK ${Build.VERSION.SDK_INT})")
+                    result
+                } catch (e: Exception) {
+                    Logx.w("${this::class.simpleName}.$operation: Modern API failed (${e.message}), falling back to deprecated")
+                    deprecatedBlock()
+                }
+            } else {
+                Logx.d("${this::class.simpleName}.$operation: Using deprecated API (SDK ${Build.VERSION.SDK_INT} < $minimumApiLevel)")
+                deprecatedBlock()
+            }
+        }
+    }
+    
+    /**
+     * Checks if current API level supports modern implementation.
+     * 현재 API 레벨이 현대적 구현을 지원하는지 확인합니다.
+     * 
+     * @param minimumApiLevel Required minimum API level / 필요한 최소 API 레벨
+     * @return true if modern API is supported / 현대적 API가 지원되면 true
+     */
+    protected fun isModernApiSupported(minimumApiLevel: Int): Boolean {
+        return Build.VERSION.SDK_INT >= minimumApiLevel
+    }
+    
+    /**
+     * Logs API compatibility information for debugging.
+     * 디버깅을 위한 API 호환성 정보를 로깅합니다.
+     * 
+     * @param operation Operation name / 작업 이름
+     * @param apiInfo API information / API 정보
+     */
+    protected fun logApiCompatibilityInfo(operation: String, apiInfo: String) {
+        Logx.d("${this::class.simpleName}.$operation: API Compatibility - $apiInfo (SDK ${Build.VERSION.SDK_INT})")
+    }
+    
+    /**
+     * Creates a standardized unsupported version error.
+     * 표준화된 지원되지 않는 버전 오류를 생성합니다.
+     * 
+     * @param apiName Name of the API / API 이름
+     * @param requiredApiLevel Required API level / 필요한 API 레벨
+     */
+    protected fun createUnsupportedVersionError(apiName: String, requiredApiLevel: Int): SystemServiceError {
+        return SystemServiceError.SystemService.UnsupportedVersion(
+            serviceName = apiName,
+            requiredApi = requiredApiLevel,
+            currentApi = Build.VERSION.SDK_INT
+        )
+    }
+
     /**
      * Called when the service is being destroyed. Override to perform cleanup.
      * 서비스가 소멸될 때 호출됩니다. 정리 작업을 수행하려면 재정의하세요.
