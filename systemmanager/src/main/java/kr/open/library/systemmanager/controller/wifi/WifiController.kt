@@ -327,13 +327,8 @@ public open class WifiController(context: Context) : BaseSystemService(
      * 
      * @return 5GHz 대역 지원 여부 / 5GHz band support status
      */
-    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     public fun is5GHzBandSupported(): Boolean = safeCatch("is5GHzBandSupported", false) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            wifiManager.is5GHzBandSupported
-        } else {
-            false
-        }
+        wifiManager.is5GHzBandSupported
     }
 
     /**
@@ -344,11 +339,7 @@ public open class WifiController(context: Context) : BaseSystemService(
      */
     @RequiresApi(Build.VERSION_CODES.R)
     public fun is6GHzBandSupported(): Boolean = safeCatch("is6GHzBandSupported", false) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            wifiManager.is6GHzBandSupported
-        } else {
-            false
-        }
+        wifiManager.is6GHzBandSupported
     }
 
     /**
@@ -359,11 +350,7 @@ public open class WifiController(context: Context) : BaseSystemService(
      */
     @RequiresApi(Build.VERSION_CODES.Q)
     public fun isWpa3SaeSupported(): Boolean = safeCatch("isWpa3SaeSupported", false) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            wifiManager.isWpa3SaeSupported
-        } else {
-            false
-        }
+        wifiManager.isWpa3SaeSupported
     }
 
     /**
@@ -374,11 +361,7 @@ public open class WifiController(context: Context) : BaseSystemService(
      */
     @RequiresApi(Build.VERSION_CODES.Q)
     public fun isEnhancedOpenSupported(): Boolean = safeCatch("isEnhancedOpenSupported", false) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            wifiManager.isEnhancedOpenSupported
-        } else {
-            false
-        }
+        wifiManager.isEnhancedOpenSupported
     }
 
     /**
