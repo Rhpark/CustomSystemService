@@ -22,6 +22,10 @@
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+    
+    <!-- Telephony permissions -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.READ_PHONE_NUMBERS" />
 
     <application
         android:allowBackup="true"
@@ -117,6 +121,13 @@
             android:name=".WifiTestActivity"
             android:exported="false"
             android:label="WiFi Controller Test"
+            android:parentActivityName=".MainActivity" />
+
+        <!-- Telephony Test Activity -->
+        <activity
+            android:name=".TelephonyTestActivity"
+            android:exported="false"
+            android:label="Telephony Information Test"
             android:parentActivityName=".MainActivity" />
     </application>
 

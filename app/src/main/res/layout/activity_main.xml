@@ -133,6 +133,16 @@
                     android:text="Test WiFi Controller"
                     android:textSize="18sp" />
 
+                <Button
+                    android:id="@+id/btnTelephonyTest"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:backgroundTint="@android:color/holo_purple"
+                    android:padding="16dp"
+                    android:text="Test Telephony Information"
+                    android:textSize="18sp" />
+
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

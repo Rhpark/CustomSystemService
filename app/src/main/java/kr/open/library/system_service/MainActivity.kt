@@ -77,6 +77,10 @@ class MainActivity : AppCompatActivity() {
         binding.btnWifiTest.setOnClickListener {
             navigateToWifiTest()
         }
+        
+        binding.btnTelephonyTest.setOnClickListener {
+            navigateToTelephonyTest()
+        }
     }
     
     /**
@@ -157,6 +161,15 @@ class MainActivity : AppCompatActivity() {
      */
     private fun navigateToWifiTest() {
         val intent = Intent(this, WifiTestActivity::class.java)
+        startActivity(intent)
+    }
+    
+    /**
+     * Navigates to the TelephonyTestActivity for testing telephony information functionality.
+     * 전화통신 정보 기능을 테스트하기 위해 TelephonyTestActivity로 이동합니다.
+     */
+    private fun navigateToTelephonyTest() {
+        val intent = Intent(this, TelephonyTestActivity::class.java)
         startActivity(intent)
     }
 }
