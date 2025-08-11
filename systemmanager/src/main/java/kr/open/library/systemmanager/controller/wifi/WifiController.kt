@@ -21,7 +21,6 @@ import kr.open.library.systemmanager.base.BaseSystemService
 import kr.open.library.systemmanager.base.SystemServiceError
 import kr.open.library.systemmanager.base.SystemServiceException
 import kr.open.library.systemmanager.extenstions.getWifiManager
-import kr.open.library.systemmanager.extenstions.safeCatch
 import kr.open.library.systemmanager.extenstions.getConnectivityManager
 
 /**
@@ -57,7 +56,10 @@ public open class WifiController(context: Context) : BaseSystemService(
      * @return WiFi 활성화 상태 / WiFi enabled status
      */
     @RequiresPermission(ACCESS_WIFI_STATE)
-    public fun isWifiEnabled(): Boolean = safeCatch("isWifiEnabled", false) {
+    public fun isWifiEnabled(): Boolean = safeExecuteOrDefault(
+        operation = "isWifiEnabled",
+        defaultValue = false
+    ) {
         wifiManager.isWifiEnabled
     }
 
@@ -83,7 +85,10 @@ public open class WifiController(context: Context) : BaseSystemService(
      * @return WiFi 상태 코드 (DISABLED, ENABLING, ENABLED, DISABLING, UNKNOWN)
      */
     @RequiresPermission(ACCESS_WIFI_STATE)
-    public fun getWifiState(): Int = safeCatch("getWifiState", WifiManager.WIFI_STATE_UNKNOWN) {
+    public fun getWifiState(): Int = safeExecuteOrDefault(
+        operation = "getWifiState",
+        defaultValue = WifiManager.WIFI_STATE_UNKNOWN
+    ) {
         wifiManager.wifiState
     }
 
@@ -188,7 +193,11 @@ public open class WifiController(context: Context) : BaseSystemService(
      * NetworkCapabilities를 통한 WiFi 정보 조회 (API 31+용)
      * WiFi info retrieval via NetworkCapabilities (for API 31+)
      */
-    private fun getConnectionInfoFromNetworkCapabilities(): WifiInfo? = safeCatch("getConnectionInfoFromNetworkCapabilities", null) {
+    private fun getConnectionInfoFromNetworkCapabilities(): WifiInfo? = safeExecuteOrDefault(
+        operation = "getConnectionInfoFromNetworkCapabilities",
+        defaultValue = null,
+        requiresPermission = false
+    ) {
         val activeNetwork = connectivityManager.activeNetwork
         val networkCapabilities = connectivityManager.getNetworkCapabilities(activeNetwork)
         
@@ -231,7 +240,10 @@ public open class WifiController(context: Context) : BaseSystemService(
      * @return DHCP 정보 또는 null / DHCP info or null
      */
     @RequiresPermission(ACCESS_WIFI_STATE)
-    public fun getDhcpInfo(): DhcpInfo? = safeCatch("getDhcpInfo", null) {
+    public fun getDhcpInfo(): DhcpInfo? = safeExecuteOrDefault(
+        operation = "getDhcpInfo",
+        defaultValue = null
+    ) {
         wifiManager.dhcpInfo
     }
 
@@ -282,7 +294,10 @@ public open class WifiController(context: Context) : BaseSystemService(
      * @return 스캔 결과 목록 / List of scan results
      */
     @RequiresPermission(allOf = [ACCESS_WIFI_STATE, ACCESS_FINE_LOCATION])
-    public fun getScanResults(): List<ScanResult> = safeCatch("getScanResults", emptyList()) {
+    public fun getScanResults(): List<ScanResult> = safeExecuteOrDefault(
+        operation = "getScanResults",
+        defaultValue = emptyList()
+    ) {
         wifiManager.scanResults ?: emptyList()
     }
 
@@ -333,7 +348,10 @@ public open class WifiController(context: Context) : BaseSystemService(
      * @return WiFi 연결 상태 / WiFi connection status
      */
     @RequiresPermission(android.Manifest.permission.ACCESS_NETWORK_STATE)
-    public fun isConnectedWifi(): Boolean = safeCatch("isConnectedWifi", false) {
+    public fun isConnectedWifi(): Boolean = safeExecuteOrDefault(
+        operation = "isConnectedWifi",
+        defaultValue = false
+    ) {
         val networkCapabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
         networkCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ?: false
     }
@@ -362,7 +380,11 @@ public open class WifiController(context: Context) : BaseSystemService(
      * @param numLevels 레벨 수 (일반적으로 4 또는 5) / Number of levels (typically 4 or 5)
      * @return 신호 레벨 (0부터 numLevels-1) / Signal level (0 to numLevels-1)
      */
-    public fun calculateSignalLevel(rssi: Int, numLevels: Int): Int = safeCatch("calculateSignalLevel", 0) {
+    public fun calculateSignalLevel(rssi: Int, numLevels: Int): Int = safeExecuteOrDefault(
+        operation = "calculateSignalLevel",
+        defaultValue = 0,
+        requiresPermission = false
+    ) {
         WifiManager.calculateSignalLevel(rssi, numLevels)
     }
 
@@ -374,7 +396,11 @@ public open class WifiController(context: Context) : BaseSystemService(
      * @param rssiB 두 번째 신호 강도 / Second signal strength  
      * @return 비교 결과 (-1, 0, 1) / Comparison result (-1, 0, 1)
      */
-    public fun compareSignalLevel(rssiA: Int, rssiB: Int): Int = safeCatch("compareSignalLevel", 0) {
+    public fun compareSignalLevel(rssiA: Int, rssiB: Int): Int = safeExecuteOrDefault(
+        operation = "compareSignalLevel",
+        defaultValue = 0,
+        requiresPermission = false
+    ) {
         WifiManager.compareSignalLevel(rssiA, rssiB)
     }
 
@@ -384,7 +410,11 @@ public open class WifiController(context: Context) : BaseSystemService(
      * 
      * @return 5GHz 대역 지원 여부 / 5GHz band support status
      */
-    public fun is5GHzBandSupported(): Boolean = safeCatch("is5GHzBandSupported", false) {
+    public fun is5GHzBandSupported(): Boolean = safeExecuteOrDefault(
+        operation = "is5GHzBandSupported",
+        defaultValue = false,
+        requiresPermission = false
+    ) {
         wifiManager.is5GHzBandSupported
     }
 
@@ -395,9 +425,13 @@ public open class WifiController(context: Context) : BaseSystemService(
      * @return 6GHz 대역 지원 여부 / 6GHz band support status
      */
     @RequiresApi(Build.VERSION_CODES.R)
-    public fun is6GHzBandSupported(): Boolean = safeCatch("is6GHzBandSupported", false) {
-        wifiManager.is6GHzBandSupported
-    }
+    public fun is6GHzBandSupported(): Boolean = executeWithApiCompatibility(
+        operation = "is6GHzBandSupported",
+        supportedApiLevel = Build.VERSION_CODES.R,
+        modernApi = { wifiManager.is6GHzBandSupported },
+        legacyApi = { false },
+        requiresPermission = false
+    ).getOrDefault(false)
 
     /**
      * WPA3 SAE 지원 여부를 확인합니다.
@@ -406,9 +440,13 @@ public open class WifiController(context: Context) : BaseSystemService(
      * @return WPA3 SAE 지원 여부 / WPA3 SAE support status
      */
     @RequiresApi(Build.VERSION_CODES.Q)
-    public fun isWpa3SaeSupported(): Boolean = safeCatch("isWpa3SaeSupported", false) {
-        wifiManager.isWpa3SaeSupported
-    }
+    public fun isWpa3SaeSupported(): Boolean = executeWithApiCompatibility(
+        operation = "isWpa3SaeSupported",
+        supportedApiLevel = Build.VERSION_CODES.Q,
+        modernApi = { wifiManager.isWpa3SaeSupported },
+        legacyApi = { false },
+        requiresPermission = false
+    ).getOrDefault(false)
 
     /**
      * Enhanced Open 지원 여부를 확인합니다.
@@ -417,9 +455,13 @@ public open class WifiController(context: Context) : BaseSystemService(
      * @return Enhanced Open 지원 여부 / Enhanced Open support status
      */
     @RequiresApi(Build.VERSION_CODES.Q)
-    public fun isEnhancedOpenSupported(): Boolean = safeCatch("isEnhancedOpenSupported", false) {
-        wifiManager.isEnhancedOpenSupported
-    }
+    public fun isEnhancedOpenSupported(): Boolean = executeWithApiCompatibility(
+        operation = "isEnhancedOpenSupported",
+        supportedApiLevel = Build.VERSION_CODES.Q,
+        modernApi = { wifiManager.isEnhancedOpenSupported },
+        legacyApi = { false },
+        requiresPermission = false
+    ).getOrDefault(false)
 
     /**
      * WiFi 재연결을 시도합니다.
@@ -428,7 +470,10 @@ public open class WifiController(context: Context) : BaseSystemService(
      * @return 재연결 시도 성공 여부 / Reconnection attempt success status
      */
     @RequiresPermission(CHANGE_WIFI_STATE)
-    public fun reconnect(): Boolean = safeCatch("reconnect", false) {
+    public fun reconnect(): Boolean = safeExecuteOrDefault(
+        operation = "reconnect",
+        defaultValue = false
+    ) {
         wifiManager.reconnect()
     }
 
@@ -439,7 +484,10 @@ public open class WifiController(context: Context) : BaseSystemService(
      * @return 재결합 시도 성공 여부 / Reassociation attempt success status
      */
     @RequiresPermission(CHANGE_WIFI_STATE)
-    public fun reassociate(): Boolean = safeCatch("reassociate", false) {
+    public fun reassociate(): Boolean = safeExecuteOrDefault(
+        operation = "reassociate",
+        defaultValue = false
+    ) {
         wifiManager.reassociate()
     }
 
@@ -450,7 +498,10 @@ public open class WifiController(context: Context) : BaseSystemService(
      * @return 연결 해제 성공 여부 / Disconnection success status
      */
     @RequiresPermission(CHANGE_WIFI_STATE)
-    public fun disconnect(): Boolean = safeCatch("disconnect", false) {
+    public fun disconnect(): Boolean = safeExecuteOrDefault(
+        operation = "disconnect",
+        defaultValue = false
+    ) {
         wifiManager.disconnect()
     }
 
@@ -461,7 +512,10 @@ public open class WifiController(context: Context) : BaseSystemService(
      * @return WiFi SSID 또는 null / WiFi SSID or null
      */
     @RequiresPermission(ACCESS_WIFI_STATE)
-    public fun getCurrentSsid(): String? = safeCatch("getCurrentSsid", null) {
+    public fun getCurrentSsid(): String? = safeExecuteOrDefault(
+        operation = "getCurrentSsid",
+        defaultValue = null
+    ) {
         val wifiInfo = getConnectionInfo()
         wifiInfo?.ssid?.removeSurrounding("\"")
     }
@@ -473,7 +527,10 @@ public open class WifiController(context: Context) : BaseSystemService(
      * @return WiFi BSSID 또는 null / WiFi BSSID or null
      */
     @RequiresPermission(ACCESS_WIFI_STATE)
-    public fun getCurrentBssid(): String? = safeCatch("getCurrentBssid", null) {
+    public fun getCurrentBssid(): String? = safeExecuteOrDefault(
+        operation = "getCurrentBssid",
+        defaultValue = null
+    ) {
         getConnectionInfo()?.bssid
     }
 
@@ -484,7 +541,10 @@ public open class WifiController(context: Context) : BaseSystemService(
      * @return 신호 강도 (dBm) / Signal strength in dBm
      */
     @RequiresPermission(ACCESS_WIFI_STATE)
-    public fun getCurrentRssi(): Int = safeCatch("getCurrentRssi", -127) {
+    public fun getCurrentRssi(): Int = safeExecuteOrDefault(
+        operation = "getCurrentRssi",
+        defaultValue = -127
+    ) {
         getConnectionInfo()?.rssi ?: -127
     }
 
@@ -495,7 +555,10 @@ public open class WifiController(context: Context) : BaseSystemService(
      * @return 링크 속도 (Mbps) / Link speed in Mbps
      */
     @RequiresPermission(ACCESS_WIFI_STATE)
-    public fun getCurrentLinkSpeed(): Int = safeCatch("getCurrentLinkSpeed", 0) {
+    public fun getCurrentLinkSpeed(): Int = safeExecuteOrDefault(
+        operation = "getCurrentLinkSpeed",
+        defaultValue = 0
+    ) {
         getConnectionInfo()?.linkSpeed ?: 0
     }
 

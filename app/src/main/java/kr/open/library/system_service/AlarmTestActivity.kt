@@ -178,9 +178,9 @@ class AlarmTestActivity : AppCompatActivity() {
             logMessage("Alarm type: $alarmType")
             
             val success = when (alarmType) {
-                "ALARM_CLOCK" -> alarmController.registerAlarmClock(TestAlarmReceiver::class.java, alarmDto)
-                "EXACT_IDLE" -> alarmController.registerAlarmExactAndAllowWhileIdle(TestAlarmReceiver::class.java, alarmDto)
-                "ALLOW_IDLE" -> alarmController.registerAlarmAndAllowWhileIdle(TestAlarmReceiver::class.java, alarmDto)
+                "ALARM_CLOCK" -> alarmController.registerAlarmClock(TestAlarmReceiver::class.java, alarmDto).isSuccess
+                "EXACT_IDLE" -> alarmController.registerAlarmExactAndAllowWhileIdle(TestAlarmReceiver::class.java, alarmDto).isSuccess
+                "ALLOW_IDLE" -> alarmController.registerAlarmAndAllowWhileIdle(TestAlarmReceiver::class.java, alarmDto).isSuccess
                 else -> false
             }
             
@@ -189,7 +189,7 @@ class AlarmTestActivity : AppCompatActivity() {
                 logMessage("Scheduled for: ${alarmDto.getFormattedTime()}")
                 
                 // Check if alarm exists
-                val exists = alarmController.exists(testAlarmId, TestAlarmReceiver::class.java)
+                val exists = alarmController.exists(testAlarmId, TestAlarmReceiver::class.java).getOrDefault(false)
                 logMessage("Alarm exists check: $exists")
             } else {
                 logMessage("❌ Failed to set alarm")
@@ -205,7 +205,7 @@ class AlarmTestActivity : AppCompatActivity() {
         try {
             logMessage("Cancelling alarm with ID: $testAlarmId")
             
-            val success = alarmController.remove(testAlarmId, TestAlarmReceiver::class.java)
+            val success = alarmController.remove(testAlarmId, TestAlarmReceiver::class.java).getOrDefault(false)
             
             if (success) {
                 logMessage("✅ Alarm cancelled successfully!")

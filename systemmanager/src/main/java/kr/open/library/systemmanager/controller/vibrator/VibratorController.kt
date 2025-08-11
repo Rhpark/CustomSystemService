@@ -13,7 +13,6 @@ import kr.open.library.systemmanager.base.BaseSystemService
 import kr.open.library.systemmanager.extenstions.checkSdkVersion
 import kr.open.library.systemmanager.extenstions.getVibrator
 import kr.open.library.systemmanager.extenstions.getVibratorManager
-import kr.open.library.systemmanager.extenstions.safeCatch
 
 /**
  * Controller for managing device vibration operations with backward compatibility.
@@ -33,7 +32,11 @@ public open class VibratorController(context: Context) :
      * SDK 31 미만 (안드로이드 12 이하) 버전용 레거시 진동 인스턴스입니다.
      */
     public val vibrator: Vibrator by lazy {
-        safeCatch("vibrator initialization", context.getVibrator()) {
+        safeExecuteOrDefault(
+            operation = "vibrator initialization",
+            defaultValue = context.getVibrator(),
+            requiresPermission = false
+        ) {
             checkSdkVersion(
                 Build.VERSION_CODES.S,
                 positiveWork = {
@@ -51,7 +54,11 @@ public open class VibratorController(context: Context) :
      */
     @get:RequiresApi(Build.VERSION_CODES.S)
     public val vibratorManager: VibratorManager by lazy {
-        safeCatch("vibratorManager initialization", context.getVibratorManager()) {
+        safeExecuteOrDefault(
+            operation = "vibratorManager initialization",
+            defaultValue = context.getVibratorManager(),
+            requiresPermission = false
+        ) {
             checkSdkVersion(
                 Build.VERSION_CODES.S,
                 positiveWork = { context.getVibratorManager() },

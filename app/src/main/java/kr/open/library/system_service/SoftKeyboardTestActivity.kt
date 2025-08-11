@@ -126,7 +126,7 @@ class SoftKeyboardTestActivity : AppCompatActivity() {
      * 기본 키보드 표시 기능을 시연합니다.
      */
     private fun demonstrateShowKeyboard() {
-        val success = softKeyboardController.show(binding.etTest1)
+        val success = softKeyboardController.show(binding.etTest1).getOrDefault(false)
         val message = if (success) "Keyboard shown successfully" else "Failed to show keyboard"
         updateStatus(message)
         showToast(message)
@@ -137,7 +137,7 @@ class SoftKeyboardTestActivity : AppCompatActivity() {
      * 기본 키보드 숨김 기능을 시연합니다.
      */
     private fun demonstrateHideKeyboard() {
-        val success = softKeyboardController.hide(binding.etTest1)
+        val success = softKeyboardController.hide(binding.etTest1).getOrDefault(false)
         val message = if (success) "Keyboard hidden successfully" else "Failed to hide keyboard"
         updateStatus(message)
         showToast(message)
@@ -148,7 +148,7 @@ class SoftKeyboardTestActivity : AppCompatActivity() {
      * 지연이 있는 키보드 표시 기능을 시연합니다.
      */
     private fun demonstrateShowWithDelay() {
-        val success = softKeyboardController.showDelay(binding.etTest2, 2000L)
+        val success = softKeyboardController.showDelay(binding.etTest2, 2000L).getOrDefault(false)
         val message = if (success) "Keyboard will show in 2 seconds..." else "Failed to schedule keyboard show"
         updateStatus(message)
         showToast(message)
@@ -159,7 +159,7 @@ class SoftKeyboardTestActivity : AppCompatActivity() {
      * 지연이 있는 키보드 숨김 기능을 시연합니다.
      */
     private fun demonstrateHideWithDelay() {
-        val success = softKeyboardController.hideDelay(binding.etTest2, 2000L)
+        val success = softKeyboardController.hideDelay(binding.etTest2, 2000L).getOrDefault(false)
         val message = if (success) "Keyboard will hide in 2 seconds..." else "Failed to schedule keyboard hide"
         updateStatus(message)
         showToast(message)
@@ -170,8 +170,8 @@ class SoftKeyboardTestActivity : AppCompatActivity() {
      * 코루틴 기반 지연이 있는 키보드 표시를 시연합니다.
      */
     private fun demonstrateShowCoroutineDelay() {
-        softKeyboardController.showDelay(binding.etTest1, 1500L, coroutineScope = lifecycleScope)
-        val message = "Keyboard will show in 1.5 seconds (coroutine)..."
+        val result = softKeyboardController.showDelay(binding.etTest1, 1500L, coroutineScope = lifecycleScope)
+        val message = if (result.isSuccess) "Keyboard will show in 1.5 seconds (coroutine)..." else "Failed to schedule keyboard show (coroutine)"
         updateStatus(message)
         showToast(message)
     }
@@ -181,8 +181,8 @@ class SoftKeyboardTestActivity : AppCompatActivity() {
      * 코루틴 기반 지연이 있는 키보드 숨김을 시연합니다.
      */
     private fun demonstrateHideCoroutineDelay() {
-        softKeyboardController.hideDelay(binding.etTest1, 1500L, coroutineScope = lifecycleScope)
-        val message = "Keyboard will hide in 1.5 seconds (coroutine)..."
+        val result = softKeyboardController.hideDelay(binding.etTest1, 1500L, coroutineScope = lifecycleScope)
+        val message = if (result.isSuccess) "Keyboard will hide in 1.5 seconds (coroutine)..." else "Failed to schedule keyboard hide (coroutine)"
         updateStatus(message)
         showToast(message)
     }
@@ -192,7 +192,7 @@ class SoftKeyboardTestActivity : AppCompatActivity() {
      * 윈도우 소프트 입력 모드를 adjust pan으로 설정하는 것을 시연합니다.
      */
     private fun demonstrateSetAdjustPan() {
-        val success = softKeyboardController.setAdjustPan(window)
+        val success = softKeyboardController.setAdjustPan(window).isSuccess
         val message = if (success) "Window mode set to ADJUST_PAN" else "Failed to set ADJUST_PAN"
         updateStatus(message)
         showToast(message)
@@ -206,7 +206,7 @@ class SoftKeyboardTestActivity : AppCompatActivity() {
         val success = softKeyboardController.setSoftInputMode(
             window, 
             WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
-        )
+        ).isSuccess
         val message = if (success) "Window mode set to ADJUST_RESIZE" else "Failed to set ADJUST_RESIZE"
         updateStatus(message)
         showToast(message)
@@ -218,7 +218,7 @@ class SoftKeyboardTestActivity : AppCompatActivity() {
      */
     private fun demonstrateStartStylusHandwriting() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val success = softKeyboardController.startStylusHandwriting(binding.etStylusTest)
+            val success = softKeyboardController.startStylusHandwriting(binding.etStylusTest).getOrDefault(false)
             val message = if (success) "Stylus handwriting started" else "Failed to start stylus handwriting"
             updateStatus(message)
             showToast(message)
@@ -235,7 +235,7 @@ class SoftKeyboardTestActivity : AppCompatActivity() {
      */
     private fun demonstrateStartStylusDelayed() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val success = softKeyboardController.startStylusHandwriting(binding.etStylusTest, 2000L)
+            val success = softKeyboardController.startStylusHandwriting(binding.etStylusTest, 2000L).getOrDefault(false)
             val message = if (success) "Stylus handwriting will start in 2 seconds..." else "Failed to schedule stylus handwriting"
             updateStatus(message)
             showToast(message)

@@ -173,15 +173,15 @@ public abstract class BaseAlarmReceiver() : BroadcastReceiver() {
     private fun registerAlarm(alarmController: AlarmController, alarmDto: AlarmDTO): Boolean =
         when (registerType) {
             RegisterType.ALARM_AND_ALLOW_WHILE_IDLE -> {
-                alarmController.registerAlarmAndAllowWhileIdle(classType, alarmDto)
+                alarmController.registerAlarmAndAllowWhileIdle(classType, alarmDto).isSuccess
             }
 
             RegisterType.ALARM_CLOCK -> {
-                alarmController.registerAlarmClock(classType, alarmDto)
+                alarmController.registerAlarmClock(classType, alarmDto).isSuccess
             }
 
             RegisterType.ALARM_EXACT_AND_ALLOW_WHILE_IDLE -> {
-                alarmController.registerAlarmExactAndAllowWhileIdle(classType, alarmDto)
+                alarmController.registerAlarmExactAndAllowWhileIdle(classType, alarmDto).isSuccess
             }
         }
 
