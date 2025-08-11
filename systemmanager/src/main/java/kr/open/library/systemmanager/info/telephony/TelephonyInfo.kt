@@ -8,6 +8,7 @@ import android.content.Context
 import android.os.Build
 import android.os.Handler
 import android.telephony.CellInfo
+import android.telephony.PhoneStateListener
 import android.telephony.ServiceState
 import android.telephony.SignalStrength
 import android.telephony.SubscriptionInfo
@@ -15,6 +16,7 @@ import android.telephony.SubscriptionManager
 import android.telephony.TelephonyCallback
 import android.telephony.TelephonyDisplayInfo
 import android.telephony.TelephonyManager
+import android.util.SparseArray
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,6 +34,7 @@ import kr.open.library.systemmanager.info.network.telephony.data.current.Current
 import kr.open.library.systemmanager.info.network.telephony.data.current.CurrentSignalStrength
 import kr.open.library.systemmanager.info.network.telephony.data.state.TelephonyNetworkState
 import java.util.concurrent.Executor
+import androidx.core.util.forEach
 
 /**
  * TelephonyInfo - 통합된 Telephony 정보 관리 클래스
@@ -47,6 +50,8 @@ import java.util.concurrent.Executor
  * - 네트워크 상태 추적 / Network state tracking
  * - API 호환성 처리 (TelephonyCallback vs PhoneStateListener) / API compatibility handling
  * - 멀티 SIM 지원 / Multi-SIM support
+ * - 슬롯별 콜백 관리 / Per-slot callback management
+ * - 고급 콜백 시스템 / Advanced callback system
  *
  * 필수 권한 / Required Permissions:
  * - android.permission.READ_PHONE_STATE (필수/Required)
@@ -71,6 +76,13 @@ import java.util.concurrent.Executor
  * telephonyInfo.registerCallback { state ->
  *     // 상태 변경 처리 / Handle state changes
  * }
+ * 
+ * // 슬롯별 콜백 등록 / Per-slot callback registration
+ * telephonyInfo.registerTelephonyCallBack(
+ *     simSlotIndex = 0,
+ *     executor = context.mainExecutor,
+ *     onSignalStrength = { signal -> /* 신호 강도 변경 */ }
+ * )
  * ```
  */
 public class TelephonyInfo(context: Context) : BaseSystemService(
@@ -107,6 +119,28 @@ public class TelephonyInfo(context: Context) : BaseSystemService(
     }
     
     // =================================================
+    // Multi-SIM Callback Management / 멀티 SIM 콜백 관리
+    // =================================================
+    
+    /**
+     * SIM 슬롯별 TelephonyManager 인스턴스 저장
+     * Stores TelephonyManager instances per SIM slot
+     */
+    private val uSimTelephonyManagerList = SparseArray<TelephonyManager>()
+    
+    /**
+     * SIM 슬롯별 CommonTelephonyCallback 인스턴스 저장
+     * Stores CommonTelephonyCallback instances per SIM slot
+     */
+    private val uSimTelephonyCallbackList = SparseArray<CommonTelephonyCallback>()
+    
+    /**
+     * 슬롯별 콜백 등록 상태
+     * Per-slot callback registration status
+     */
+    private val isRegistered = SparseArray<Boolean>()
+    
+    // =================================================
     // State Management
     // =================================================
     
@@ -120,6 +154,45 @@ public class TelephonyInfo(context: Context) : BaseSystemService(
     public val currentNetworkState: StateFlow<TelephonyNetworkState?> = _currentNetworkState.asStateFlow()
     
     private var isCallbackRegistered = false
+    
+    // =================================================
+    // Multi-SIM Initialization / 멀티 SIM 초기화
+    // =================================================
+    
+    init {
+        initializeMultiSimSupport()
+    }
+    
+    /**
+     * 멀티 SIM 지원 초기화
+     * Initialize multi-SIM support
+     */
+    private fun initializeMultiSimSupport() {
+        try {
+            updateUSimTelephonyManagerList()
+        } catch (e: SecurityException) {
+            Logx.w("TelephonyInfo: Permission required for multi-SIM initialization", e)
+        } catch (e: Exception) {
+            Logx.e("TelephonyInfo: Error during multi-SIM initialization", e)
+        }
+    }
+    
+    /**
+     * SIM 슬롯별 TelephonyManager 목록 업데이트
+     * Update TelephonyManager list per SIM slot
+     */
+    @RequiresPermission(READ_PHONE_STATE)
+    private fun updateUSimTelephonyManagerList() {
+        val subscriptionInfoList = getActiveSubscriptionInfoListInternal()
+        Logx.d("TelephonyInfo: activeSubscriptionInfoList size ${subscriptionInfoList.size}")
+        
+        subscriptionInfoList.forEach { subscriptionInfo ->
+            Logx.d("TelephonyInfo: SubID $subscriptionInfo")
+            val slotIndex = subscriptionInfo.simSlotIndex
+            uSimTelephonyManagerList[slotIndex] = telephonyManager.createForSubscriptionId(subscriptionInfo.subscriptionId)
+            uSimTelephonyCallbackList[slotIndex] = CommonTelephonyCallback(uSimTelephonyManagerList[slotIndex])
+        }
+    }
     
     // =================================================
     // Carrier Information / 통신사 정보
@@ -569,14 +642,272 @@ public class TelephonyInfo(context: Context) : BaseSystemService(
     }
     
     // =================================================
+    // Cross-Reference Helper Methods / 상호참조 헬퍼 메서드
+    // =================================================
+    
+    /**
+     * 활성화된 구독 정보 목록 반환 (SimInfo와의 상호 참조용)
+     * Get active subscription info list (for cross-reference with SimInfo)
+     */
+    @RequiresPermission(READ_PHONE_STATE)
+    private fun getActiveSubscriptionInfoListInternal(): List<SubscriptionInfo> {
+        return try {
+            subscriptionManager.activeSubscriptionInfoList ?: emptyList()
+        } catch (e: SecurityException) {
+            Logx.w("TelephonyInfo: Permission required for subscription list", e)
+            emptyList()
+        }
+    }
+    
+    /**
+     * 특정 SIM 슬롯의 TelephonyManager 반환
+     * Get TelephonyManager for specific SIM slot
+     */
+    public fun getTelephonyManagerFromUSim(slotIndex: Int): TelephonyManager? = 
+        uSimTelephonyManagerList[slotIndex]
+    
+    // =================================================
+    // Multi-SIM Callback System / 멀티 SIM 콜백 시스템
+    // =================================================
+    
+    /**
+     * 기본 SIM에 대한 Telephony 콜백 등록 (API 31+)
+     * Register telephony callback for default SIM (API 31+)
+     */
+    @RequiresApi(Build.VERSION_CODES.S)
+    @RequiresPermission(READ_PHONE_STATE)
+    public fun registerTelephonyCallBackFromDefaultUSim(
+        executor: Executor,
+        isGpsOn: Boolean,
+        onActiveDataSubId: ((subId: Int) -> Unit)? = null,
+        onDataConnectionState: ((state: Int, networkType: Int) -> Unit)? = null,
+        onCellInfo: ((currentCellInfo: CurrentCellInfo) -> Unit)? = null,
+        onSignalStrength: ((currentSignalStrength: CurrentSignalStrength) -> Unit)? = null,
+        onServiceState: ((currentServiceState: CurrentServiceState) -> Unit)? = null,
+        onCallState: ((callState: Int, phoneNumber: String?) -> Unit)? = null,
+        onDisplayInfo: ((telephonyDisplayInfo: TelephonyDisplayInfo) -> Unit)? = null,
+        onTelephonyNetworkState: ((telephonyNetworkState: TelephonyNetworkState) -> Unit)? = null
+    ): Result<Unit> {
+        return safeExecute(
+            operation = "registerTelephonyCallBackFromDefaultUSim",
+            requiresPermission = true
+        ) {
+            val subscriptionInfoList = getActiveSubscriptionInfoListInternal()
+            val defaultSim = subscriptionInfoList.firstOrNull()
+                ?: throw IllegalStateException("No default SIM found")
+            
+            registerTelephonyCallBack(
+                defaultSim.simSlotIndex, executor, isGpsOn, onActiveDataSubId,
+                onDataConnectionState, onCellInfo, onSignalStrength, onServiceState,
+                onCallState, onDisplayInfo, onTelephonyNetworkState
+            )
+        }
+    }
+    
+    /**
+     * 특정 SIM 슬롯에 대한 Telephony 콜백 등록 (API 31+)
+     * Register telephony callback for specific SIM slot (API 31+)
+     */
+    @RequiresApi(Build.VERSION_CODES.S)
+    @RequiresPermission(READ_PHONE_STATE)
+    public fun registerTelephonyCallBack(
+        simSlotIndex: Int,
+        executor: Executor,
+        isGpsOn: Boolean,
+        onActiveDataSubId: ((subId: Int) -> Unit)? = null,
+        onDataConnectionState: ((state: Int, networkType: Int) -> Unit)? = null,
+        onCellInfo: ((currentCellInfo: CurrentCellInfo) -> Unit)? = null,
+        onSignalStrength: ((currentSignalStrength: CurrentSignalStrength) -> Unit)? = null,
+        onServiceState: ((currentServiceState: CurrentServiceState) -> Unit)? = null,
+        onCallState: ((callState: Int, phoneNumber: String?) -> Unit)? = null,
+        onDisplayInfo: ((telephonyDisplayInfo: TelephonyDisplayInfo) -> Unit)? = null,
+        onTelephonyNetworkState: ((telephonyNetworkState: TelephonyNetworkState) -> Unit)? = null
+    ) {
+        val tm = uSimTelephonyManagerList[simSlotIndex]
+            ?: throw IllegalStateException("TelephonyManager [$simSlotIndex] is null")
+        val callback = uSimTelephonyCallbackList[simSlotIndex]
+            ?: throw IllegalStateException("telephonyCallbackList [$simSlotIndex] is null")
+        
+        unregisterCallBack(simSlotIndex)
+        
+        if (isGpsOn) {
+            tm.registerTelephonyCallback(executor, callback.baseGpsTelephonyCallback)
+        } else {
+            tm.registerTelephonyCallback(executor, callback.baseTelephonyCallback)
+        }
+        
+        setupSlotCallbackListeners(simSlotIndex, onActiveDataSubId, onDataConnectionState,
+            onCellInfo, onSignalStrength, onServiceState, onCallState, onDisplayInfo, onTelephonyNetworkState)
+        isRegistered[simSlotIndex] = true
+    }
+    
+    /**
+     * 슬롯별 콜백 리스너 설정
+     * Setup callback listeners for specific slot
+     */
+    private fun setupSlotCallbackListeners(
+        simSlotIndex: Int,
+        onActiveDataSubId: ((subId: Int) -> Unit)?,
+        onDataConnectionState: ((state: Int, networkType: Int) -> Unit)?,
+        onCellInfo: ((currentCellInfo: CurrentCellInfo) -> Unit)?,
+        onSignalStrength: ((currentSignalStrength: CurrentSignalStrength) -> Unit)?,
+        onServiceState: ((currentServiceState: CurrentServiceState) -> Unit)?,
+        onCallState: ((callState: Int, phoneNumber: String?) -> Unit)?,
+        onDisplayInfo: ((telephonyDisplayInfo: TelephonyDisplayInfo) -> Unit)?,
+        onTelephonyNetworkState: ((telephonyNetworkState: TelephonyNetworkState) -> Unit)?
+    ) {
+        setOnActiveDataSubId(simSlotIndex, onActiveDataSubId)
+        setOnDataConnectionState(simSlotIndex, onDataConnectionState)
+        setOnCellInfo(simSlotIndex, onCellInfo)
+        setOnSignalStrength(simSlotIndex, onSignalStrength)
+        setOnServiceState(simSlotIndex, onServiceState)
+        setOnCallState(simSlotIndex, onCallState)
+        setOnDisplayState(simSlotIndex, onDisplayInfo)
+        setOnTelephonyNetworkType(simSlotIndex, onTelephonyNetworkState)
+    }
+    
+    /**
+     * 특정 SIM 슬롯의 콜백 해제 (API 31+)
+     * Unregister callback for specific SIM slot (API 31+)
+     */
+    @RequiresApi(Build.VERSION_CODES.S)
+    public fun unregisterCallBack(simSlotIndex: Int) {
+        val tm = uSimTelephonyManagerList[simSlotIndex]
+        val callback = uSimTelephonyCallbackList[simSlotIndex]
+        
+        if (callback == null || tm == null) {
+            Logx.w("TelephonyInfo: telephonyCallbackList[$simSlotIndex] is null")
+            return
+        }
+        
+        try {
+            tm.unregisterTelephonyCallback(callback.baseTelephonyCallback)
+        } catch (e: SecurityException) {
+            Logx.w("TelephonyInfo: Permission issue during unregistering callback", e)
+        } catch (e: IllegalArgumentException) {
+            Logx.w("TelephonyInfo: Invalid callback provided", e)
+        }
+        
+        try {
+            tm.unregisterTelephonyCallback(callback.baseGpsTelephonyCallback)
+        } catch (e: SecurityException) {
+            Logx.w("TelephonyInfo: Permission issue during unregistering callback", e)
+        } catch (e: IllegalArgumentException) {
+            Logx.w("TelephonyInfo: Invalid callback provided", e)
+        }
+        
+        isRegistered[simSlotIndex] = false
+    }
+    
+    /**
+     * 신호 강도 콜백 설정
+     * Set signal strength callback
+     */
+    @RequiresPermission(READ_PHONE_STATE)
+    public fun setOnSignalStrength(simSlotIndex: Int, onSignalStrength: ((currentSignalStrength: CurrentSignalStrength) -> Unit)? = null) {
+        uSimTelephonyCallbackList[simSlotIndex]?.let { it.setOnSignalStrength(onSignalStrength) }
+            ?: Logx.w("TelephonyInfo: setOnSignalStrength telephonyCallbackList[$simSlotIndex] is null")
+    }
+    
+    /**
+     * 서비스 상태 콜백 설정
+     * Set service state callback
+     */
+    @RequiresPermission(READ_PHONE_STATE)
+    public fun setOnServiceState(simSlotIndex: Int, onServiceState: ((currentServiceState: CurrentServiceState) -> Unit)? = null) {
+        uSimTelephonyCallbackList[simSlotIndex]?.let { it.setOnServiceState(onServiceState) }
+            ?: Logx.w("TelephonyInfo: setOnServiceState telephonyCallbackList[$simSlotIndex] is null")
+    }
+    
+    /**
+     * 활성 데이터 구독 ID 콜백 설정
+     * Set active data subscription ID callback
+     */
+    @RequiresPermission(READ_PHONE_STATE)
+    public fun setOnActiveDataSubId(simSlotIndex: Int, onActiveDataSubId: ((subId: Int) -> Unit)? = null) {
+        uSimTelephonyCallbackList[simSlotIndex]?.let { it.setOnActiveDataSubId(onActiveDataSubId) }
+            ?: Logx.w("TelephonyInfo: setOnActiveDataSubId telephonyCallbackList[$simSlotIndex] is null")
+    }
+    
+    /**
+     * 데이터 연결 상태 콜백 설정
+     * Set data connection state callback
+     */
+    @RequiresPermission(READ_PHONE_STATE)
+    public fun setOnDataConnectionState(simSlotIndex: Int, onDataConnectionState: ((state: Int, networkType: Int) -> Unit)? = null) {
+        uSimTelephonyCallbackList[simSlotIndex]?.let { it.setOnDataConnectionState(onDataConnectionState) }
+            ?: Logx.w("TelephonyInfo: setOnDataConnectionState telephonyCallbackList[$simSlotIndex] is null")
+    }
+    
+    /**
+     * 셀 정보 콜백 설정
+     * Set cell info callback
+     */
+    @RequiresPermission(READ_PHONE_STATE)
+    public fun setOnCellInfo(simSlotIndex: Int, onCellInfo: ((currentCellInfo: CurrentCellInfo) -> Unit)? = null) {
+        uSimTelephonyCallbackList[simSlotIndex]?.let { it.setOnCellInfo(onCellInfo) }
+            ?: Logx.w("TelephonyInfo: setOnCellInfo telephonyCallbackList[$simSlotIndex] is null")
+    }
+    
+    /**
+     * 통화 상태 콜백 설정
+     * Set call state callback
+     */
+    @RequiresPermission(READ_PHONE_STATE)
+    public fun setOnCallState(simSlotIndex: Int, onCallState: ((callState: Int, phoneNumber: String?) -> Unit)? = null) {
+        uSimTelephonyCallbackList[simSlotIndex]?.let { it.setOnCallState(onCallState) }
+            ?: Logx.w("TelephonyInfo: setOnCallState telephonyCallbackList[$simSlotIndex] is null")
+    }
+    
+    /**
+     * 디스플레이 정보 콜백 설정
+     * Set display info callback
+     */
+    @RequiresPermission(READ_PHONE_STATE)
+    public fun setOnDisplayState(simSlotIndex: Int, onDisplay: ((telephonyDisplayInfo: TelephonyDisplayInfo) -> Unit)? = null) {
+        uSimTelephonyCallbackList[simSlotIndex]?.let { it.setOnDisplay(onDisplay) }
+            ?: Logx.w("TelephonyInfo: setOnDisplayState telephonyCallbackList[$simSlotIndex] is null")
+    }
+    
+    /**
+     * 통신망 타입 콜백 설정
+     * Set telephony network type callback
+     */
+    public fun setOnTelephonyNetworkType(simSlotIndex: Int, onTelephonyNetworkType: ((telephonyNetworkState: TelephonyNetworkState) -> Unit)? = null) {
+        uSimTelephonyCallbackList[simSlotIndex]?.let { it.setOnTelephonyNetworkType(onTelephonyNetworkType) }
+            ?: Logx.w("TelephonyInfo: setOnTelephonyNetworkType telephonyCallbackList[$simSlotIndex] is null")
+    }
+    
+    /**
+     * 콜백 등록 상태 확인
+     * Check callback registration status
+     */
+    public fun isRegistered(simSlotIndex: Int): Boolean = isRegistered[simSlotIndex] ?: false
+    
+    // =================================================
     // Cleanup / 정리
     // =================================================
     
     override fun onDestroy() {
         try {
+            // 기본 콜백 해제
             if (isCallbackRegistered) {
                 unregisterCallback()
             }
+            
+            // 멀티 SIM 콜백들 해제
+            uSimTelephonyCallbackList.forEach { key: Int, value: CommonTelephonyCallback ->
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    try {
+                        unregisterCallBack(key)
+                    } catch (e: Exception) {
+                        Logx.w("TelephonyInfo: Error unregistering callback for slot $key", e)
+                    }
+                } else {
+                    // Legacy API cleanup would go here if implemented
+                }
+            }
+            
             Logx.d("TelephonyInfo destroyed")
         } catch (e: Exception) {
             Logx.e("Error during TelephonyInfo cleanup: ${e.message}")

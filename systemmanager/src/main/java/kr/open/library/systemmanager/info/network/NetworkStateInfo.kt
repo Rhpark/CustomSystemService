@@ -33,6 +33,7 @@ import kr.open.library.systemmanager.extenstions.getEuiccManager
 import kr.open.library.systemmanager.extenstions.getSubscriptionManager
 import kr.open.library.systemmanager.extenstions.getTelephonyManager
 import kr.open.library.systemmanager.controller.wifi.WifiController
+import kr.open.library.systemmanager.info.connectivity.NetworkConnectivityInfo
 import kr.open.library.systemmanager.info.network.connectivity.callback.NetworkStateCallback
 import kr.open.library.systemmanager.info.network.connectivity.data.NetworkCapabilitiesData
 import kr.open.library.systemmanager.info.network.connectivity.data.NetworkLinkPropertiesData
@@ -41,46 +42,105 @@ import kr.open.library.systemmanager.info.network.telephony.data.current.Current
 import kr.open.library.systemmanager.info.network.telephony.data.current.CurrentServiceState
 import kr.open.library.systemmanager.info.network.telephony.data.current.CurrentSignalStrength
 import kr.open.library.systemmanager.info.network.telephony.data.state.TelephonyNetworkState
+import kr.open.library.systemmanager.info.sim.SimInfo
+import kr.open.library.systemmanager.info.telephony.TelephonyInfo
 
 import java.util.concurrent.Executor
 
 /**
+ * NetworkStateInfo - 네트워크 상태 정보 통합 관리 클래스 (Facade Pattern)
+ * Comprehensive Network State Information Management Class (Facade Pattern)
+ * 
+ * ⚠️ DEPRECATED: 이 클래스는 더 이상 권장되지 않습니다. 새로운 전용 클래스들을 사용하세요:
+ * ⚠️ DEPRECATED: This class is no longer recommended. Use the new dedicated classes:
+ * 
+ * - SimInfo: SIM 카드 및 구독 정보 관리 / SIM card and subscription information management
+ * - NetworkConnectivityInfo: 순수 네트워크 연결성 관리 / Pure network connectivity management  
+ * - TelephonyInfo: 통신 품질 및 신호 관리 / Communication quality and signal management
+ * 
+ * 기존 호환성 유지를 위해 이 클래스는 위 3개 클래스로 위임(delegation)합니다.
+ * This class delegates to the above 3 classes for backward compatibility.
+ * 
+ * 권장 마이그레이션 / Recommended Migration:
+ * ```
+ * // 기존 방식 / Old way
+ * val networkState = NetworkStateInfo(context)
+ * val simCount = networkState.getActiveSimCount()
+ * val isConnected = networkState.isNetworkConnected()
+ * 
+ * // 새로운 방식 / New way
+ * val simInfo = SimInfo(context)
+ * val networkInfo = NetworkConnectivityInfo(context)
+ * val simCount = simInfo.getActiveSimCount()
+ * val isConnected = networkInfo.isNetworkConnected()
+ * ```
+ * 
  * request Permission
  * <uses-permission android:name="android.permission.INTERNET"/>
  * <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
  */
+@Deprecated(
+    "Use specialized classes: SimInfo, NetworkConnectivityInfo, TelephonyInfo",
+    ReplaceWith("SimInfo(context) + NetworkConnectivityInfo(context) + TelephonyInfo(context)"),
+    DeprecationLevel.WARNING
+)
 public open class NetworkStateInfo(
     context: Context,
 ) : BaseSystemService(
     context,
     listOf(READ_PHONE_STATE, READ_PHONE_NUMBERS, ACCESS_FINE_LOCATION)
 ) {
+    
+    // =================================================
+    // New Architecture Delegates / 새로운 아키텍처 위임
+    // =================================================
+    
+    /**
+     * SIM 카드 및 구독 정보 관리를 위한 SimInfo 인스턴스
+     * SimInfo instance for SIM card and subscription information management
+     */
+    public val simInfo: SimInfo by lazy { SimInfo(context) }
+    
+    /**
+     * 순수 네트워크 연결성 관리를 위한 NetworkConnectivityInfo 인스턴스
+     * NetworkConnectivityInfo instance for pure network connectivity management
+     */
+    public val networkConnectivityInfo: NetworkConnectivityInfo by lazy { NetworkConnectivityInfo(context) }
+    
+    /**
+     * 통신 품질 및 신호 관리를 위한 TelephonyInfo 인스턴스
+     * TelephonyInfo instance for communication quality and signal management
+     */
+    public val telephonyInfo: TelephonyInfo by lazy { TelephonyInfo(context) }
+    
+    // =================================================
+    // Legacy Support (Deprecated) / 레거시 지원 (폐기 예정)
+    // =================================================
+    
+    @Deprecated("Use SimInfo.telephonyManager", ReplaceWith("simInfo.telephonyManager"))
     public val telephonyManager: TelephonyManager by lazy { context.getTelephonyManager() }
-    public val subscriptionManager: SubscriptionManager by lazy {   context.getSubscriptionManager() }
-    public val connectivityManager: ConnectivityManager by lazy {   context.getConnectivityManager() }
+    
+    @Deprecated("Use SimInfo.subscriptionManager", ReplaceWith("simInfo.subscriptionManager"))
+    public val subscriptionManager: SubscriptionManager by lazy { context.getSubscriptionManager() }
+    
+    @Deprecated("Use NetworkConnectivityInfo.connectivityManager", ReplaceWith("networkConnectivityInfo.connectivityManager"))
+    public val connectivityManager: ConnectivityManager by lazy { context.getConnectivityManager() }
+    
+    @Deprecated("Use NetworkConnectivityInfo.wifiController", ReplaceWith("networkConnectivityInfo.wifiController"))
     public val wifiController: WifiController by lazy { WifiController(context) }
+    
+    @Deprecated("Use SimInfo.euiccManager", ReplaceWith("simInfo.euiccManager"))
     public val euiccManager: EuiccManager by lazy { context.getEuiccManager() }
 
+    // Legacy internal state (kept for compatibility)
     private val uSimTelephonyManagerList = SparseArray<TelephonyManager>()
-    private val uSimTelephonyCallbackList =  SparseArray<CommonTelephonyCallback>()
-    private val isRegistered =  SparseArray<Boolean>()
-
-    /** SIM 정보를 읽을 수 있는지 여부를 나타낸다.
-     * Indicates whether SIM information can be read.
-     **/
+    private val uSimTelephonyCallbackList = SparseArray<CommonTelephonyCallback>()
+    private val isRegistered = SparseArray<Boolean>()
     private var isReadSimInfoFromDefaultUSim = false
-
-
-    /** 네트워크 상태 콜백
-     *  Network state callback */
     private var networkCallBack: NetworkStateCallback? = null
-
-    /** 기본 네트워크 상태 콜백
-     *  Default network state callback */
     private var networkDefaultCallback: NetworkStateCallback? = null
 
     init {
-
         initialization()
     }
 
@@ -94,16 +154,24 @@ public open class NetworkStateInfo(
         }
     }
 
-    public fun isCanReadSimInfo(): Boolean = isReadSimInfoFromDefaultUSim
+    @Deprecated("Use SimInfo.isCanReadSimInfo()", ReplaceWith("simInfo.isCanReadSimInfo()"))
+    public fun isCanReadSimInfo(): Boolean = simInfo.isCanReadSimInfo()
 
-    public fun isDualSim(): Boolean = getMaximumUSimCount() == 2
-    public fun isSingleSim(): Boolean = getMaximumUSimCount() == 1
-    public fun isMultiSim(): Boolean = getMaximumUSimCount() > 1
+    @Deprecated("Use SimInfo.isDualSim()", ReplaceWith("simInfo.isDualSim()"))
+    public fun isDualSim(): Boolean = simInfo.isDualSim()
+    
+    @Deprecated("Use SimInfo.isSingleSim()", ReplaceWith("simInfo.isSingleSim()"))
+    public fun isSingleSim(): Boolean = simInfo.isSingleSim()
+    
+    @Deprecated("Use SimInfo.isMultiSim()", ReplaceWith("simInfo.isMultiSim()"))
+    public fun isMultiSim(): Boolean = simInfo.isMultiSim()
 
-    public fun getMaximumUSimCount(): Int = subscriptionManager.activeSubscriptionInfoCountMax
+    @Deprecated("Use SimInfo.getMaximumUSimCount()", ReplaceWith("simInfo.getMaximumUSimCount()"))
+    public fun getMaximumUSimCount(): Int = simInfo.getMaximumUSimCount()
 
+    @Deprecated("Use SimInfo.getActiveSimCount()", ReplaceWith("simInfo.getActiveSimCount()"))
     @RequiresPermission(READ_PHONE_STATE)
-    public fun getActiveSimCount(): Int = getActiveSimCountInternal().getOrElse { 0 }
+    public fun getActiveSimCount(): Int = simInfo.getActiveSimCount()
     
     /**
      * 활성 SIM 수 반환 (Result 패턴)
@@ -718,8 +786,9 @@ public open class NetworkStateInfo(
      * @return Boolean - 네트워크가 연결되어 있으면 true.
      * @Returns true if the network is connected.
      */
+    @Deprecated("Use NetworkConnectivityInfo.isNetworkConnected()", ReplaceWith("networkConnectivityInfo.isNetworkConnected()"))
     @RequiresPermission(ACCESS_NETWORK_STATE)
-    public fun isNetworkConnected(): Boolean = isNetworkConnectedInternal().getOrElse { false }
+    public fun isNetworkConnected(): Boolean = networkConnectivityInfo.isNetworkConnected()
     
     /**
      * 네트워크 연결 여부를 확인 (Result 패턴)
@@ -738,8 +807,9 @@ public open class NetworkStateInfo(
      * 현재 네트워크의 NetworkCapabilities를 반환.
      * Returns the NetworkCapabilities of the current network.
      */
+    @Deprecated("Use NetworkConnectivityInfo.getNetworkCapabilities()", ReplaceWith("networkConnectivityInfo.getNetworkCapabilities()"))
     @RequiresPermission(ACCESS_NETWORK_STATE)
-    public fun getCapabilities(): NetworkCapabilities? = getCapabilitiesInternal().getOrNull()
+    public fun getCapabilities(): NetworkCapabilities? = networkConnectivityInfo.getNetworkCapabilities()
     
     /**
      * 현재 네트워크의 NetworkCapabilities를 반환 (Result 패턴)
@@ -752,8 +822,9 @@ public open class NetworkStateInfo(
         }
     }
 
+    @Deprecated("Use NetworkConnectivityInfo.getLinkProperties()", ReplaceWith("networkConnectivityInfo.getLinkProperties()"))
     @RequiresPermission(ACCESS_NETWORK_STATE)
-    public fun getLinkProperties(): LinkProperties? = getLinkPropertiesInternal().getOrNull()
+    public fun getLinkProperties(): LinkProperties? = networkConnectivityInfo.getLinkProperties()
     
     /**
      * 현재 네트워크의 LinkProperties를 반환 (Result 패턴)
@@ -766,14 +837,17 @@ public open class NetworkStateInfo(
         }
     }
 
+    @Deprecated("Use NetworkConnectivityInfo.isConnectedWifi()", ReplaceWith("networkConnectivityInfo.isConnectedWifi()"))
     @RequiresPermission(ACCESS_NETWORK_STATE)
-    public fun isConnectedWifi(): Boolean = getCapabilities()?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ?: false
+    public fun isConnectedWifi(): Boolean = networkConnectivityInfo.isConnectedWifi()
 
+    @Deprecated("Use NetworkConnectivityInfo.isConnectedMobile()", ReplaceWith("networkConnectivityInfo.isConnectedMobile()"))
     @RequiresPermission(ACCESS_NETWORK_STATE)
-    public fun isConnectedMobile(): Boolean = getCapabilities()?.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ?: false
+    public fun isConnectedMobile(): Boolean = networkConnectivityInfo.isConnectedMobile()
 
+    @Deprecated("Use NetworkConnectivityInfo.isConnectedVPN()", ReplaceWith("networkConnectivityInfo.isConnectedVPN()"))
     @RequiresPermission(ACCESS_NETWORK_STATE)
-    public fun isConnectedVPN(): Boolean = getCapabilities()?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) ?: false
+    public fun isConnectedVPN(): Boolean = networkConnectivityInfo.isConnectedVPN()
 
     @RequiresPermission(ACCESS_NETWORK_STATE)
     public fun isConnectedBluetooth(): Boolean = getCapabilities()?.hasTransport(NetworkCapabilities.TRANSPORT_BLUETOOTH) ?: false
@@ -791,7 +865,8 @@ public open class NetworkStateInfo(
     @RequiresApi(Build.VERSION_CODES.S)
     public fun isConnectedUSB(): Boolean = getCapabilities()?.hasTransport(NetworkCapabilities.TRANSPORT_USB) ?: false
 
-    public fun isWifiOn(): Boolean = wifiController.isWifiEnabled()
+    @Deprecated("Use NetworkConnectivityInfo.isWifiEnabled()", ReplaceWith("networkConnectivityInfo.isWifiEnabled()"))
+    public fun isWifiOn(): Boolean = networkConnectivityInfo.isWifiEnabled()
 
     /**
      * 네트워크 상태 콜백을 등록.

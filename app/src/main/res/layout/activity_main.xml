@@ -143,6 +143,16 @@
                     android:text="Test Telephony Information"
                     android:textSize="18sp" />
 
+                <Button
+                    android:id="@+id/btnArchitectureTest"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:backgroundTint="#E91E63"
+                    android:padding="16dp"
+                    android:text="Test New Architecture (Phase 4)"
+                    android:textSize="18sp" />
+
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

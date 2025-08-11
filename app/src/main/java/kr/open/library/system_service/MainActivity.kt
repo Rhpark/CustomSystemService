@@ -81,6 +81,10 @@ class MainActivity : AppCompatActivity() {
         binding.btnTelephonyTest.setOnClickListener {
             navigateToTelephonyTest()
         }
+        
+        binding.btnArchitectureTest.setOnClickListener {
+            navigateToArchitectureTest()
+        }
     }
     
     /**
@@ -170,6 +174,15 @@ class MainActivity : AppCompatActivity() {
      */
     private fun navigateToTelephonyTest() {
         val intent = Intent(this, TelephonyTestActivity::class.java)
+        startActivity(intent)
+    }
+    
+    /**
+     * Navigates to the ArchitectureTestActivity for testing new 3-class architecture.
+     * 새로운 3개 클래스 아키텍처를 테스트하기 위해 ArchitectureTestActivity로 이동합니다.
+     */
+    private fun navigateToArchitectureTest() {
+        val intent = Intent(this, ArchitectureTestActivity::class.java)
         startActivity(intent)
     }
 }
