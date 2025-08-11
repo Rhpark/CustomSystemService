@@ -129,6 +129,12 @@
             android:exported="false"
             android:label="Telephony Information Test"
             android:parentActivityName=".MainActivity" />
+
+        <activity
+            android:name=".ArchitectureTestActivity"
+            android:exported="false"
+            android:label="ArchitectureTest Test"
+            android:parentActivityName=".MainActivity" />
     </application>
 
 </manifest>
