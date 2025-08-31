@@ -1,6 +1,32 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
+    id ("maven-publish")
+    id ("kotlin-kapt")
+}
+
+publishing {
+    publications {
+        register("release", MavenPublication::class) { // MavenPublication::class 사용 가능
+            groupId = "com.github.Rhpark"
+            artifactId = "Permissions"
+            version = "0.1.0"
+
+            afterEvaluate {
+                from(components.findByName("release"))
+            }
+        }
+
+        register("debug", MavenPublication::class) { // MavenPublication::class 사용 가능
+            groupId = "com.github.Rhpark"
+            artifactId = "Permissions"
+            version = "0.1.0" // 동일 버전 사용 시 주의 (이전 답변 참고)
+
+            afterEvaluate {
+                from(components.findByName("debug"))
+            }
+        }
+    }
 }
 
 android {
