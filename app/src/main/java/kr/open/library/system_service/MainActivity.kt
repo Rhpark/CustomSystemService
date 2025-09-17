@@ -2,6 +2,7 @@ package kr.open.library.system_service
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -80,6 +81,14 @@ class MainActivity : AppCompatActivity() {
         
         binding.btnTelephonyTest.setOnClickListener {
             navigateToTelephonyTest()
+        }
+        
+        binding.btnBleTest.setOnClickListener {
+            navigateToBleTest()
+        }
+        
+        binding.btnBleTwoPhoneTest.setOnClickListener {
+            navigateToBleTwoPhoneTest()
         }
         
         binding.btnArchitectureTest.setOnClickListener {
@@ -174,6 +183,24 @@ class MainActivity : AppCompatActivity() {
      */
     private fun navigateToTelephonyTest() {
         val intent = Intent(this, TelephonyTestActivity::class.java)
+        startActivity(intent)
+    }
+    
+    /**
+     * Navigates to the BleTestActivity for testing BLE functionality.
+     * BLE 기능을 테스트하기 위해 BleTestActivity로 이동합니다.
+     */
+    private fun navigateToBleTest() {
+        val intent = Intent(this, BleTestActivity::class.java)
+        startActivity(intent)
+    }
+    
+    /**
+     * Navigates to the BleTwoPhoneTestActivity for testing BLE communication between two phones.
+     * 두 스마트폰 간 BLE 통신을 테스트하기 위해 BleTwoPhoneTestActivity로 이동합니다.
+     */
+    private fun navigateToBleTwoPhoneTest() {
+        val intent = Intent(this, BleTwoPhoneTestActivity::class.java)
         startActivity(intent)
     }
     

@@ -144,6 +144,26 @@
                     android:textSize="18sp" />
 
                 <Button
+                    android:id="@+id/btnBleTest"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:backgroundTint="#2196F3"
+                    android:padding="16dp"
+                    android:text="📱 Test BLE Controller"
+                    android:textSize="18sp" />
+
+                <Button
+                    android:id="@+id/btnBleTwoPhoneTest"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    android:backgroundTint="#FF5722"
+                    android:padding="16dp"
+                    android:text="🔗 Two Phone BLE Test"
+                    android:textSize="18sp" />
+
+                <Button
                     android:id="@+id/btnArchitectureTest"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

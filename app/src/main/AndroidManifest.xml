@@ -26,6 +26,31 @@
     <!-- Telephony permissions -->
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.READ_PHONE_NUMBERS" />
+    
+    <!-- BLE permissions -->
+    <!-- Legacy Bluetooth permissions (API < 31) -->
+    <uses-permission android:name="android.permission.BLUETOOTH" 
+        android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" 
+        android:maxSdkVersion="30" />
+    
+    <!-- API 31+ BLE permissions -->
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" 
+        android:usesPermissionFlags="neverForLocation" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
+    
+    <!-- Foreground Service permission for BLE -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    
+    <!-- BLE 기능 요구사항 (선택사항으로 설정하여 호환성 향상) -->
+    <uses-feature 
+        android:name="android.hardware.bluetooth_le" 
+        android:required="false" />
+    <uses-feature 
+        android:name="android.hardware.bluetooth" 
+        android:required="false" />
 
     <application
         android:allowBackup="true"
@@ -129,6 +154,27 @@
             android:exported="false"
             android:label="Telephony Information Test"
             android:parentActivityName=".MainActivity" />
+
+        <!-- BLE Test Activity -->
+        <activity
+            android:name=".BleTestActivity"
+            android:exported="false"
+            android:label="BLE Controller Test"
+            android:parentActivityName=".MainActivity" />
+
+        <!-- BLE Two Phone Test Activity -->
+        <activity
+            android:name=".BleTwoPhoneTestActivity"
+            android:exported="false"
+            android:label="🔗 Two Phone BLE Test"
+            android:parentActivityName=".MainActivity" />
+        
+        <!-- BLE Foreground Service -->
+        <service
+            android:name=".BleForegroundService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice" />
 
         <activity
             android:name=".ArchitectureTestActivity"

@@ -171,6 +171,33 @@ public sealed class SystemServiceError {
         /** Location accuracy insufficient / 위치 정확도 부충분 */
         public data class InsufficientAccuracy(val requiredAccuracy: Float, val actualAccuracy: Float) : Location()
     }
+    
+    /**
+     * Bluetooth/BLE service specific errors.
+     * Bluetooth/BLE 서비스별 특정 오류입니다.
+     */
+    public sealed class Bluetooth : SystemServiceError() {
+        /** BLE is not supported on this device / 이 기기에서 BLE가 지원되지 않음 */
+        public object BleNotSupported : Bluetooth()
+        
+        /** Bluetooth adapter is not available / Bluetooth 어댑터를 사용할 수 없음 */
+        public object AdapterNotAvailable : Bluetooth()
+        
+        /** Bluetooth is turned off / Bluetooth가 꺼져 있음 */
+        public object BluetoothOff : Bluetooth()
+        
+        /** BLE scanning failed / BLE 스캐닝 실패 */
+        public data class ScanFailed(val errorCode: Int, val reason: String) : Bluetooth()
+        
+        /** BLE advertising failed / BLE 광고 실패 */
+        public data class AdvertiseFailed(val errorCode: Int, val reason: String) : Bluetooth()
+        
+        /** BLE connection failed / BLE 연결 실패 */
+        public data class ConnectionFailed(val deviceAddress: String, val status: Int) : Bluetooth()
+        
+        /** GATT operation failed / GATT 작업 실패 */
+        public data class GattOperationFailed(val operation: String, val status: Int, val deviceAddress: String) : Bluetooth()
+    }
 }
 
 /**
@@ -279,27 +306,4 @@ public class SystemServiceException(
     public fun isRecoverable(): Boolean = error.isRecoverable()
 }
 
-/**
- * Location service specific errors.
- * 위치 서비스별 특정 오류입니다.
- */
-public sealed class LocationError : SystemServiceError() {
-    /** Location provider is not available / 위치 제공자를 사용할 수 없음 */
-    public data class ProviderNotAvailable(val provider: String) : LocationError()
-    
-    /** Location provider is disabled / 위치 제공자가 비활성화됨 */
-    public data class ProviderDisabled(val provider: String) : LocationError()
-    
-    /** Location updates failed to start / 위치 업데이트 시작 실패 */
-    public data class UpdateStartFailed(val provider: String, val reason: String) : LocationError()
-    
-    /** Location calculation failed / 위치 계산 실패 */
-    public data class CalculationFailed(val operation: String, val reason: String) : LocationError()
-    
-    /** GPS timeout / GPS 시간 초과 */
-    public data class GpsTimeout(val timeoutMs: Long) : LocationError()
-    
-    /** Location accuracy insufficient / 위치 정확도 불충분 */
-    public data class InsufficientAccuracy(val requiredAccuracy: Float, val actualAccuracy: Float) : LocationError()
-}
 
