@@ -9,8 +9,8 @@ import android.net.wifi.WifiManager
 import android.os.Build
 import androidx.annotation.RequiresPermission
 import kr.open.library.logcat.Logx
-import kr.open.library.systemmanager.extenstions.getConnectivityManager
-import kr.open.library.systemmanager.extenstions.getWifiManager
+import kr.open.library.systemmanager.extensions.getConnectivityManager
+import kr.open.library.systemmanager.extensions.getWifiManager
 
 /**
  * WiFi 관련 deprecated API들의 호환성 프록시

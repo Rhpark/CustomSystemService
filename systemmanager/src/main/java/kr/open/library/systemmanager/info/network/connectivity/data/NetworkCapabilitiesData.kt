@@ -6,7 +6,7 @@ import android.net.TransportInfo
 import android.os.Build
 import android.os.ext.SdkExtensions
 import androidx.annotation.RequiresApi
-import kr.open.library.systemmanager.extenstions.checkSdkVersion
+import kr.open.library.systemmanager.extensions.checkSdkVersion
 
 
 public data class NetworkCapabilitiesData(public val networkCapabilities: NetworkCapabilities) :

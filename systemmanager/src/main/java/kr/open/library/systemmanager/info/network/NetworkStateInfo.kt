@@ -4,7 +4,6 @@ import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.Manifest.permission.ACCESS_NETWORK_STATE
 import android.Manifest.permission.READ_PHONE_NUMBERS
 import android.Manifest.permission.READ_PHONE_STATE
-import android.annotation.SuppressLint
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.LinkProperties
@@ -27,11 +26,11 @@ import kr.open.library.logcat.Logx
 import kr.open.library.permissions.extensions.hasPermissions
 import kr.open.library.systemmanager.base.BaseSystemService
 
-import kr.open.library.systemmanager.extenstions.checkSdkVersion
-import kr.open.library.systemmanager.extenstions.getConnectivityManager
-import kr.open.library.systemmanager.extenstions.getEuiccManager
-import kr.open.library.systemmanager.extenstions.getSubscriptionManager
-import kr.open.library.systemmanager.extenstions.getTelephonyManager
+import kr.open.library.systemmanager.extensions.checkSdkVersion
+import kr.open.library.systemmanager.extensions.getConnectivityManager
+import kr.open.library.systemmanager.extensions.getEuiccManager
+import kr.open.library.systemmanager.extensions.getSubscriptionManager
+import kr.open.library.systemmanager.extensions.getTelephonyManager
 import kr.open.library.systemmanager.controller.wifi.WifiController
 import kr.open.library.systemmanager.info.connectivity.NetworkConnectivityInfo
 import kr.open.library.systemmanager.info.network.connectivity.callback.NetworkStateCallback

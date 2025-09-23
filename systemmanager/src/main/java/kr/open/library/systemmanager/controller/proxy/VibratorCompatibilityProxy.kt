@@ -9,8 +9,8 @@ import android.os.VibratorManager
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import kr.open.library.logcat.Logx
-import kr.open.library.systemmanager.extenstions.getVibrator
-import kr.open.library.systemmanager.extenstions.getVibratorManager
+import kr.open.library.systemmanager.extensions.getVibrator
+import kr.open.library.systemmanager.extensions.getVibratorManager
 
 /**
  * 진동 관련 deprecated API들의 호환성 프록시

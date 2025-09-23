@@ -1,6 +1,5 @@
 package kr.open.library.systemmanager.controller.alarm.receiver
 
-import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -13,8 +12,8 @@ import kr.open.library.systemmanager.controller.alarm.vo.AlarmConstants.ALARM_KE
 import kr.open.library.systemmanager.controller.alarm.vo.AlarmConstants.WAKELOCK_TAG
 import kr.open.library.systemmanager.controller.alarm.vo.AlarmConstants.WAKELOCK_TIMEOUT_MS
 import kr.open.library.systemmanager.controller.notification.SimpleNotificationController
-import kr.open.library.systemmanager.extenstions.getAlarmController
-import kr.open.library.systemmanager.extenstions.getPowerManager
+import kr.open.library.systemmanager.extensions.getAlarmController
+import kr.open.library.systemmanager.extensions.getPowerManager
 
 
 /**

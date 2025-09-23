@@ -7,7 +7,7 @@ import android.net.ProxyInfo
 import android.net.RouteInfo
 import android.os.Build
 import androidx.annotation.RequiresApi
-import kr.open.library.systemmanager.extenstions.checkSdkVersion
+import kr.open.library.systemmanager.extensions.checkSdkVersion
 import java.net.InetAddress
 
 public data class NetworkLinkPropertiesData(public val linkProperties: LinkProperties) : NetworkBase(linkProperties) {

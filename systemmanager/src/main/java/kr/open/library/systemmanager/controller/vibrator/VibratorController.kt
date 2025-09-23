@@ -10,9 +10,9 @@ import android.os.VibratorManager
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import kr.open.library.systemmanager.base.BaseSystemService
-import kr.open.library.systemmanager.extenstions.checkSdkVersion
-import kr.open.library.systemmanager.extenstions.getVibrator
-import kr.open.library.systemmanager.extenstions.getVibratorManager
+import kr.open.library.systemmanager.extensions.checkSdkVersion
+import kr.open.library.systemmanager.extensions.getVibrator
+import kr.open.library.systemmanager.extensions.getVibratorManager
 
 /**
  * Controller for managing device vibration operations with backward compatibility.

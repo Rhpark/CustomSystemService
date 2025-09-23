@@ -10,9 +10,6 @@ import android.net.wifi.WifiInfo
 import android.net.wifi.WifiManager
 import android.net.DhcpInfo
 import android.net.NetworkCapabilities
-import android.net.ConnectivityManager
-import android.net.Network
-import android.net.NetworkRequest
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
@@ -20,8 +17,8 @@ import kr.open.library.logcat.Logx
 import kr.open.library.systemmanager.base.BaseSystemService
 import kr.open.library.systemmanager.base.SystemServiceError
 import kr.open.library.systemmanager.base.SystemServiceException
-import kr.open.library.systemmanager.extenstions.getWifiManager
-import kr.open.library.systemmanager.extenstions.getConnectivityManager
+import kr.open.library.systemmanager.extensions.getWifiManager
+import kr.open.library.systemmanager.extensions.getConnectivityManager
 
 /**
  * WifiController - WiFi 상태 정보 조회 및 제어 컨트롤러

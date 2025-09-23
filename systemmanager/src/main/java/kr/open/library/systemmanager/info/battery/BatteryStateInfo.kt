@@ -10,6 +10,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,11 +20,10 @@ import kotlinx.coroutines.launch
 import kr.open.library.logcat.Logx
 import kr.open.library.systemmanager.base.BaseSystemService
 import kr.open.library.systemmanager.base.DataUpdate
-import kr.open.library.systemmanager.extenstions.checkSdkVersion
-import kr.open.library.systemmanager.extenstions.getBatteryManager
-import kr.open.library.systemmanager.extenstions.safeCatch
+import kr.open.library.systemmanager.extensions.checkSdkVersion
+import kr.open.library.systemmanager.extensions.getBatteryManager
+import kr.open.library.systemmanager.extensions.safeCatch
 import kr.open.library.systemmanager.info.battery.power.PowerProfile
-import kr.open.library.systemmanager.info.battery.power.PowerProfileVO
 
 /**
  * This class provides information about the battery state of an Android device.
@@ -807,6 +807,7 @@ public open class BatteryStateInfo(context: Context) :
         super.onDestroy()
         updateStop()
         unRegisterReceiver()
+        coroutineScope?.cancel()
         coroutineScope = null
     }
 }

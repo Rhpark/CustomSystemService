@@ -14,7 +14,7 @@ import androidx.annotation.RequiresPermission
 import kr.open.library.logcat.Logx
 import kr.open.library.systemmanager.base.BaseSystemService
 import kr.open.library.systemmanager.controller.wifi.WifiController
-import kr.open.library.systemmanager.extenstions.getConnectivityManager
+import kr.open.library.systemmanager.extensions.getConnectivityManager
 import kr.open.library.systemmanager.info.network.NetworkStateInfoInternal
 import kr.open.library.systemmanager.info.network.connectivity.callback.NetworkStateCallback
 import kr.open.library.systemmanager.info.network.connectivity.data.NetworkCapabilitiesData

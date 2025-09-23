@@ -13,8 +13,8 @@ import kr.open.library.systemmanager.controller.window.floating.drag.FloatingDra
 import kr.open.library.systemmanager.controller.window.floating.fixed.FloatingFixedView
 import kr.open.library.systemmanager.controller.window.floating.vo.FloatingViewCollisionsType
 import kr.open.library.systemmanager.controller.window.floating.vo.FloatingViewTouchType
-import kr.open.library.systemmanager.extenstions.getWindowManager
-import kr.open.library.systemmanager.extenstions.safeCatch
+import kr.open.library.systemmanager.extensions.getWindowManager
+import kr.open.library.systemmanager.extensions.safeCatch
 
 
 /**

@@ -3,24 +3,19 @@ package kr.open.library.system_service
 import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.Manifest.permission.ACCESS_WIFI_STATE
 import android.Manifest.permission.CHANGE_WIFI_STATE
-import android.content.pm.PackageManager
 import android.graphics.Color
 import android.net.wifi.ScanResult
-import android.net.wifi.WifiInfo
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
-import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.*
 import kr.open.library.logcat.Logx
 import kr.open.library.permissions.PermissionManager
-import kr.open.library.system_service.R
 import kr.open.library.system_service.databinding.ActivityWifiTestBinding
 import kr.open.library.systemmanager.controller.wifi.WifiController
-import kr.open.library.systemmanager.extenstions.checkSdkVersion
 import java.text.SimpleDateFormat
 import java.util.*
 

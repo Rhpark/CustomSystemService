@@ -2,7 +2,7 @@ package kr.open.library.systemmanager.info.battery.power
 
 import android.content.Context
 import kr.open.library.logcat.Logx
-import kr.open.library.systemmanager.extenstions.safeCatch
+import kr.open.library.systemmanager.extensions.safeCatch
 import java.lang.reflect.Method
 
 /**

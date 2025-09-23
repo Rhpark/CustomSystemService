@@ -2,13 +2,11 @@ package kr.open.library.systemmanager.controller.window.floating.fixed
 
 import android.graphics.PixelFormat
 import android.graphics.Rect
-import android.os.Build
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager.LayoutParams
 import kr.open.library.systemmanager.controller.proxy.WindowCompatibilityProxy
-import kr.open.library.systemmanager.extenstions.checkSdkVersion
-import kr.open.library.systemmanager.extenstions.safeCatch
+import kr.open.library.systemmanager.extensions.safeCatch
 
 /**
  * FloatingFixedView - 고정 플로팅 뷰 클래스

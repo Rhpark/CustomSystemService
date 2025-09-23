@@ -9,8 +9,8 @@ import android.view.WindowInsets
 import android.view.WindowManager
 import androidx.annotation.RequiresApi
 import kr.open.library.systemmanager.base.BaseSystemService
-import kr.open.library.systemmanager.extenstions.checkSdkVersion
-import kr.open.library.systemmanager.extenstions.getWindowManager
+import kr.open.library.systemmanager.extensions.checkSdkVersion
+import kr.open.library.systemmanager.extensions.getWindowManager
 
 /**
  * This class provides information about the display of an Android device.

@@ -1,4 +1,4 @@
-package kr.open.library.systemmanager.extenstions
+package kr.open.library.systemmanager.extensions
 
 import android.os.Build
 import androidx.annotation.ChecksSdkIntAtLeast

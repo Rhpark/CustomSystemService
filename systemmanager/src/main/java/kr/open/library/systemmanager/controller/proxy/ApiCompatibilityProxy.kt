@@ -2,7 +2,7 @@ package kr.open.library.systemmanager.controller.proxy
 
 import android.content.Context
 import android.os.Build
-import kr.open.library.systemmanager.extenstions.safeCatch
+import kr.open.library.systemmanager.extensions.safeCatch
 
 /**
  * API 호환성 프록시의 기본 인터페이스

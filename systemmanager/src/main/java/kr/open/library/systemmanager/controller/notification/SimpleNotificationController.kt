@@ -19,8 +19,8 @@ import kr.open.library.systemmanager.controller.notification.dto.SimplePendingIn
 import kr.open.library.systemmanager.controller.notification.dto.SimpleProgressNotificationOption
 import kr.open.library.systemmanager.controller.notification.vo.SimpleNotificationType
 import kr.open.library.systemmanager.controller.notification.vo.NotificationStyle
-import kr.open.library.systemmanager.extenstions.getNotificationManager
-import kr.open.library.systemmanager.extenstions.safeCatch
+import kr.open.library.systemmanager.extensions.getNotificationManager
+import kr.open.library.systemmanager.extensions.safeCatch
 
 
 /**

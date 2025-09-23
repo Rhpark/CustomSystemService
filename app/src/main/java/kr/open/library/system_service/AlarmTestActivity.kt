@@ -11,17 +11,14 @@ import android.os.Bundle
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import kotlinx.coroutines.*
 import kr.open.library.logcat.Logx
 import kr.open.library.permissions.PermissionManager
-import kr.open.library.system_service.R
 import kr.open.library.system_service.databinding.ActivityAlarmTestBinding
 import kr.open.library.systemmanager.controller.alarm.AlarmController
 import kr.open.library.systemmanager.controller.alarm.dto.AlarmDTO
-import kr.open.library.systemmanager.extenstions.checkSdkVersion
+import kr.open.library.systemmanager.extensions.checkSdkVersion
 import java.text.SimpleDateFormat
 import java.util.*
 

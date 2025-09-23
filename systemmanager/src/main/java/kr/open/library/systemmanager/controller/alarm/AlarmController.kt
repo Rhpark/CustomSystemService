@@ -8,9 +8,8 @@ import android.icu.util.Calendar
 import kr.open.library.logcat.Logx
 import kr.open.library.systemmanager.base.BaseSystemService
 import kr.open.library.systemmanager.controller.alarm.dto.AlarmDTO
-import kr.open.library.systemmanager.controller.alarm.receiver.BaseAlarmReceiver
 import kr.open.library.systemmanager.controller.alarm.vo.AlarmConstants
-import kr.open.library.systemmanager.extenstions.getAlarmManager
+import kr.open.library.systemmanager.extensions.getAlarmManager
 
 
 /**

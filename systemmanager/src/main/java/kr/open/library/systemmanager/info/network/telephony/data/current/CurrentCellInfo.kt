@@ -2,7 +2,7 @@ package kr.open.library.systemmanager.info.network.telephony.data.current
 
 import android.os.Build
 import android.telephony.*
-import kr.open.library.systemmanager.extenstions.checkSdkVersion
+import kr.open.library.systemmanager.extensions.checkSdkVersion
 import kr.open.library.systemmanager.info.network.telephony.data.cell.cdma.CellInfoCdmaData
 import kr.open.library.systemmanager.info.network.telephony.data.cell.gsm.CellInfoGsmData
 import kr.open.library.systemmanager.info.network.telephony.data.cell.lte.CellInfoLteData

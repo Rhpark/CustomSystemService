@@ -7,7 +7,7 @@ import kr.open.library.logcat.Logx
 import kr.open.library.systemmanager.controller.window.floating.fixed.FloatingFixedView
 import kr.open.library.systemmanager.controller.window.floating.vo.FloatingViewCollisionsType
 import kr.open.library.systemmanager.controller.window.floating.vo.FloatingViewTouchType
-import kr.open.library.systemmanager.extenstions.safeCatch
+import kr.open.library.systemmanager.extensions.safeCatch
 
 /**
  * FloatingDragView - 드래그 가능한 플로팅 뷰 클래스

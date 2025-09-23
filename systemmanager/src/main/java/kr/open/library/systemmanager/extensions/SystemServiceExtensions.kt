@@ -1,4 +1,4 @@
-package kr.open.library.systemmanager.extenstions
+package kr.open.library.systemmanager.extensions
 
 import android.app.AlarmManager
 import android.app.NotificationManager
@@ -18,7 +18,6 @@ import android.telephony.euicc.EuiccManager
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import androidx.annotation.RequiresApi
-import kotlinx.coroutines.CoroutineScope
 import kr.open.library.systemmanager.controller.alarm.AlarmController
 import kr.open.library.systemmanager.info.display.DisplayInfo
 
@@ -42,8 +41,7 @@ public fun Context.getSubscriptionManager(): SubscriptionManager = getSystemServ
 
 public fun Context.getEuiccManager(): EuiccManager = getSystemService(EuiccManager::class.java)
 
-public fun Context.getConnectivityManager(): ConnectivityManager = getSystemService(
-    ConnectivityManager::class.java)
+public fun Context.getConnectivityManager(): ConnectivityManager = getSystemService(ConnectivityManager::class.java)
 
 public fun Context.getWifiManager(): WifiManager = getSystemService(WifiManager::class.java)
 
@@ -51,8 +49,7 @@ public fun Context.getLocationManager(): LocationManager = getSystemService(Loca
 
 public fun Context.getAlarmManager(): AlarmManager = getSystemService(AlarmManager::class.java)
 
-public fun Context.getNotificationManager(): NotificationManager = getSystemService(
-    NotificationManager::class.java)
+public fun Context.getNotificationManager(): NotificationManager = getSystemService(NotificationManager::class.java)
 
 public fun Context.getPowerManager(): PowerManager = getSystemService(PowerManager::class.java)
 

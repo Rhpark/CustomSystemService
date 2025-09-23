@@ -12,7 +12,7 @@ import android.telephony.TelephonyManager
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import kr.open.library.logcat.Logx
-import kr.open.library.systemmanager.extenstions.checkSdkVersion
+import kr.open.library.systemmanager.extensions.checkSdkVersion
 import kr.open.library.systemmanager.info.network.telephony.data.current.CurrentCellInfo
 import kr.open.library.systemmanager.info.network.telephony.data.current.CurrentServiceState
 import kr.open.library.systemmanager.info.network.telephony.data.current.CurrentSignalStrength

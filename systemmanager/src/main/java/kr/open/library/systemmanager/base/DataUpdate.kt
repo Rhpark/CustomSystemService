@@ -46,25 +46,4 @@ internal class DataUpdate<TYPE>(initialValue: TYPE) {
     public fun update(newValue: TYPE) {
         _state.value = newValue
     }
-
-    /**
-     * Legacy compatibility method for callback-based usage.
-     * Prefer using the StateFlow directly for reactive programming.
-     *
-     * 콜백 기반 사용을 위한 레거시 호환성 메서드입니다.
-     * 반응형 프로그래밍을 위해 StateFlow를 직접 사용하는 것을 권장합니다.
-     *
-     * @param updateListener Callback to be invoked on value changes
-     * @deprecated Use state.collect {} or state.onEach {} instead
-     */
-    @Deprecated(
-        message = "Use state.collect {} or state.onEach {} for reactive updates",
-        replaceWith = ReplaceWith("state.collect { updateListener(it) }")
-    )
-    public fun updateListener(updateListener: ((res: TYPE) -> Unit)?) {
-        // For backward compatibility, we immediately call with current value
-        updateListener?.invoke(currentValue)
-        // Note: This doesn't actually register a listener as the old implementation did
-        // Users should migrate to using state.collect {} pattern
-    }
 }

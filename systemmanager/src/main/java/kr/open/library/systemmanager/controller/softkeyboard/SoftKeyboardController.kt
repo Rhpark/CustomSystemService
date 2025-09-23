@@ -12,7 +12,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kr.open.library.logcat.Logx
 import kr.open.library.systemmanager.base.BaseSystemService
-import kr.open.library.systemmanager.extenstions.getInputMethodManager
+import kr.open.library.systemmanager.extensions.getInputMethodManager
 
 /**
  * Controller for managing soft keyboard operations using InputMethodManager.

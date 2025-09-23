@@ -3,26 +3,23 @@ package kr.open.library.system_service
 import android.Manifest.permission.POST_NOTIFICATIONS
 import android.app.NotificationManager
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Bundle
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import kotlinx.coroutines.*
 import kr.open.library.logcat.Logx
 import kr.open.library.permissions.PermissionManager
-import kr.open.library.system_service.R
 import kr.open.library.system_service.databinding.ActivityNotificationTestBinding
 import kr.open.library.systemmanager.controller.notification.SimpleNotificationController
 import kr.open.library.systemmanager.controller.notification.dto.SimpleNotificationOption
 import kr.open.library.systemmanager.controller.notification.dto.SimpleProgressNotificationOption
 import kr.open.library.systemmanager.controller.notification.vo.NotificationStyle
 import kr.open.library.systemmanager.controller.notification.vo.SimpleNotificationType
-import kr.open.library.systemmanager.extenstions.checkSdkVersion
+import kr.open.library.systemmanager.extensions.checkSdkVersion
 import java.text.SimpleDateFormat
 import java.util.*
 

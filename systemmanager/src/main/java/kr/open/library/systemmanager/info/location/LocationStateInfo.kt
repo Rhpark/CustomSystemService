@@ -23,8 +23,8 @@ import kr.open.library.logcat.Logx
 import kr.open.library.permissions.extensions.hasPermissions
 import kr.open.library.systemmanager.base.BaseSystemService
 import kr.open.library.systemmanager.base.DataUpdate
-import kr.open.library.systemmanager.extenstions.checkSdkVersion
-import kr.open.library.systemmanager.extenstions.getLocationManager
+import kr.open.library.systemmanager.extensions.checkSdkVersion
+import kr.open.library.systemmanager.extensions.getLocationManager
 import kr.open.library.systemmanager.base.SystemServiceError
 import kr.open.library.systemmanager.base.SystemServiceException
 
@@ -43,7 +43,7 @@ public open class LocationStateInfo(
     private val isGpsEnabled = DataUpdate<Boolean>(isGpsEnabled())
     private val isNetworkEnabled = DataUpdate<Boolean>(isNetworkEnabled())
     private val isPassiveEnabled = DataUpdate<Boolean>(isPassiveEnabled())
-    private val isFusedEnabled = DataUpdate<Boolean>(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) isFusedEnabled() else false)
+    private val isFusedEnabled = DataUpdate<Boolean>(checkSdkVersion(Build.VERSION_CODES.S, positiveWork = {isFusedEnabled()}, negativeWork = {false}))
 
     init {
         setupDataFlows()
