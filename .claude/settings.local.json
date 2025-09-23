@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gradlew build:*)",
+      "Bash(./gradlew build:*)",
+      "Bash(dir)",
+      "Bash(.gradlew build)",
+      "Bash(gradlew.bat build:*)",
+      "Bash(gradle build)",
+      "Bash(find:*)",
+      "WebSearch",
+      "Bash(./gradlew.bat build:*)",
+      "Bash(java:*)",
+      "Bash(where java)",
+      "Bash(echo $JAVA_HOME)",
+      "Bash(dir:*)",
+      "Read(\\/**)",
+      "Bash(export:*)",
+      "Bash(echo:*)",
+      "Bash(\"/c/Program Files/Android/Android Studio/jre/bin/java.exe\" -version)",
+      "Bash(JAVA_HOME=\"/c/Program Files/Android/Android Studio/jre\" ./gradlew.bat build)",
+      "Bash(\"/c/Program Files/Android/Android Studio1/jbr/bin/java.exe\" -version)",
+      "Bash(JAVA_HOME=\"/c/Program Files/Android/Android Studio1/jbr\" ./gradlew.bat build)",
+      "Bash(JAVA_HOME=\"/c/Program Files/Android/Android Studio1/jbr\" ./gradlew.bat clean build)",
+      "Bash(JAVA_HOME=\"/c/Program Files/Android/Android Studio1/jbr\" ./gradlew.bat compileDebugKotlin --info)",
+      "Bash(JAVA_HOME=\"/c/Program Files/Android/Android Studio1/jbr\" ./gradlew.bat build --info)",
+      "Bash(JAVA_HOME=\"/c/Program Files/Android/Android Studio1/jbr\" ./gradlew.bat compileDebugKotlin)",
+      "Bash(JAVA_HOME=\"/c/Program Files/Android/Android Studio1/jbr\" ./gradlew.bat assembleDebug)",
+      "Bash(sed:*)",
+      "Bash(del \"systemmanager\\src\\main\\java\\kr\\open\\library\\systemmanager\\controller\\bluetooth\\debug_fix.kt\")",
+      "Bash(JAVA_HOME=\"/c/Program Files/Android/Android Studio1/jbr\" ./gradlew.bat build --quiet)",
+      "Bash(JAVA_HOME=\"/c/Program Files/Android/Android Studio1/jbr\" ./gradlew.bat compileDebugKotlin --quiet)",
+      "Bash(JAVA_HOME=\"/c/Program Files/Android/Android Studio1/jbr\" ./gradlew.bat :app:assembleDebug --quiet)",
+      "Bash(del \"D:\\Android Project\\SystemService\\app\\src\\main\\java\\kr\\open\\library\\system_service\\BleTwoPhoneTestActivity.kt.backup\")",
+      "Bash(JAVA_HOME=\"/c/Program Files/Android/Android Studio1/jbr\" ./gradlew.bat :app:compileDebugKotlin --quiet)",
+      "Bash(JAVA_HOME=\"/c/Program Files/Android/Android Studio1/jbr\" ./gradlew.bat :systemmanager:compileDebugKotlin --quiet)",
+      "Bash(JAVA_HOME=\"/c/Program Files/Android/Android Studio1/jbr\" ./gradlew.bat test --info)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

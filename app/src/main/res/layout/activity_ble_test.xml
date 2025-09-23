@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/white"
+        tools:context=".BleTestActivity">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- 제목 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="BLE 통신 테스트"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:layout_marginBottom="16dp" />
+
+            <!-- 모드 선택 버튼들 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="모드 선택"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="16dp">
+
+                <Button
+                    android:id="@+id/btnStartCentral"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp"
+                    android:text="Central 스캔"
+                    android:backgroundTint="@android:color/holo_blue_light" />
+
+                <Button
+                    android:id="@+id/btnStartPeripheral"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:text="Peripheral 시작"
+                    android:backgroundTint="@android:color/holo_green_light" />
+
+            </LinearLayout>
+
+            <!-- 스캔된 디바이스 목록 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="스캔된 디바이스"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerViewDevices"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:layout_marginBottom="16dp"
+                android:background="@android:color/white"
+                android:elevation="2dp"
+                android:padding="8dp"
+                tools:listitem="@layout/item_ble_device" />
+
+            <!-- 메시지 전송 버튼들 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="메시지 전송"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp">
+
+                <Button
+                    android:id="@+id/btnSendMessage"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="4dp"
+                    android:text="텍스트 메시지"
+                    android:textSize="12sp"
+                    android:enabled="false" />
+
+                <Button
+                    android:id="@+id/btnSendHeartbeat"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="4dp"
+                    android:text="하트비트"
+                    android:textSize="12sp"
+                    android:enabled="false" />
+
+                <Button
+                    android:id="@+id/btnSendSensorData"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="4dp"
+                    android:text="센서 데이터"
+                    android:textSize="12sp"
+                    android:enabled="false" />
+
+            </LinearLayout>
+
+            <!-- 상태 새로고침 및 로그 제어 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="16dp">
+
+                <Button
+                    android:id="@+id/btnRefreshStatus"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp"
+                    android:text="상태 새로고침"
+                    android:backgroundTint="@android:color/darker_gray" />
+
+                <Button
+                    android:id="@+id/btnClearLog"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:text="로그 지우기"
+                    android:backgroundTint="@android:color/holo_red_light" />
+
+            </LinearLayout>
+
+            <!-- 상태 표시 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="상태 정보"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:id="@+id/tvStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@android:color/black"
+                android:textColor="@android:color/white"
+                android:fontFamily="monospace"
+                android:padding="12dp"
+                android:text="초기화 중..."
+                android:layout_marginBottom="16dp" />
+
+            <!-- 로그 출력 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="로그 출력"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp" />
+
+            <ScrollView
+                android:id="@+id/scrollLog"
+                android:layout_width="match_parent"
+                android:layout_height="300dp"
+                android:background="@android:color/black"
+                android:padding="12dp">
+
+                <TextView
+                    android:id="@+id/tvLogOutput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@android:color/white"
+                    android:fontFamily="monospace"
+                    android:textSize="12sp"
+                    android:text="로그가 여기에 표시됩니다...\n" />
+
+            </ScrollView>
+
+            <!-- 사용 안내 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="📋 사용 안내"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="1. 두 개의 디바이스로 테스트하세요\n2. 하나는 Central 모드, 다른 하나는 Peripheral 모드로 시작\n3. 연결이 성공하면 메시지 전송 버튼들이 활성화됩니다\n4. 다양한 타입의 메시지를 전송해보세요\n\n⚠️ 주의: Bluetooth 권한과 위치 권한이 필요합니다"
+                android:textSize="14sp"
+                android:lineSpacingMultiplier="1.2"
+                android:background="@android:color/white"
+                android:padding="12dp" />
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</layout>
