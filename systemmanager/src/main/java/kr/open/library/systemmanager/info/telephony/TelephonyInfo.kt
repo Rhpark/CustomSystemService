@@ -29,6 +29,8 @@ import kr.open.library.systemmanager.info.network.telephony.data.current.Current
 import kr.open.library.systemmanager.info.network.telephony.data.state.TelephonyNetworkState
 import java.util.concurrent.Executor
 import androidx.core.util.forEach
+import kr.open.library.systemmanager.base.SystemServiceError
+import kr.open.library.systemmanager.base.SystemServiceException
 
 /**
  * TelephonyInfo - 통합된 Telephony 정보 관리 클래스
@@ -199,38 +201,17 @@ public class TelephonyInfo(context: Context) : BaseSystemService(
      * @return Carrier name or null if unavailable / 통신사 이름 또는 사용 불가 시 null
      */
     @RequiresPermission(READ_PHONE_STATE)
-    public fun getCarrierName(): String? = safeExecuteOrDefault(
-        operation = "getCarrierName",
-        defaultValue = null,
-        requiresPermission = true
-    ) {
+    public fun getCarrierName(): String? = safe(null) {
         telephonyManager.networkOperatorName?.takeIf { it.isNotBlank() }
     }
     
-    /**
-     * Safely gets the carrier name with Result pattern.
-     * Result 패턴으로 통신사 이름을 안전하게 가져옵니다.
-     */
-    @RequiresPermission(READ_PHONE_STATE)
-    public fun getCarrierNameSafe(): Result<String?> {
-        return safeExecute(
-            operation = "getCarrierNameSafe",
-            requiresPermission = true
-        ) {
-            telephonyManager.networkOperatorName?.takeIf { it.isNotBlank() }
-        }
-    }
     
     /**
      * Gets the Mobile Country Code (MCC) from the default SIM.
      * 기본 SIM에서 Mobile Country Code (MCC)를 가져옵니다.
      */
     @RequiresPermission(READ_PHONE_STATE)
-    public fun getMobileCountryCode(): String? = safeExecuteOrDefault(
-        operation = "getMobileCountryCode",
-        defaultValue = null,
-        requiresPermission = true
-    ) {
+    public fun getMobileCountryCode(): String? = safe(null) {
         telephonyManager.networkOperator?.take(3)?.takeIf { it.length == 3 }
     }
     
@@ -239,11 +220,7 @@ public class TelephonyInfo(context: Context) : BaseSystemService(
      * 기본 SIM에서 Mobile Network Code (MNC)를 가져옵니다.
      */
     @RequiresPermission(READ_PHONE_STATE)
-    public fun getMobileNetworkCode(): String? = safeExecuteOrDefault(
-        operation = "getMobileNetworkCode",
-        defaultValue = null,
-        requiresPermission = true
-    ) {
+    public fun getMobileNetworkCode(): String? = safe(null) {
         val operator = telephonyManager.networkOperator
         if (operator?.length in 5..6) {
             operator.substring(3)
@@ -261,27 +238,10 @@ public class TelephonyInfo(context: Context) : BaseSystemService(
      * @return SIM state constant from TelephonyManager / TelephonyManager의 SIM 상태 상수
      */
     @RequiresPermission(READ_PHONE_STATE)
-    public fun getSimState(): Int = safeExecuteOrDefault(
-        operation = "getSimState",
-        defaultValue = TelephonyManager.SIM_STATE_UNKNOWN,
-        requiresPermission = true
-    ) {
+    public fun getSimState(): Int = safe(TelephonyManager.SIM_STATE_UNKNOWN) {
         telephonyManager.simState
     }
     
-    /**
-     * Safely gets the SIM state with Result pattern.
-     * Result 패턴으로 SIM 상태를 안전하게 가져옵니다.
-     */
-    @RequiresPermission(READ_PHONE_STATE)
-    public fun getSimStateSafe(): Result<Int> {
-        return safeExecute(
-            operation = "getSimStateSafe",
-            requiresPermission = true
-        ) {
-            telephonyManager.simState
-        }
-    }
     
     /**
      * Checks if SIM is ready.
@@ -295,11 +255,7 @@ public class TelephonyInfo(context: Context) : BaseSystemService(
      * SIM 운영자 이름을 가져옵니다.
      */
     @RequiresPermission(READ_PHONE_STATE)
-    public fun getSimOperatorName(): String? = safeExecuteOrDefault(
-        operation = "getSimOperatorName",
-        defaultValue = null,
-        requiresPermission = true
-    ) {
+    public fun getSimOperatorName(): String? = safe(null) {
         telephonyManager.simOperatorName?.takeIf { it.isNotBlank() }
     }
     
@@ -308,11 +264,7 @@ public class TelephonyInfo(context: Context) : BaseSystemService(
      * SIM 제공업체의 ISO 국가 코드를 가져옵니다.
      */
     @RequiresPermission(READ_PHONE_STATE)
-    public fun getSimCountryIso(): String? = safeExecuteOrDefault(
-        operation = "getSimCountryIso", 
-        defaultValue = null,
-        requiresPermission = true
-    ) {
+    public fun getSimCountryIso(): String? = safe(null) {
         telephonyManager.simCountryIso?.takeIf { it.isNotBlank() }
     }
     
@@ -328,11 +280,7 @@ public class TelephonyInfo(context: Context) : BaseSystemService(
      * 참고: SIM 구성에 따라 null이나 빈 문자열을 반환할 수 있습니다.
      */
     @RequiresPermission(anyOf = [READ_PHONE_STATE, READ_PHONE_NUMBERS])
-    public fun getPhoneNumber(): String? = safeExecuteOrDefault(
-        operation = "getPhoneNumber",
-        defaultValue = null,
-        requiresPermission = true
-    ) {
+    public fun getPhoneNumber(): String? = safe(null) {
         @Suppress("DEPRECATION")
         telephonyManager.line1Number?.takeIf { it.isNotBlank() }
     }
@@ -341,11 +289,7 @@ public class TelephonyInfo(context: Context) : BaseSystemService(
      * Gets the call state.
      * 통화 상태를 가져옵니다.
      */
-    public fun getCallState(): Int = safeExecuteOrDefault(
-        operation = "getCallState",
-        defaultValue = TelephonyManager.CALL_STATE_IDLE,
-        requiresPermission = false
-    ) {
+    public fun getCallState(): Int = safe(TelephonyManager.CALL_STATE_IDLE) {
         telephonyManager.callState
     }
     
@@ -358,29 +302,21 @@ public class TelephonyInfo(context: Context) : BaseSystemService(
      * 현재 네트워크 타입을 가져옵니다.
      */
     @RequiresPermission(READ_PHONE_STATE)
-    public fun getNetworkType(): Int = executeWithDeprecatedFallback(
-        operation = "getNetworkType",
-        minimumApiLevel = Build.VERSION_CODES.R,
-        modernBlock = {
+    public fun getNetworkType(): Int = safe(TelephonyManager.NETWORK_TYPE_UNKNOWN) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             telephonyManager.dataNetworkType
-        },
-        deprecatedBlock = {
+        } else {
             @Suppress("DEPRECATION")
             telephonyManager.networkType
-        },
-        requiresPermission = true
-    ).getOrDefault(TelephonyManager.NETWORK_TYPE_UNKNOWN)
+        }
+    }
     
     /**
      * Gets the current data network type.
      * 현재 데이터 네트워크 타입을 가져옵니다.
      */
     @RequiresPermission(READ_PHONE_STATE)
-    public fun getDataNetworkType(): Int = safeExecuteOrDefault(
-        operation = "getDataNetworkType",
-        defaultValue = TelephonyManager.NETWORK_TYPE_UNKNOWN,
-        requiresPermission = true
-    ) {
+    public fun getDataNetworkType(): Int = safe(TelephonyManager.NETWORK_TYPE_UNKNOWN) {
         telephonyManager.dataNetworkType
     }
     
@@ -389,11 +325,7 @@ public class TelephonyInfo(context: Context) : BaseSystemService(
      * 디바이스가 로밍 중인지 확인합니다.
      */
     @RequiresPermission(READ_PHONE_STATE)
-    public fun isNetworkRoaming(): Boolean = safeExecuteOrDefault(
-        operation = "isNetworkRoaming",
-        defaultValue = false,
-        requiresPermission = true
-    ) {
+    public fun isNetworkRoaming(): Boolean = safe(false) {
         telephonyManager.isNetworkRoaming
     }
     
@@ -425,11 +357,7 @@ public class TelephonyInfo(context: Context) : BaseSystemService(
      * 활성화된 SIM 카드 수를 가져옵니다.
      */
     @RequiresPermission(READ_PHONE_STATE)
-    public fun getActiveSimCount(): Int = safeExecuteOrDefault(
-        operation = "getActiveSimCount",
-        defaultValue = 0,
-        requiresPermission = true
-    ) {
+    public fun getActiveSimCount(): Int = safe(0) {
         subscriptionManager.activeSubscriptionInfoCount
     }
     
@@ -438,11 +366,7 @@ public class TelephonyInfo(context: Context) : BaseSystemService(
      * 활성 구독 정보 목록을 가져옵니다.
      */
     @RequiresPermission(READ_PHONE_STATE)
-    public fun getActiveSubscriptionInfoList(): List<SubscriptionInfo> = safeExecuteOrDefault(
-        operation = "getActiveSubscriptionInfoList",
-        defaultValue = emptyList(),
-        requiresPermission = true
-    ) {
+    public fun getActiveSubscriptionInfoList(): List<SubscriptionInfo> = safe(emptyList()) {
         subscriptionManager.activeSubscriptionInfoList ?: emptyList()
     }
     
@@ -451,16 +375,12 @@ public class TelephonyInfo(context: Context) : BaseSystemService(
      * 기본 데이터 SIM의 구독 정보를 가져옵니다.
      */
     @RequiresPermission(READ_PHONE_STATE)
-    public fun getDefaultDataSubscriptionInfo(): SubscriptionInfo? = safeExecuteOrDefault(
-        operation = "getDefaultDataSubscriptionInfo",
-        defaultValue = null,
-        requiresPermission = true
-    ) {
+    public fun getDefaultDataSubscriptionInfo(): SubscriptionInfo? = safe(null) {
         val subId = checkSdkVersion(
             Build.VERSION_CODES.R,
             positiveWork = { telephonyManager.subscriptionId },
-            negativeWork = { 
-                getActiveSubscriptionInfoList().firstOrNull()?.subscriptionId 
+            negativeWork = {
+                getActiveSubscriptionInfoList().firstOrNull()?.subscriptionId
             }
         )
         subId?.let { subscriptionManager.getActiveSubscriptionInfo(it) }
@@ -481,17 +401,21 @@ public class TelephonyInfo(context: Context) : BaseSystemService(
         onServiceStateChanged: ((ServiceState) -> Unit)? = null,
         onNetworkStateChanged: ((TelephonyNetworkState) -> Unit)? = null
     ): Result<Unit> {
-        return executeWithApiCompatibility(
-            operation = "registerCallback",
-            supportedApiLevel = Build.VERSION_CODES.S,
-            modernApi = {
+        return try {
+            if (!isPermissionAllGranted()) {
+                return Result.failure(SystemServiceException(createPermissionError()))
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 registerModernCallback(handler, onSignalStrengthChanged, onServiceStateChanged, onNetworkStateChanged)
-            },
-            legacyApi = {
+            } else {
                 registerLegacyCallback(onSignalStrengthChanged, onServiceStateChanged, onNetworkStateChanged)
-            },
-            requiresPermission = true
-        )
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Logx.e("Failed to register callback: ${e.message}")
+            Result.failure(SystemServiceException(SystemServiceError.Unknown.Exception(e, "registerCallback")))
+        }
     }
     
     @RequiresApi(Build.VERSION_CODES.S)
@@ -558,29 +482,25 @@ public class TelephonyInfo(context: Context) : BaseSystemService(
      * telephony 콜백을 해제합니다.
      */
     @RequiresPermission(READ_PHONE_STATE)
-    public fun unregisterCallback(): Result<Unit> {
-        return safeExecute(
-            operation = "unregisterCallback",
-            requiresPermission = true
-        ) {
-            if (!isCallbackRegistered) {
-                Logx.w("TelephonyInfo: No callback registered")
-                return@safeExecute
-            }
-            
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                telephonyManager.unregisterTelephonyCallback(telephonyCallback.baseTelephonyCallback)
-            } else {
-                @Suppress("DEPRECATION")
-                telephonyManager.listen(
-                    telephonyCallback.basePhoneStateListener, 
-                    android.telephony.PhoneStateListener.LISTEN_NONE
-                )
-            }
-            
-            isCallbackRegistered = false
-            Logx.d("TelephonyInfo: Callback unregistered")
+    public fun unregisterCallback(): Boolean = safe(false) {
+        if (!isCallbackRegistered) {
+            Logx.w("TelephonyInfo: No callback registered")
+            return@safe false
         }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            telephonyManager.unregisterTelephonyCallback(telephonyCallback.baseTelephonyCallback)
+        } else {
+            @Suppress("DEPRECATION")
+            telephonyManager.listen(
+                telephonyCallback.basePhoneStateListener,
+                android.telephony.PhoneStateListener.LISTEN_NONE
+            )
+        }
+
+        isCallbackRegistered = false
+        Logx.d("TelephonyInfo: Callback unregistered")
+        true
     }
     
     // =================================================
@@ -682,19 +602,24 @@ public class TelephonyInfo(context: Context) : BaseSystemService(
         onDisplayInfo: ((telephonyDisplayInfo: TelephonyDisplayInfo) -> Unit)? = null,
         onTelephonyNetworkState: ((telephonyNetworkState: TelephonyNetworkState) -> Unit)? = null
     ): Result<Unit> {
-        return safeExecute(
-            operation = "registerTelephonyCallBackFromDefaultUSim",
-            requiresPermission = true
-        ) {
+        return try {
+            if (!isPermissionAllGranted()) {
+                return Result.failure(SystemServiceException(createPermissionError()))
+            }
+
             val subscriptionInfoList = getActiveSubscriptionInfoListInternal()
             val defaultSim = subscriptionInfoList.firstOrNull()
                 ?: throw IllegalStateException("No default SIM found")
-            
+
             registerTelephonyCallBack(
                 defaultSim.simSlotIndex, executor, isGpsOn, onActiveDataSubId,
                 onDataConnectionState, onCellInfo, onSignalStrength, onServiceState,
                 onCallState, onDisplayInfo, onTelephonyNetworkState
             )
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Logx.e("Failed to register telephony callback from default SIM: ${e.message}")
+            Result.failure(SystemServiceException(SystemServiceError.Unknown.Exception(e, "registerTelephonyCallBackFromDefaultUSim")))
         }
     }
     

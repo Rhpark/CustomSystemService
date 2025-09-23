@@ -34,17 +34,16 @@ public open class AlarmController(context: Context) : BaseSystemService(
      *
      * @param receiver The BroadcastReceiver class to handle the alarm
      * @param alarmDto The alarm data containing time and metadata
-     * @return Result<Unit> containing success or detailed error information
+     * @return Boolean true if alarm was registered successfully, false otherwise
      */
-    public fun registerAlarmClock(receiver: Class<*>, alarmDto: AlarmDTO): Result<Unit> {
-        return safeExecute("registerAlarmClock") {
-            val calendar = getCalendar(alarmDto)
-            val pendingIntent = getAlarmPendingIntent(receiver, alarmDto.key).getOrThrow()
-                
-            val alarmClockInfo = AlarmManager.AlarmClockInfo(calendar.timeInMillis, pendingIntent)
-            alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
-            Logx.d("Alarm clock registered for key: ${alarmDto.key} at ${calendar.time}")
-        }
+    public fun registerAlarmClock(receiver: Class<*>, alarmDto: AlarmDTO): Boolean = safe(false) {
+        val calendar = getCalendar(alarmDto)
+        val pendingIntent = getAlarmPendingIntent(receiver, alarmDto.key) ?: return@safe false
+
+        val alarmClockInfo = AlarmManager.AlarmClockInfo(calendar.timeInMillis, pendingIntent)
+        alarmManager.setAlarmClock(alarmClockInfo, pendingIntent)
+        Logx.d("Alarm clock registered for key: ${alarmDto.key} at ${calendar.time}")
+        true
     }
 
     /**
@@ -53,16 +52,15 @@ public open class AlarmController(context: Context) : BaseSystemService(
      *
      * @param receiver The BroadcastReceiver class to handle the alarm
      * @param alarmDto The alarm data containing time and metadata
-     * @return Result<Unit> containing success or detailed error information
+     * @return Boolean true if alarm was registered successfully, false otherwise
      */
-    public fun registerAlarmExactAndAllowWhileIdle(receiver: Class<*>, alarmDto: AlarmDTO): Result<Unit> {
-        return safeExecute("registerAlarmExactAndAllowWhileIdle") {
-            val calendar = getCalendar(alarmDto)
-            val pendingIntent = getAlarmPendingIntent(receiver, alarmDto.key).getOrThrow()
-                
-            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
-            Logx.d("Exact alarm registered for key: ${alarmDto.key} at ${calendar.time}")
-        }
+    public fun registerAlarmExactAndAllowWhileIdle(receiver: Class<*>, alarmDto: AlarmDTO): Boolean = safe(false) {
+        val calendar = getCalendar(alarmDto)
+        val pendingIntent = getAlarmPendingIntent(receiver, alarmDto.key) ?: return@safe false
+
+        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
+        Logx.d("Exact alarm registered for key: ${alarmDto.key} at ${calendar.time}")
+        true
     }
 
     /**
@@ -71,33 +69,30 @@ public open class AlarmController(context: Context) : BaseSystemService(
      *
      * @param receiver The BroadcastReceiver class to handle the alarm
      * @param alarmDto The alarm data containing time and metadata
-     * @return Result<Unit> containing success or detailed error information
+     * @return Boolean true if alarm was registered successfully, false otherwise
      */
-    public fun registerAlarmAndAllowWhileIdle(receiver: Class<*>, alarmDto: AlarmDTO): Result<Unit> {
-        return safeExecute("registerAlarmAndAllowWhileIdle") {
-            val calendar = getCalendar(alarmDto)
-            val pendingIntent = getAlarmPendingIntent(receiver, alarmDto.key).getOrThrow()
-                
-            alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
-            Logx.d("Idle-allowed alarm registered for key: ${alarmDto.key} at ${calendar.time}")
-        }
+    public fun registerAlarmAndAllowWhileIdle(receiver: Class<*>, alarmDto: AlarmDTO): Boolean = safe(false) {
+        val calendar = getCalendar(alarmDto)
+        val pendingIntent = getAlarmPendingIntent(receiver, alarmDto.key) ?: return@safe false
+
+        alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
+        Logx.d("Idle-allowed alarm registered for key: ${alarmDto.key} at ${calendar.time}")
+        true
     }
 
     /**
      * Creates a PendingIntent for alarm operations with proper error handling.
      * 알람 작업을 위한 PendingIntent를 안전하게 생성합니다.
      */
-    private fun getAlarmPendingIntent(receiver: Class<*>, key: Int): Result<PendingIntent> {
-        return safeExecute("getAlarmPendingIntent", requiresPermission = false) {
-            PendingIntent.getBroadcast(
-                context,
-                key,
-                Intent(context, receiver).apply { 
-                    putExtra(AlarmConstants.ALARM_KEY, key) 
-                },
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-        }
+    private fun getAlarmPendingIntent(receiver: Class<*>, key: Int): PendingIntent? = safe(null) {
+        PendingIntent.getBroadcast(
+            context,
+            key,
+            Intent(context, receiver).apply {
+                putExtra(AlarmConstants.ALARM_KEY, key)
+            },
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
     }
 
     /**
@@ -133,29 +128,27 @@ public open class AlarmController(context: Context) : BaseSystemService(
      *
      * @param key The unique identifier for the alarm to remove
      * @param receiver The BroadcastReceiver class used when creating the alarm
-     * @return Result<Boolean> true if alarm was found and cancelled, false if not found
+     * @return Boolean true if alarm was found and cancelled, false if not found
      */
-    public fun remove(key: Int, receiver: Class<*>): Result<Boolean> {
-        return safeExecute("removeAlarm", requiresPermission = false) {
-            val intent = Intent(context, receiver).apply {
-                putExtra(AlarmConstants.ALARM_KEY, key)
-            }
-            val pendingIntent = PendingIntent.getBroadcast(
-                context, 
-                key, 
-                intent, 
-                PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
-            )
-            
-            if (pendingIntent != null) {
-                alarmManager.cancel(pendingIntent)
-                pendingIntent.cancel()
-                Logx.d("Alarm with key $key cancelled successfully")
-                true
-            } else {
-                Logx.w("No alarm found with key $key")
-                false
-            }
+    public fun remove(key: Int, receiver: Class<*>): Boolean = safe(false) {
+        val intent = Intent(context, receiver).apply {
+            putExtra(AlarmConstants.ALARM_KEY, key)
+        }
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            key,
+            intent,
+            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        if (pendingIntent != null) {
+            alarmManager.cancel(pendingIntent)
+            pendingIntent.cancel()
+            Logx.d("Alarm with key $key cancelled successfully")
+            true
+        } else {
+            Logx.w("No alarm found with key $key")
+            false
         }
     }
     
@@ -165,20 +158,19 @@ public open class AlarmController(context: Context) : BaseSystemService(
      *
      * @param key The unique identifier for the alarm
      * @param receiver The BroadcastReceiver class used when creating the alarm
-     * @return Result<Boolean> true if alarm exists, false otherwise
+     * @return Boolean true if alarm exists, false otherwise
      */
-    public fun exists(key: Int, receiver: Class<*>): Result<Boolean> {
-        return safeExecute("checkAlarmExists", requiresPermission = false) {
-            val intent = Intent(context, receiver).apply {
-                putExtra(AlarmConstants.ALARM_KEY, key)
-            }
-            val pendingIntent = PendingIntent.getBroadcast(
-                context,
-                key,
-                intent,
-                PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
-            )
-            pendingIntent != null
+    public fun exists(key: Int, receiver: Class<*>): Boolean = safe(false) {
+        val intent = Intent(context, receiver).apply {
+            putExtra(AlarmConstants.ALARM_KEY, key)
         }
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            key,
+            intent,
+            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+        )
+        pendingIntent != null
+        true
     }
 }

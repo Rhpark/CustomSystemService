@@ -2,8 +2,10 @@ package kr.open.library.systemmanager.base
 
 import android.content.Context
 import android.os.Build
+import android.os.CombinedVibration
 import kr.open.library.logcat.Logx
 import kr.open.library.permissions.extensions.remainPermissions
+import kr.open.library.systemmanager.extensions.checkSdkVersion
 
 /**
  * Base class for system services with integrated Result pattern support.
@@ -63,139 +65,24 @@ public abstract class BaseSystemService(
     }
 
     /**
-     * Executes a block of code safely with Result pattern, handling common system service errors.
-     * Result 패턴을 사용하여 일반적인 시스템 서비스 오류를 처리하며 코드 블록을 안전하게 실행합니다.
-     *
-     * @param operation Name of the operation for logging
-     * @param operation 로깅을 위한 작업 이름
-     * @param requiresPermission Whether this operation requires permissions to be granted
-     * @param requiresPermission 이 작업에 권한이 필요한지 여부
-     * @param block The operation to execute
-     * @param block 실행할 작업
-     * @return Result containing success value or SystemServiceError
+     * Simple safe execution with basic error handling.
+     * 기본 오류 처리가 포함된 간단한 안전 실행입니다.
      */
-    protected inline fun <T> safeExecute(
-        operation: String,
-        requiresPermission: Boolean = true,
-        block: () -> T
-    ): Result<T> {
-        return runCatching {
-            // Check permissions if required
-            if (requiresPermission && !isPermissionAllGranted()) {
-                throw SystemServiceException(createPermissionError())
+    protected inline fun <T> safe(defaultValue: T, block: () -> T): T {
+        return try {
+            if (!isPermissionAllGranted()) {
+                Logx.w("${this::class.simpleName}: Permission not granted")
+                return defaultValue
             }
-            
-            try {
-                val result = block()
-                Logx.d("${this::class.simpleName}.$operation: Success")
-                result
-            } catch (e: SecurityException) {
-                val error = handleSecurityException(e, operation)
-                Logx.e("${this::class.simpleName}.$operation: Security error - ${error.getDeveloperMessage()}")
-                throw SystemServiceException(error, e)
-            } catch (e: IllegalArgumentException) {
-                val error = SystemServiceError.Configuration.InvalidParameter(
-                    parameterName = "unknown",
-                    value = null,
-                    reason = e.message ?: "Invalid argument"
-                )
-                Logx.e("${this::class.simpleName}.$operation: Invalid argument - ${e.message}")
-                throw SystemServiceException(error, e)
-            } catch (e: IllegalStateException) {
-                val error = SystemServiceError.State.InvalidState(
-                    currentState = "unknown",
-                    requiredState = "valid",
-                    operation = operation
-                )
-                Logx.e("${this::class.simpleName}.$operation: Invalid state - ${e.message}")
-                throw SystemServiceException(error, e)
-            } catch (e: UnsupportedOperationException) {
-                val error = SystemServiceError.SystemService.UnsupportedVersion(
-                    serviceName = this::class.simpleName ?: "unknown",
-                    requiredApi = 0,
-                    currentApi = Build.VERSION.SDK_INT
-                )
-                Logx.e("${this::class.simpleName}.$operation: Unsupported operation - ${e.message}")
-                throw SystemServiceException(error, e)
-            } catch (e: Exception) {
-                val error = SystemServiceError.Unknown.Exception(e, operation)
-                Logx.e("${this::class.simpleName}.$operation: Unexpected error - ${e.message}")
-                throw SystemServiceException(error, e)
-            }
+            block()
+        } catch (e: Exception) {
+            Logx.w("${this::class.simpleName}: Operation failed - ${e.message}")
+            defaultValue
         }
     }
 
-    /**
-     * Handles SecurityException and categorizes it appropriately.
-     * SecurityException을 처리하고 적절하게 분류합니다.
-     */
-    protected fun handleSecurityException(e: SecurityException, operation: String): SystemServiceError {
-        val message = e.message ?: ""
-        
-        return when {
-            // Permission-related security errors
-            message.contains("permission", ignoreCase = true) -> {
-                when {
-                    message.contains("SYSTEM_ALERT_WINDOW") -> 
-                        SystemServiceError.Permission.SpecialPermissionRequired(
-                            "SYSTEM_ALERT_WINDOW",
-                            "android.settings.action.MANAGE_OVERLAY_PERMISSION"
-                        )
-                    message.contains("SCHEDULE_EXACT_ALARM") ->
-                        SystemServiceError.Permission.SpecialPermissionRequired(
-                            "SCHEDULE_EXACT_ALARM",
-                            "android.settings.REQUEST_SCHEDULE_EXACT_ALARM"
-                        )
-                    else -> SystemServiceError.Permission.NotGranted(remainPermissions.ifEmpty { listOf("unknown") })
-                }
-            }
-            
-            // Policy-related security errors
-            message.contains("policy", ignoreCase = true) || message.contains("admin", ignoreCase = true) -> {
-                SystemServiceError.Security.PolicyViolation("device_policy", operation)
-            }
-            
-            // Access denied
-            message.contains("denied", ignoreCase = true) || message.contains("forbidden", ignoreCase = true) -> {
-                SystemServiceError.Security.AccessDenied(operation, message)
-            }
-            
-            // Default security error
-            else -> SystemServiceError.Security.PolicyViolation("security_policy", operation)
-        }
-    }
 
-    /**
-     * Executes an operation that returns boolean and converts it to Result<Unit>.
-     * boolean을 반환하는 작업을 실행하고 Result<Unit>로 변환합니다.
-     */
-    protected inline fun safeExecuteBoolean(
-        operation: String,
-        requiresPermission: Boolean = true,
-        block: () -> Boolean
-    ): Result<Unit> {
-        return safeExecute(operation, requiresPermission) {
-            val success = block()
-            if (success) {
-                Unit
-            } else {
-                throw IllegalStateException("Operation '$operation' returned false")
-            }
-        }
-    }
 
-    /**
-     * Executes an operation with a default fallback value.
-     * 기본 대체 값과 함께 작업을 실행합니다.
-     */
-    protected inline fun <T> safeExecuteOrDefault(
-        operation: String,
-        defaultValue: T,
-        requiresPermission: Boolean = true,
-        block: () -> T
-    ): T {
-        return safeExecute(operation, requiresPermission, block).getOrDefault(defaultValue)
-    }
 
     /**
      * Refreshes the permission status. Call this after requesting permissions.
@@ -226,213 +113,6 @@ public abstract class BaseSystemService(
      */
     public fun isPermissionGranted(permission: String): Boolean {
         return !remainPermissions.contains(permission)
-    }
-
-    /**
-     * Creates a detailed permission error with user guidance.
-     * 사용자 안내가 포함된 상세한 권한 오류를 생성합니다.
-     */
-    protected fun createPermissionErrorWithGuidance(): SystemServiceError.Permission.SpecialPermissionRequired {
-        return when {
-            remainPermissions.contains(android.Manifest.permission.SYSTEM_ALERT_WINDOW) -> {
-                SystemServiceError.Permission.SpecialPermissionRequired(
-                    "SYSTEM_ALERT_WINDOW",
-                    "android.settings.action.MANAGE_OVERLAY_PERMISSION"
-                )
-            }
-            remainPermissions.contains(android.Manifest.permission.SCHEDULE_EXACT_ALARM) -> {
-                SystemServiceError.Permission.SpecialPermissionRequired(
-                    "SCHEDULE_EXACT_ALARM", 
-                    "android.settings.REQUEST_SCHEDULE_EXACT_ALARM"
-                )
-            }
-            else -> {
-                SystemServiceError.Permission.SpecialPermissionRequired(
-                    remainPermissions.firstOrNull() ?: "UNKNOWN",
-                    null
-                )
-            }
-        }
-    }
-
-    /**
-     * Executes an operation with enhanced permission handling and user guidance.
-     * 향상된 권한 처리와 사용자 안내가 포함된 작업을 실행합니다.
-     */
-    protected inline fun <T> safeExecuteWithPermissionGuidance(
-        operation: String,
-        noinline onPermissionRequired: ((SystemServiceError.Permission.SpecialPermissionRequired) -> Unit)? = null,
-        block: () -> T
-    ): Result<T> {
-        return runCatching {
-            // Check permissions first
-            if (!isPermissionAllGranted()) {
-                val permissionError = createPermissionErrorWithGuidance()
-                Logx.w("${this::class.simpleName}.$operation: Permission required - ${permissionError.permission}")
-                
-                // Notify caller about permission requirement
-                onPermissionRequired?.invoke(permissionError)
-                
-                throw SystemServiceException(permissionError)
-            }
-            
-            // Execute operation with standard error handling
-            safeExecute(operation, requiresPermission = true, block).getOrThrow()
-        }
-    }
-
-    /**
-     * Gets user-friendly permission guidance message.
-     * 사용자 친화적인 권한 안내 메시지를 가져옵니다.
-     */
-    public fun getPermissionGuidanceMessage(): String? {
-        if (isPermissionAllGranted()) return null
-        
-        return when {
-            remainPermissions.contains(android.Manifest.permission.SYSTEM_ALERT_WINDOW) -> 
-                "다른 앱 위에 표시 권한이 필요합니다. 설정에서 권한을 허용해 주세요."
-            remainPermissions.contains(android.Manifest.permission.SCHEDULE_EXACT_ALARM) ->
-                "정확한 알람 권한이 필요합니다. 설정에서 권한을 허용해 주세요."
-            else -> 
-                "이 기능을 사용하려면 다음 권한이 필요합니다: ${remainPermissions.joinToString(", ")}"
-        }
-    }
-
-    // =================================================
-    // API Compatibility Support
-    // API 호환성 지원
-    // =================================================
-    
-    /**
-     * Executes operation with API level-specific fallback support.
-     * API 레벨별 대체 지원과 함께 작업을 실행합니다.
-     * 
-     * @param operation Operation name for logging / 로깅용 작업 이름
-     * @param supportedApiLevel Minimum API level for modern approach / 현대적 접근법을 위한 최소 API 레벨
-     * @param modernApi Modern API implementation / 현대적 API 구현
-     * @param legacyApi Legacy API implementation / 레거시 API 구현
-     * @param requiresPermission Whether this operation requires permissions / 이 작업에 권한이 필요한지 여부
-     */
-    protected inline fun <T> executeWithApiCompatibility(
-        operation: String,
-        supportedApiLevel: Int,
-        crossinline modernApi: () -> T,
-        crossinline legacyApi: () -> T,
-        requiresPermission: Boolean = true
-    ): Result<T> {
-        return safeExecute(operation, requiresPermission) {
-            if (Build.VERSION.SDK_INT >= supportedApiLevel) {
-                try {
-                    modernApi()
-                } catch (e: UnsupportedOperationException) {
-                    Logx.w("${this::class.simpleName}.$operation: Modern API failed, falling back to legacy")
-                    legacyApi()
-                } catch (e: NoSuchMethodError) {
-                    Logx.w("${this::class.simpleName}.$operation: Modern API not available, falling back to legacy")
-                    legacyApi()
-                }
-            } else {
-                legacyApi()
-            }
-        }
-    }
-    
-    /**
-     * Executes deprecated API with proper suppression and logging.
-     * 적절한 억제 및 로깅과 함께 deprecated API를 실행합니다.
-     * 
-     * @param operation Operation name / 작업 이름
-     * @param apiName Name of the deprecated API / deprecated API 이름
-     * @param replacementInfo Information about modern replacement / 현대적 대체재 정보
-     * @param requiresPermission Whether this operation requires permissions / 권한 필요 여부
-     * @param block Deprecated API call / deprecated API 호출
-     */
-    protected inline fun <T> executeDeprecatedApi(
-        operation: String,
-        apiName: String,
-        replacementInfo: String? = null,
-        requiresPermission: Boolean = true,
-        crossinline block: () -> T
-    ): Result<T> {
-        return safeExecute(operation, requiresPermission) {
-            if (replacementInfo != null) {
-                Logx.w("${this::class.simpleName}.$operation: Using deprecated $apiName. Consider migrating to $replacementInfo")
-            } else {
-                Logx.w("${this::class.simpleName}.$operation: Using deprecated $apiName")
-            }
-            block()
-        }
-    }
-    
-    /**
-     * Executes modern API with automatic fallback to deprecated version.
-     * deprecated 버전에 대한 자동 대체와 함께 현대적 API를 실행합니다.
-     * 
-     * @param operation Operation name / 작업 이름
-     * @param minimumApiLevel Minimum API level for modern implementation / 현대적 구현을 위한 최소 API 레벨
-     * @param modernBlock Modern API implementation / 현대적 API 구현
-     * @param deprecatedBlock Deprecated API fallback / deprecated API 대체
-     * @param requiresPermission Whether this operation requires permissions / 권한 필요 여부
-     */
-    protected inline fun <T> executeWithDeprecatedFallback(
-        operation: String,
-        minimumApiLevel: Int,
-        crossinline modernBlock: () -> T,
-        crossinline deprecatedBlock: () -> T,
-        requiresPermission: Boolean = true
-    ): Result<T> {
-        return safeExecute(operation, requiresPermission) {
-            if (Build.VERSION.SDK_INT >= minimumApiLevel) {
-                try {
-                    val result = modernBlock()
-                    Logx.d("${this::class.simpleName}.$operation: Using modern API (SDK ${Build.VERSION.SDK_INT})")
-                    result
-                } catch (e: Exception) {
-                    Logx.w("${this::class.simpleName}.$operation: Modern API failed (${e.message}), falling back to deprecated")
-                    deprecatedBlock()
-                }
-            } else {
-                Logx.d("${this::class.simpleName}.$operation: Using deprecated API (SDK ${Build.VERSION.SDK_INT} < $minimumApiLevel)")
-                deprecatedBlock()
-            }
-        }
-    }
-    
-    /**
-     * Checks if current API level supports modern implementation.
-     * 현재 API 레벨이 현대적 구현을 지원하는지 확인합니다.
-     * 
-     * @param minimumApiLevel Required minimum API level / 필요한 최소 API 레벨
-     * @return true if modern API is supported / 현대적 API가 지원되면 true
-     */
-    protected fun isModernApiSupported(minimumApiLevel: Int): Boolean {
-        return Build.VERSION.SDK_INT >= minimumApiLevel
-    }
-    
-    /**
-     * Logs API compatibility information for debugging.
-     * 디버깅을 위한 API 호환성 정보를 로깅합니다.
-     * 
-     * @param operation Operation name / 작업 이름
-     * @param apiInfo API information / API 정보
-     */
-    protected fun logApiCompatibilityInfo(operation: String, apiInfo: String) {
-        Logx.d("${this::class.simpleName}.$operation: API Compatibility - $apiInfo (SDK ${Build.VERSION.SDK_INT})")
-    }
-    
-    /**
-     * Creates a standardized unsupported version error.
-     * 표준화된 지원되지 않는 버전 오류를 생성합니다.
-     * 
-     * @param apiName Name of the API / API 이름
-     * @param requiredApiLevel Required API level / 필요한 API 레벨
-     */
-    protected fun createUnsupportedVersionError(apiName: String, requiredApiLevel: Int): SystemServiceError {
-        return SystemServiceError.SystemService.UnsupportedVersion(
-            serviceName = apiName,
-            requiredApi = requiredApiLevel,
-            currentApi = Build.VERSION.SDK_INT
-        )
     }
 
     /**

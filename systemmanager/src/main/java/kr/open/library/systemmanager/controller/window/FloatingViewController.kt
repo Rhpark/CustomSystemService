@@ -48,13 +48,7 @@ public open class FloatingViewController(context: Context) :
      * @param floatingView 설정할 고정 플로팅 뷰 (null이면 제거) / Fixed floating view to set (remove if null)
      * @return 성공 여부 / Success status
      */
-    public fun setFloatingFixedView(floatingView: FloatingFixedView?): Boolean = safeCatch("setFloatingFixedView", false) {
-        if (!isPermissionAllGranted()) {
-            val guidanceMessage = getPermissionGuidanceMessage()
-            Logx.e("Cannot display floating view. $guidanceMessage")
-            return@safeCatch false
-        }
-
+    public fun setFloatingFixedView(floatingView: FloatingFixedView?): Boolean = safe(false) {
         if(floatingView == null) {
             removeFloatingFixedView()
         } else {
@@ -64,32 +58,6 @@ public open class FloatingViewController(context: Context) :
         true
     }
 
-    /**
-     * Enhanced method for setting floating view with permission guidance callback.
-     * 권한 안내 콜백이 포함된 향상된 플로팅 뷰 설정 메서드입니다.
-     * 
-     * @param floatingView 설정할 고정 플로팅 뷰 / Fixed floating view to set
-     * @param onPermissionRequired 권한이 필요할 때 호출되는 콜백 / Callback when permission is required
-     * @return Result containing success or error information
-     */
-    public fun setFloatingFixedViewSafe(
-        floatingView: FloatingFixedView?,
-        onPermissionRequired: ((String, String?) -> Unit)? = null
-    ): Result<Unit> {
-        return safeExecuteWithPermissionGuidance(
-            "setFloatingFixedViewSafe",
-            onPermissionRequired = { error ->
-                onPermissionRequired?.invoke(error.permission, error.settingsAction)
-            }
-        ) {
-            if(floatingView == null) {
-                removeFloatingFixedView()
-            } else {
-                addView(floatingView.view, floatingView.params)
-            }
-            this.floatingFixedView = floatingView
-        }
-    }
 
     /**
      * 현재 설정된 고정 플로팅 뷰를 반환합니다.
@@ -106,13 +74,7 @@ public open class FloatingViewController(context: Context) :
      * @param floatingView 추가할 드래그 플로팅 뷰 / Draggable floating view to add
      * @return 추가 성공 여부 / Addition success status
      */
-    public fun addFloatingDragView(floatingView: FloatingDragView): Boolean = safeCatch("addFloatingDragView", false) {
-        if (!isPermissionAllGranted()) {
-            val guidanceMessage = getPermissionGuidanceMessage()
-            Logx.e("Cannot add floating drag view. $guidanceMessage")
-            return@safeCatch false
-        }
-
+    public fun addFloatingDragView(floatingView: FloatingDragView): Boolean = safe(false) {
         val config = FloatingDragViewConfig(floatingView)
 
         floatingView.view.setOnTouchListener{ view, event->
@@ -158,67 +120,6 @@ public open class FloatingViewController(context: Context) :
         true
     }
 
-    /**
-     * Enhanced method for adding draggable floating view with permission guidance.
-     * 권한 안내가 포함된 향상된 드래그 플로팅 뷰 추가 메서드입니다.
-     * 
-     * @param floatingView 추가할 드래그 플로팅 뷰 / Draggable floating view to add
-     * @param onPermissionRequired 권한이 필요할 때 호출되는 콜백 / Callback when permission is required
-     * @return Result containing success or error information
-     */
-    public fun addFloatingDragViewSafe(
-        floatingView: FloatingDragView,
-        onPermissionRequired: ((String, String?) -> Unit)? = null
-    ): Result<Unit> {
-        return safeExecuteWithPermissionGuidance(
-            "addFloatingDragViewSafe",
-            onPermissionRequired = { error ->
-                onPermissionRequired?.invoke(error.permission, error.settingsAction)
-            }
-        ) {
-            val config = FloatingDragViewConfig(floatingView)
-
-            floatingView.view.setOnTouchListener{ view, event ->
-                when (event.action) {
-                    MotionEvent.ACTION_DOWN -> {
-                        config.onTouchDown(event.rawX, event.rawY)
-                        floatingView.updateCollisionState(
-                            FloatingViewTouchType.TOUCH_DOWN,
-                            getCollisionTypeWithFixedView(floatingView)
-                        )
-                        true
-                    }
-
-                    MotionEvent.ACTION_MOVE -> {
-                        config.onTouchMove(event.rawX, event.rawY)
-                        updateView(view, floatingView.params)
-                        floatingView.updateCollisionState(
-                            FloatingViewTouchType.TOUCH_MOVE,
-                            getCollisionTypeWithFixedView(floatingView)
-                        )
-                        true
-                    }
-
-                    MotionEvent.ACTION_UP -> {
-                        floatingView.updateCollisionState(
-                            FloatingViewTouchType.TOUCH_UP,
-                            getCollisionTypeWithFixedView(floatingView)
-                        )
-                        if (!config.getIsDragging()) {
-                            floatingView.view.performClick()
-                        }
-                        config.onTouchUp()
-                        true
-                    }
-
-                    else -> false
-                }
-            }
-
-            floatingDragViewInfoList.add(config)
-            addView(config.getView(), floatingView.params)
-        }
-    }
 
     private fun getCollisionTypeWithFixedView(floatingDragView: FloatingDragView): FloatingViewCollisionsType =
         if(isCollisionFixedView(floatingDragView)) FloatingViewCollisionsType.OCCURING
@@ -235,37 +136,13 @@ public open class FloatingViewController(context: Context) :
      * @param params 새로운 레이아웃 파라미터 / New layout parameters
      * @return 업데이트 성공 여부 / Update success status
      */
-    public fun updateView(view: View, params: LayoutParams): Boolean = safeCatch("updateView", false) {
+    public fun updateView(view: View, params: LayoutParams): Boolean = safe(false) {
         params.x = params.x.coerceAtLeast(0)
         params.y = params.y.coerceAtLeast(0)
         windowManager.updateViewLayout(view, params)
         true
     }
 
-    /**
-     * Enhanced method for updating view layout with validation and Result pattern.
-     * 검증과 Result 패턴이 포함된 향상된 뷰 레이아웃 업데이트 메서드입니다.
-     * 
-     * @param view 업데이트할 뷰 / View to update
-     * @param params 새로운 레이아웃 파라미터 / New layout parameters
-     * @return Result containing success or error information
-     */
-    public fun updateViewSafe(view: View, params: LayoutParams): Result<Unit> {
-        return safeExecute("updateViewSafe", requiresPermission = false) {
-            validateViewAndParams(view, params)
-            
-            // Enhanced boundary checking with screen dimensions
-            val displayMetrics = context.resources.displayMetrics
-            params.x = params.x.coerceIn(0, displayMetrics.widthPixels - (params.width.takeIf { it > 0 } ?: 100))
-            params.y = params.y.coerceIn(0, displayMetrics.heightPixels - (params.height.takeIf { it > 0 } ?: 100))
-            
-            try {
-                windowManager.updateViewLayout(view, params)
-            } catch (e: IllegalArgumentException) {
-                throw IllegalStateException("View is not attached to window manager", e)
-            }
-        }
-    }
 
     /**
      * 윈도우 매니저에 뷰를 추가합니다.
@@ -275,36 +152,11 @@ public open class FloatingViewController(context: Context) :
      * @param params 레이아웃 파라미터 / Layout parameters
      * @return 추가 성공 여부 / Addition success status
      */
-    public fun addView(view: View, params: LayoutParams): Boolean = safeCatch("addView", false) {
+    public fun addView(view: View, params: LayoutParams): Boolean = safe(false) {
         windowManager.addView(view, params)
         true
     }
 
-    /**
-     * Enhanced method for adding any view with detailed error handling and validation.
-     * 상세한 오류 처리와 검증이 포함된 향상된 뷰 추가 메서드입니다.
-     * 
-     * @param view 추가할 뷰 / View to add
-     * @param params 레이아웃 파라미터 / Layout parameters
-     * @return Result containing success or error information
-     */
-    public fun addViewSafe(view: View, params: LayoutParams): Result<Unit> {
-        return safeExecute("addViewSafe") {
-            validateViewAndParams(view, params)
-            
-            try {
-                windowManager.addView(view, params)
-            } catch (e: WindowManager.BadTokenException) {
-                throw IllegalStateException("Invalid window token - ensure activity is active", e)
-            } catch (e: IllegalStateException) {
-                if (e.message?.contains("has already been added") == true) {
-                    throw IllegalStateException("View has already been added to window manager", e)
-                } else {
-                    throw e
-                }
-            }
-        }
-    }
 
     /**
      * 드래그 플로팅 뷰를 제거합니다.
@@ -334,23 +186,6 @@ public open class FloatingViewController(context: Context) :
         true
     }
 
-    /**
-     * Enhanced method for removing view with proper error handling.
-     * 적절한 오류 처리가 포함된 향상된 뷰 제거 메서드입니다.
-     * 
-     * @param view 제거할 뷰 / View to remove
-     * @return Result containing success or error information
-     */
-    public fun removeViewSafe(view: View): Result<Unit> {
-        return safeExecute("removeViewSafe", requiresPermission = false) {
-            try {
-                windowManager.removeView(view)
-            } catch (e: IllegalArgumentException) {
-                // View was not added to window manager
-                throw IllegalStateException("View is not attached to window manager", e)
-            }
-        }
-    }
 
     /**
      * 고정 플로팅 뷰를 제거합니다.
@@ -378,51 +213,7 @@ public open class FloatingViewController(context: Context) :
         true
     }
 
-    /**
-     * Validates view and layout parameters before window operations.
-     * 윈도우 작업 전에 뷰와 레이아웃 매개변수의 유효성을 검사합니다.
-     */
-    private fun validateViewAndParams(view: View, params: LayoutParams) {
-        require(view.parent == null) { "View already has a parent" }
-        require(params.width > 0 || params.width == LayoutParams.MATCH_PARENT || params.width == LayoutParams.WRAP_CONTENT) {
-            "Invalid width: ${params.width}"
-        }
-        require(params.height > 0 || params.height == LayoutParams.MATCH_PARENT || params.height == LayoutParams.WRAP_CONTENT) {
-            "Invalid height: ${params.height}"
-        }
-    }
 
-    /**
-     * Batch operation to add multiple views with transaction-like behavior.
-     * 트랜잭션과 같은 동작으로 여러 뷰를 추가하는 일괄 작업입니다.
-     * 
-     * @param viewsAndParams 뷰와 파라미터 쌍의 목록 / List of view and parameter pairs
-     * @return Result containing success or error information
-     */
-    public fun addViewsBatch(viewsAndParams: List<Pair<View, LayoutParams>>): Result<Unit> {
-        return safeExecute("addViewsBatch") {
-            val addedViews = mutableListOf<View>()
-            
-            try {
-                viewsAndParams.forEach { (view, params) ->
-                    validateViewAndParams(view, params)
-                    windowManager.addView(view, params)
-                    addedViews.add(view)
-                }
-            } catch (e: Exception) {
-                // Rollback: remove any views that were successfully added
-                // 롤백: 성공적으로 추가된 뷰들을 제거
-                addedViews.forEach { view ->
-                    try {
-                        windowManager.removeView(view)
-                    } catch (ignored: Exception) {
-                        // Ignore errors during rollback
-                    }
-                }
-                throw e
-            }
-        }
-    }
 
     /**
      * Enhanced destroy method with proper cleanup and error handling.

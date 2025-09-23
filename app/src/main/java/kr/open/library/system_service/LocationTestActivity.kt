@@ -179,7 +179,7 @@ class LocationTestActivity : AppCompatActivity() {
 
     private fun getCurrentLocation() {
         lifecycleScope.launch {
-            locationStateInfo.getLocationResult().fold(
+            locationStateInfo.getLocation().fold(
                 onSuccess = { location ->
                     if (location != null) {
                         updateLocationDisplay(location)

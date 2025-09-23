@@ -31,21 +31,7 @@ public open class VibratorController(context: Context) :
      * Legacy vibrator instance for SDK versions below 31 (Android 12).
      * SDK 31 미만 (안드로이드 12 이하) 버전용 레거시 진동 인스턴스입니다.
      */
-    public val vibrator: Vibrator by lazy {
-        safeExecuteOrDefault(
-            operation = "vibrator initialization",
-            defaultValue = context.getVibrator(),
-            requiresPermission = false
-        ) {
-            checkSdkVersion(
-                Build.VERSION_CODES.S,
-                positiveWork = {
-                    throw IllegalStateException("Can not be used Vibrator Class, required must be lower than SDK version S(31), this SDK version ${Build.VERSION.SDK_INT}")
-                },
-                negativeWork = { context.getVibrator() }
-            )
-        }
-    }
+    public val vibrator: Vibrator by lazy { context.getVibrator() }
 
 
     /**
@@ -53,21 +39,7 @@ public open class VibratorController(context: Context) :
      * SDK 31+ (안드로이드 12+) 버전용 향상된 기능을 제공하는 최신 진동 매니저입니다.
      */
     @get:RequiresApi(Build.VERSION_CODES.S)
-    public val vibratorManager: VibratorManager by lazy {
-        safeExecuteOrDefault(
-            operation = "vibratorManager initialization",
-            defaultValue = context.getVibratorManager(),
-            requiresPermission = false
-        ) {
-            checkSdkVersion(
-                Build.VERSION_CODES.S,
-                positiveWork = { context.getVibratorManager() },
-                negativeWork = {
-                    throw IllegalStateException("Can not be used VibratorManager Class, required SDK version >= Build.VERSION_CODES.S(31), this SDK version ${Build.VERSION.SDK_INT}")
-                }
-            )
-        }
-    }
+    public val vibratorManager: VibratorManager by lazy { context.getVibratorManager() }
 
     /**
      * Creates a one-shot vibration with specified duration and amplitude.
@@ -80,25 +52,20 @@ public open class VibratorController(context: Context) :
      * @param effect Amplitude from -1 to 255, where -1 is default (강도 -1~255, -1은 기본값)
      */
     @RequiresPermission(VIBRATE)
-    public fun createOneShot(timer: Long, effect: Int = VibrationEffect.DEFAULT_AMPLITUDE): Boolean {
-        return executeWithApiCompatibility(
-            operation = "createOneShot",
-            supportedApiLevel = Build.VERSION_CODES.Q,
-            modernApi = {
-                val oneShot = VibrationEffect.createOneShot(timer, effect)
-                if (isModernApiSupported(Build.VERSION_CODES.S)) {
-                    vibratorManager.vibrate(CombinedVibration.createParallel(oneShot))
-                } else {
-                    vibrator.vibrate(oneShot)
-                }
-                true
-            },
-            legacyApi = {
-                @Suppress("DEPRECATION")
-                vibrator.vibrate(timer)
-                true
+    public fun createOneShot(timer: Long, effect: Int = VibrationEffect.DEFAULT_AMPLITUDE): Boolean = safe(false) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val oneShot = VibrationEffect.createOneShot(timer, effect)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                vibratorManager.vibrate(CombinedVibration.createParallel(oneShot))
+            } else {
+                vibrator.vibrate(oneShot)
             }
-        ).getOrDefault(false)
+            true
+        } else {
+            @Suppress("DEPRECATION")
+            vibrator.vibrate(timer)
+            true
+        }
     }
     
     /**
@@ -108,25 +75,20 @@ public open class VibratorController(context: Context) :
      * @param milliseconds 진동 지속 시간 (밀리초) / Vibration duration in milliseconds
      */
     @RequiresPermission(VIBRATE)
-    public fun vibrate(milliseconds: Long): Boolean {
-        return executeWithDeprecatedFallback(
-            operation = "vibrate",
-            minimumApiLevel = Build.VERSION_CODES.Q,
-            modernBlock = {
-                val effect = VibrationEffect.createOneShot(milliseconds, VibrationEffect.DEFAULT_AMPLITUDE)
-                if (isModernApiSupported(Build.VERSION_CODES.S)) {
-                    vibratorManager.vibrate(CombinedVibration.createParallel(effect))
-                } else {
-                    vibrator.vibrate(effect)
-                }
-                true
-            },
-            deprecatedBlock = {
-                @Suppress("DEPRECATION")
-                vibrator.vibrate(milliseconds)
-                true
+    public fun vibrate(milliseconds: Long): Boolean = safe(false) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val effect = VibrationEffect.createOneShot(milliseconds, VibrationEffect.DEFAULT_AMPLITUDE)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                vibratorManager.vibrate(CombinedVibration.createParallel(effect))
+            } else {
+                vibrator.vibrate(effect)
             }
-        ).getOrDefault(false)
+            true
+        } else {
+            @Suppress("DEPRECATION")
+            vibrator.vibrate(milliseconds)
+            true
+        }
     }
 
     /**
@@ -139,26 +101,21 @@ public open class VibratorController(context: Context) :
      * @param vibrationEffectClick Predefined effect constant (e.g., VibrationEffect.EFFECT_CLICK)
      */
     @RequiresPermission(VIBRATE)
-    public fun createPredefined(vibrationEffectClick: Int): Boolean {
-        return executeWithApiCompatibility(
-            operation = "createPredefined",
-            supportedApiLevel = Build.VERSION_CODES.Q,
-            modernApi = {
-                val predefinedEffect = VibrationEffect.createPredefined(vibrationEffectClick)
-                if (isModernApiSupported(Build.VERSION_CODES.S)) {
-                    vibratorManager.vibrate(CombinedVibration.createParallel(predefinedEffect))
-                } else {
-                    vibrator.vibrate(predefinedEffect)
-                }
-                true
-            },
-            legacyApi = {
-                // Fallback for older APIs - use simple vibration
-                @Suppress("DEPRECATION")
-                vibrator.vibrate(100) // Default 100ms for predefined effects
-                true
+    public fun createPredefined(vibrationEffectClick: Int): Boolean = safe(false) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val predefinedEffect = VibrationEffect.createPredefined(vibrationEffectClick)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                vibratorManager.vibrate(CombinedVibration.createParallel(predefinedEffect))
+            } else {
+                vibrator.vibrate(predefinedEffect)
             }
-        ).getOrDefault(false)
+            true
+        } else {
+            // Fallback for older APIs - use simple vibration
+            @Suppress("DEPRECATION")
+            vibrator.vibrate(100) // Default 100ms for predefined effects
+            true
+        }
     }
 
     /**
@@ -173,26 +130,21 @@ public open class VibratorController(context: Context) :
      * @param repeat Index to start repeating from, -1 for no repeat (반복 시작 인덱스, -1은 반복 없음)
      */
     @RequiresPermission(VIBRATE)
-    public fun createWaveform(times: LongArray, amplitudes: IntArray, repeat: Int = -1): Boolean {
-        return executeWithApiCompatibility(
-            operation = "createWaveform",
-            supportedApiLevel = Build.VERSION_CODES.O,
-            modernApi = {
-                val waveformEffect = VibrationEffect.createWaveform(times, amplitudes, repeat)
-                if (isModernApiSupported(Build.VERSION_CODES.S)) {
-                    vibratorManager.vibrate(CombinedVibration.createParallel(waveformEffect))
-                } else {
-                    vibrator.vibrate(waveformEffect)
-                }
-                true
-            },
-            legacyApi = {
-                // Fallback for older APIs - use pattern vibration without amplitudes
-                @Suppress("DEPRECATION")
-                vibrator.vibrate(times, repeat)
-                true
+    public fun createWaveform(times: LongArray, amplitudes: IntArray, repeat: Int = -1): Boolean = safe(false) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val waveformEffect = VibrationEffect.createWaveform(times, amplitudes, repeat)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                vibratorManager.vibrate(CombinedVibration.createParallel(waveformEffect))
+            } else {
+                vibrator.vibrate(waveformEffect)
             }
-        ).getOrDefault(false)
+            true
+        } else {
+            // Fallback for older APIs - use pattern vibration without amplitudes
+            @Suppress("DEPRECATION")
+            vibrator.vibrate(times, repeat)
+            true
+        }
     }
     
     /**
@@ -203,25 +155,20 @@ public open class VibratorController(context: Context) :
      * @param repeat 반복 시작 인덱스, -1은 반복 없음 / Repeat start index, -1 for no repeat
      */
     @RequiresPermission(VIBRATE)
-    public fun vibratePattern(pattern: LongArray, repeat: Int = -1): Boolean {
-        return executeWithDeprecatedFallback(
-            operation = "vibratePattern",
-            minimumApiLevel = Build.VERSION_CODES.O,
-            modernBlock = {
-                val waveformEffect = VibrationEffect.createWaveform(pattern, repeat)
-                if (isModernApiSupported(Build.VERSION_CODES.S)) {
-                    vibratorManager.vibrate(CombinedVibration.createParallel(waveformEffect))
-                } else {
-                    vibrator.vibrate(waveformEffect)
-                }
-                true
-            },
-            deprecatedBlock = {
-                @Suppress("DEPRECATION")
-                vibrator.vibrate(pattern, repeat)
-                true
+    public fun vibratePattern(pattern: LongArray, repeat: Int = -1): Boolean = safe(false) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val waveformEffect = VibrationEffect.createWaveform(pattern, repeat)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                vibratorManager.vibrate(CombinedVibration.createParallel(waveformEffect))
+            } else {
+                vibrator.vibrate(waveformEffect)
             }
-        ).getOrDefault(false)
+            true
+        } else {
+            @Suppress("DEPRECATION")
+            vibrator.vibrate(pattern, repeat)
+            true
+        }
     }
 
     /**
@@ -232,37 +179,24 @@ public open class VibratorController(context: Context) :
      * 레거시 Vibrator와 최신 VibratorManager API 모두에서 작동합니다.
      */
     @RequiresPermission(VIBRATE)
-    public fun cancel(): Boolean {
-        return executeWithApiCompatibility(
-            operation = "cancel",
-            supportedApiLevel = Build.VERSION_CODES.S,
-            modernApi = {
-                vibratorManager.cancel()
-                true
-            },
-            legacyApi = {
-                vibrator.cancel()
-                true
-            },
-            requiresPermission = true
-        ).getOrDefault(false)
+    public fun cancel(): Boolean = safe(false) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            vibratorManager.cancel()
+        } else {
+            vibrator.cancel()
+        }
+        true
     }
     
     /**
      * 진동 지원 여부를 확인합니다.
      * Check if vibration is supported on this device.
      */
-    public fun hasVibrator(): Boolean {
-        return executeWithApiCompatibility(
-            operation = "hasVibrator",
-            supportedApiLevel = Build.VERSION_CODES.S,
-            modernApi = {
-                vibratorManager.defaultVibrator.hasVibrator()
-            },
-            legacyApi = {
-                vibrator.hasVibrator()
-            },
-            requiresPermission = false
-        ).getOrDefault(false)
+    public fun hasVibrator(): Boolean = safe(false) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            vibratorManager.defaultVibrator.hasVibrator()
+        } else {
+            vibrator.hasVibrator()
+        }
     }
 }

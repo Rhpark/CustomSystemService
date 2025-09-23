@@ -30,47 +30,43 @@ public open class SoftKeyboardController(context: Context) : BaseSystemService(c
     /**
      * Sets window soft input mode to adjust pan.
      * Can be configured in manifest: android:windowSoftInputMode="adjustPan"
-     * 
+     *
      * 윈도우 소프트 입력 모드를 adjust pan으로 설정합니다.
      * 매니페스트에서 설정 가능: android:windowSoftInputMode="adjustPan"
      */
-    public fun setAdjustPan(window: Window): Result<Unit> {
-        return safeExecute("setAdjustPan", requiresPermission = false) {
-            window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN)
-        }
+    public fun setAdjustPan(window: Window): Boolean = safe(false) {
+        window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN)
+        true
     }
 
     /**
      * Sets custom soft input mode for the window.
      * Can be configured in manifest: android:windowSoftInputMode="..."
-     * 
+     *
      * 윈도우에 사용자 정의 소프트 입력 모드를 설정합니다.
      * 매니페스트에서 설정 가능: android:windowSoftInputMode="..."
      *
      * @param window Target window
      * @param softInputTypes Input mode types (e.g., SOFT_INPUT_ADJUST_PAN, SOFT_INPUT_MASK_STATE)
      */
-    public fun setSoftInputMode(window: Window, softInputTypes: Int): Result<Unit> {
-        return safeExecute("setSoftInputMode", requiresPermission = false) {
-            window.setSoftInputMode(softInputTypes)
-        }
+    public fun setSoftInputMode(window: Window, softInputTypes: Int): Boolean = safe(false) {
+        window.setSoftInputMode(softInputTypes)
+        true
     }
 
     /**
      * Shows soft keyboard for input-capable views (EditText, SearchView, etc.).
      * Default flag options: SHOW_IMPLICIT, SHOW_FORCED (API 33 Deprecated)
-     * 
+     *
      * 입력 가능한 뷰(EditText, SearchView 등)에 소프트 키보드를 표시합니다.
      * 기본 플래그 옵션: SHOW_IMPLICIT, SHOW_FORCED (API 33에서 deprecated)
      */
-    public fun show(v: View, flag: Int = InputMethodManager.SHOW_IMPLICIT): Result<Boolean> {
-        return safeExecute("show", requiresPermission = false) {
-            if (v.requestFocus()) {
-                imm.showSoftInput(v, flag)
-            } else {
-                Logx.e("view requestFocus() is false!!")
-                false
-            }
+    public fun show(v: View, flag: Int = InputMethodManager.SHOW_IMPLICIT): Boolean = safe(false) {
+        if (v.requestFocus()) {
+            imm.showSoftInput(v, flag)
+        } else {
+            Logx.e("view requestFocus() is false!!")
+            false
         }
     }
 
@@ -82,12 +78,10 @@ public open class SoftKeyboardController(context: Context) : BaseSystemService(c
      * @param v Target view
      * @param delay Delay in milliseconds
      * @param flag Show flag (SHOW_IMPLICIT, SHOW_FORCED deprecated in API 33)
-     * @return Result<Boolean> true if Runnable was placed in message queue
+     * @return Boolean true if Runnable was placed in message queue
      */
-    public fun showDelay(v: View, delay: Long, flag: Int = InputMethodManager.SHOW_IMPLICIT): Result<Boolean> {
-        return safeExecute("showDelay", requiresPermission = false) {
-            v.postDelayed(Runnable { show(v, flag) }, delay)
-        }
+    public fun showDelay(v: View, delay: Long, flag: Int = InputMethodManager.SHOW_IMPLICIT): Boolean = safe(false) {
+        v.postDelayed(Runnable { show(v, flag) }, delay)
     }
 
     /**
@@ -99,30 +93,27 @@ public open class SoftKeyboardController(context: Context) : BaseSystemService(c
         delay: Long,
         flag: Int = InputMethodManager.SHOW_IMPLICIT,
         coroutineScope: CoroutineScope
-    ): Result<Unit> {
-        return safeExecute("showDelayCoroutine", requiresPermission = false) {
-            coroutineScope.launch {
-                delay(delay)
-                show(v, flag)
-            }
+    ): Boolean = safe(false) {
+        coroutineScope.launch {
+            delay(delay)
+            show(v, flag)
         }
+        true
     }
 
     /**
      * Hides soft keyboard from input-capable views.
      * Default flag options: HIDE_IMPLICIT_ONLY, HIDE_NOT_ALWAYS
-     * 
+     *
      * 입력 가능한 뷰에서 소프트 키보드를 숨깁니다.
      * 기본 플래그 옵션: HIDE_IMPLICIT_ONLY, HIDE_NOT_ALWAYS
      */
-    public fun hide(v: View, flag: Int = 0): Result<Boolean> {
-        return safeExecute("hide", requiresPermission = false) {
-            if (v.requestFocus()) {
-                imm.hideSoftInputFromWindow(v.windowToken, flag)
-            } else {
-                Logx.e("view requestFocus() is false!!")
-                false
-            }
+    public fun hide(v: View, flag: Int = 0): Boolean = safe(false) {
+        if (v.requestFocus()) {
+            imm.hideSoftInputFromWindow(v.windowToken, flag)
+        } else {
+            Logx.e("view requestFocus() is false!!")
+            false
         }
     }
 
@@ -134,54 +125,45 @@ public open class SoftKeyboardController(context: Context) : BaseSystemService(c
      * @param v Target view
      * @param delay Delay in milliseconds
      * @param flag Hide flag (HIDE_IMPLICIT_ONLY, HIDE_NOT_ALWAYS)
-     * @return Result<Boolean> true if Runnable was placed in message queue
+     * @return Boolean true if Runnable was placed in message queue
      */
-    public fun hideDelay(v: View, delay: Long, flag: Int = 0): Result<Boolean> {
-        return safeExecute("hideDelay", requiresPermission = false) {
-            v.postDelayed(Runnable { hide(v, flag) }, delay)
-        }
+    public fun hideDelay(v: View, delay: Long, flag: Int = 0): Boolean = safe(false) {
+        v.postDelayed(Runnable { hide(v, flag) }, delay)
     }
 
     /**
      * Hides soft keyboard with coroutine-based delay.
      * 코루틴 기반 지연을 사용하여 소프트 키보드를 숨깁니다.
      */
-    public fun hideDelay(v: View, delay: Long, flag: Int = 0, coroutineScope: CoroutineScope): Result<Unit> {
-        return safeExecute("hideDelayCoroutine", requiresPermission = false) {
-            coroutineScope.launch {
-                delay(delay)
-                hide(v, flag)
-            }
+    public fun hideDelay(v: View, delay: Long, flag: Int = 0, coroutineScope: CoroutineScope): Boolean = safe(false) {
+        coroutineScope.launch {
+            delay(delay)
+            hide(v, flag)
         }
+        true
     }
 
     /**
      * Starts stylus handwriting mode for the given view.
      * Requires Android 13 (API level 33) or higher.
-     * 
+     *
      * 지정된 뷰에 대해 스타일러스 필기 모드를 시작합니다.
      * Android 13 (API 레벨 33) 이상이 필요합니다.
      */
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    public fun startStylusHandwriting(v: View): Result<Boolean> {
-        return executeWithApiCompatibility(
-            operation = "startStylusHandwriting",
-            supportedApiLevel = Build.VERSION_CODES.TIRAMISU,
-            modernApi = {
-                if (v.requestFocus()) {
-                    imm.startStylusHandwriting(v)
-                    true
-                } else {
-                    Logx.e("[ERROR]view requestFocus() is false!!")
-                    false
-                }
-            },
-            legacyApi = {
-                Logx.e("startStylusHandwriting requires API 33 or higher")
+    public fun startStylusHandwriting(v: View): Boolean = safe(false) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (v.requestFocus()) {
+                imm.startStylusHandwriting(v)
+                true
+            } else {
+                Logx.e("[ERROR]view requestFocus() is false!!")
                 false
-            },
-            requiresPermission = false
-        )
+            }
+        } else {
+            Logx.e("startStylusHandwriting requires API 33 or higher")
+            false
+        }
     }
 
     /**
@@ -189,19 +171,13 @@ public open class SoftKeyboardController(context: Context) : BaseSystemService(c
      * 지연 시간 후 스타일러스 필기 모드를 시작합니다.
      */
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    public fun startStylusHandwriting(v: View, delay: Long): Result<Boolean> {
-        return executeWithApiCompatibility(
-            operation = "startStylusHandwritingDelay",
-            supportedApiLevel = Build.VERSION_CODES.TIRAMISU,
-            modernApi = {
-                v.postDelayed(Runnable { startStylusHandwriting(v) }, delay)
-            },
-            legacyApi = {
-                Logx.e("startStylusHandwriting requires API 33 or higher")
-                false
-            },
-            requiresPermission = false
-        )
+    public fun startStylusHandwriting(v: View, delay: Long): Boolean = safe(false) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            v.postDelayed(Runnable { startStylusHandwriting(v) }, delay)
+        } else {
+            Logx.e("startStylusHandwriting requires API 33 or higher")
+            false
+        }
     }
 
 }
