@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Build
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import kr.open.library.logcat.Logx
 import kr.open.library.systemmanager.controller.bluetooth.base.BleComponent
 import kr.open.library.systemmanager.controller.bluetooth.central.BleScanner
 import kr.open.library.systemmanager.controller.bluetooth.connector.BleConnector
@@ -73,7 +74,7 @@ class SimpleBleController(context: Context) : BleComponent(context) {
         val currentModeValue = _currentMode.value
         if (currentModeValue != newMode) {
             _currentMode.value = newMode
-            logd("Mode changed to: $newMode")
+            Logx.d(TAG, "Mode changed to: $newMode")
             listener?.onModeChanged(newMode)
         }
     }
@@ -82,7 +83,7 @@ class SimpleBleController(context: Context) : BleComponent(context) {
         val previousDevice = _connectedDevice.value
         if (previousDevice != deviceAddress) {
             _connectedDevice.value = deviceAddress
-            logd("Connected device changed: $previousDevice -> $deviceAddress")
+            Logx.d(TAG, "Connected device changed: $previousDevice -> $deviceAddress")
 
             if (deviceAddress != null) {
                 listener?.onDeviceConnected(deviceAddress)
@@ -96,7 +97,7 @@ class SimpleBleController(context: Context) : BleComponent(context) {
         val currentState = _bleConnectionState.value
         if (currentState != newState) {
             _bleConnectionState.value = newState
-            logd("Connection state changed to: $newState")
+            Logx.d(TAG, "Connection state changed to: $newState")
             listener?.onStateChanged(newState)
         }
     }
@@ -105,7 +106,7 @@ class SimpleBleController(context: Context) : BleComponent(context) {
         val currentReady = _bleReady.value
         if (currentReady != ready) {
             _bleReady.value = ready
-            logd("Ready state changed to: $ready")
+            Logx.d(TAG, "Ready state changed to: $ready")
         }
     }
 
@@ -120,17 +121,17 @@ class SimpleBleController(context: Context) : BleComponent(context) {
     }
 
     private fun notifyError(error: String) {
-        loge(error)
+        Logx.e(TAG, error)
         _errors.tryEmit(error)
         listener?.onError(error)
     }
     
     // 생명주기 - suspend 함수 유지 (컴포넌트 초기화는 비동기 작업)
     override suspend fun initialize(): Boolean {
-        logd("Initializing SimpleBleController...")
+        Logx.d(TAG, "Initializing SimpleBleController...")
         
         if (!checkAllRequiredPermissions()) {
-            loge("Required permissions not granted")
+            Logx.e(TAG, "Required permissions not granted")
             updateBleReadyState(false)
             return false
         }
@@ -138,10 +139,10 @@ class SimpleBleController(context: Context) : BleComponent(context) {
         return try {
             // SDK 호환성 체크
             val isAndroid15Plus = Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM
-            logd("Android version: ${Build.VERSION.SDK_INT}, Android 15+: $isAndroid15Plus")
+            Logx.d(TAG, "Android version: ${Build.VERSION.SDK_INT}, Android 15+: $isAndroid15Plus")
             
             // 사전에 모든 GATT 리소스 정리 (Too many register gatt interface 방지)
-            logd("Pre-cleaning all GATT resources...")
+            Logx.d(TAG, "Pre-cleaning all GATT resources...")
             cleanupGattResources()
             
             // 컴포넌트들을 순차적으로 초기화 (비동기 작업)
@@ -152,27 +153,27 @@ class SimpleBleController(context: Context) : BleComponent(context) {
             if (scannerResult && advertiserResult && connectorResult) {
                 setupComponentListeners()
                 updateBleReadyState(true)
-                logi("SimpleBleController initialized successfully")
+                Logx.i(TAG, "SimpleBleController initialized successfully")
                 true
             } else {
                 val failedComponents = mutableListOf<String>()
                 if (!scannerResult) failedComponents.add("scanner")
                 if (!advertiserResult) failedComponents.add("advertiser") 
                 if (!connectorResult) failedComponents.add("connector")
-                loge("Failed to initialize components: $failedComponents")
+                Logx.e(TAG, "Failed to initialize components: $failedComponents")
                 updateBleReadyState(false)
                 false
             }
             
         } catch (e: Exception) {
-            loge("Initialization failed", e)
+            Logx.e(TAG, "Initialization failed: ${e.message}")
             updateBleReadyState(false)
             false
         }
     }
     
     override suspend fun cleanupGattResources() {
-        logd("Cleaning up GATT resources...")
+        Logx.d(TAG, "Cleaning up GATT resources...")
         scanner.cleanupGattResources()
         advertiser.cleanupGattResources()
         connector.cleanupGattResources()
@@ -180,7 +181,7 @@ class SimpleBleController(context: Context) : BleComponent(context) {
     
     private fun setupComponentListeners() {
         // 컴포넌트 간 통신 설정을 여기서 구현
-        logd("Setting up component listeners...")
+        Logx.d(TAG, "Setting up component listeners...")
         
         // 스캐너 리스너 설정
         setupScannerListener()
@@ -191,26 +192,26 @@ class SimpleBleController(context: Context) : BleComponent(context) {
         // 연결자 리스너 설정 
         setupConnectorListener()
         
-        logd("Component listeners setup completed")
+        Logx.d(TAG, "Component listeners setup completed")
     }
     
     private fun setupScannerListener() {
-        logd("Setting up scanner listener...")
+        Logx.d(TAG, "Setting up scanner listener...")
 
         // Scanner는 startScan() 호출 시 리스너를 직접 전달하므로
         // 여기서는 공통 리스너 인스턴스만 생성
-        logd("Scanner listener setup completed")
+        Logx.d(TAG, "Scanner listener setup completed")
     }
 
     // Scanner용 공통 리스너 인스턴스
     private val scanListener = object : BleScanner.ScanListener {
         override fun onDeviceFound(device: BleDevice) {
-            logd("Device found: ${device.displayName} (${device.address})")
+            Logx.d(TAG, "Device found: ${device.displayName} (${device.address})")
             notifyDeviceScanned(device)
 
             // Central 모드에서 자동 연결 로직
             if (_currentMode.value == BleMode.CENTRAL_MODE) {
-                logd("Central mode: Attempting to connect to ${device.displayName}")
+                Logx.d(TAG, "Central mode: Attempting to connect to ${device.displayName}")
                 // 즉시 스캔 중지하고 연결 시도
                 scanner.stopScan()
                 connectToDevice(device.address)
@@ -218,101 +219,101 @@ class SimpleBleController(context: Context) : BleComponent(context) {
         }
 
         override fun onScanStarted() {
-            logd("Scan started")
+            Logx.d(TAG, "Scan started")
         }
 
         override fun onScanStopped() {
-            logd("Scan stopped")
+            Logx.d(TAG, "Scan stopped")
         }
 
         override fun onScanError(error: String) {
-            loge("Scan error: $error")
+            Logx.e(TAG, "Scan error: $error")
             notifyError("Scan error: $error")
         }
     }
     
     private fun setupAdvertiserListener() {
-        logd("Setting up advertiser listener...")
+        Logx.d(TAG, "Setting up advertiser listener...")
 
         // Advertiser는 startAdvertising() 호출 시 리스너를 직접 전달하므로
         // 여기서는 공통 리스너 인스턴스만 생성
-        logd("Advertiser listener setup completed")
+        Logx.d(TAG, "Advertiser listener setup completed")
     }
 
     // Advertiser용 공통 리스너 인스턴스
     private val advertiseListener = object : BleAdvertiser.AdvertiseListener {
         override fun onAdvertiseStarted() {
-            logd("Advertising started")
+            Logx.d(TAG, "Advertising started")
         }
 
         override fun onAdvertiseStopped() {
-            logd("Advertising stopped")
+            Logx.d(TAG, "Advertising stopped")
         }
 
         override fun onConnectionReceived(deviceAddress: String) {
-            logd("Connection received from: $deviceAddress")
+            Logx.d(TAG, "Connection received from: $deviceAddress")
             // 즉시 광고 중지 (BleAdvertiser에서 이미 처리되지만 상태 업데이트)
             updateConnectedDevice(deviceAddress)
             updateBleConnectionState(ConnectionState.CONNECTED)
         }
 
         override fun onAdvertiseError(error: String) {
-            loge("Advertise error: $error")
+            Logx.e(TAG, "Advertise error: $error")
             notifyError("Advertise error: $error")
         }
     }
     
     private fun setupConnectorListener() {
-        logd("Setting up connector listener...")
+        Logx.d(TAG, "Setting up connector listener...")
 
         connector.setListener(object : BleConnector.ConnectionListener {
             override fun onConnected(deviceAddress: String) {
-                logd("Connected to: $deviceAddress")
+                Logx.d(TAG, "Connected to: $deviceAddress")
                 updateConnectedDevice(deviceAddress)
                 updateBleConnectionState(ConnectionState.CONNECTED)
             }
 
             override fun onDisconnected(deviceAddress: String) {
-                logd("Disconnected from: $deviceAddress")
+                Logx.d(TAG, "Disconnected from: $deviceAddress")
                 updateConnectedDevice(null)
                 updateBleConnectionState(ConnectionState.DISCONNECTED)
             }
 
             override fun onConnectionError(deviceAddress: String, error: String) {
-                loge("Connection error with $deviceAddress: $error")
+                Logx.e(TAG, "Connection error with $deviceAddress: $error")
                 updateBleConnectionState(ConnectionState.ERROR)
                 notifyError("Connection error: $error")
             }
 
             override fun onMtuChanged(deviceAddress: String, mtu: Int) {
-                logd("MTU changed for $deviceAddress: $mtu")
+                Logx.d(TAG, "MTU changed for $deviceAddress: $mtu")
             }
 
             override fun onMessageReceived(deviceAddress: String, type: Byte, data: ByteArray) {
-                logd("Message received from $deviceAddress, type: 0x${type.toString(16)}, size: ${data.size}")
+                Logx.d(TAG, "Message received from $deviceAddress, type: 0x${type.toString(16)}, size: ${data.size}")
                 notifyMessageReceived(type, data)
             }
         })
 
-        logd("Connector listener setup completed")
+        Logx.d(TAG, "Connector listener setup completed")
     }
 
     // 헬퍼 메서드: 디바이스 연결 시도
     private fun connectToDevice(deviceAddress: String) {
-        logd("Attempting to connect to device: $deviceAddress")
+        Logx.d(TAG, "Attempting to connect to device: $deviceAddress")
         updateBleConnectionState(ConnectionState.CONNECTING)
 
         componentScope.launch {
             try {
                 val success = connector.connect(deviceAddress)
                 if (!success) {
-                    loge("Failed to initiate connection to $deviceAddress")
+                    Logx.e(TAG, "Failed to initiate connection to $deviceAddress")
                     updateBleConnectionState(ConnectionState.ERROR)
                     notifyError("Failed to start connection")
                 }
                 // 성공/실패는 connector의 콜백에서 처리됨
             } catch (e: Exception) {
-                loge("Exception during connection attempt: ${e.message}")
+                Logx.e(TAG, "Exception during connection attempt: ${e.message}")
                 updateBleConnectionState(ConnectionState.ERROR)
                 notifyError("Connection failed: ${e.message}")
             }
@@ -320,7 +321,7 @@ class SimpleBleController(context: Context) : BleComponent(context) {
     }
     
     override suspend fun cleanup() {
-        logd("Cleaning up SimpleBleController...")
+        Logx.d(TAG, "Cleaning up SimpleBleController...")
         
         stopAllOperations()
         
@@ -342,12 +343,12 @@ class SimpleBleController(context: Context) : BleComponent(context) {
     fun startAsCentral(targetDeviceName: String) {
         if (_currentMode.value != BleMode.IDLE) {
             val error = "Cannot start Central mode, current mode: ${_currentMode.value}"
-            logw(error)
+            Logx.w(TAG, error)
             notifyError(error)
             return
         }
         
-        logd("Starting Central mode, scanning for: $targetDeviceName")
+        Logx.d(TAG, "Starting Central mode, scanning for: $targetDeviceName")
         updateCurrentMode(BleMode.CENTRAL_MODE)
         updateBleConnectionState(ConnectionState.CONNECTING)
         
@@ -359,12 +360,12 @@ class SimpleBleController(context: Context) : BleComponent(context) {
     fun startScanOnly() {
         if (_currentMode.value != BleMode.IDLE) {
             val error = "Cannot start scan, current mode: ${_currentMode.value}"
-            logw(error)
+            Logx.w(TAG, error)
             notifyError(error)
             return
         }
         
-        logd("Starting scan only mode")
+        Logx.d(TAG, "Starting scan only mode")
         updateCurrentMode(BleMode.SCAN_ONLY_MODE)
         
         // 스캔 시작 (모든 디바이스, 자동 연결 안 함)
@@ -373,27 +374,27 @@ class SimpleBleController(context: Context) : BleComponent(context) {
     
     // Peripheral 모드 시작 - 일반 함수로 단순화
     fun startAsPeripheral(deviceName: String) {
-        logd("🔥🔥🔥 startAsPeripheral() CALLED with deviceName: '$deviceName'")
+        Logx.d(TAG, "🔥🔥🔥 startAsPeripheral() CALLED with deviceName: '$deviceName'")
 
         if (_currentMode.value != BleMode.IDLE) {
             val error = "Cannot start Peripheral mode, current mode: ${_currentMode.value}"
-            logw(error)
+            Logx.w(TAG, error)
             notifyError(error)
             return
         }
 
-        logd("🔥 Starting Peripheral mode with name: $deviceName")
+        Logx.d(TAG, "🔥 Starting Peripheral mode with name: $deviceName")
         updateCurrentMode(BleMode.PERIPHERAL_MODE)
 
         // 광고 시작
-        logd("🔥 About to call startAdvertising()")
+        Logx.d(TAG, "🔥 About to call startAdvertising()")
         startAdvertising(deviceName)
-        logd("🔥 startAdvertising() call completed")
+        Logx.d(TAG, "🔥 startAdvertising() call completed")
     }
     
     // 모든 작업 중지 - 일반 함수로 단순화
     fun stopAllOperations() {
-        logd("Stopping all BLE operations...")
+        Logx.d(TAG, "Stopping all BLE operations...")
         
         // 모든 작업을 순차적으로 중지
         scanner.stopScan()
@@ -413,14 +414,14 @@ class SimpleBleController(context: Context) : BleComponent(context) {
         val deviceAddress = _connectedDevice.value
         if (deviceAddress == null) {
             val error = "Cannot send message: not connected"
-            logw(error)
+            Logx.w(TAG, error)
             notifyError(error)
             return false
         }
 
         if (_bleConnectionState.value != ConnectionState.CONNECTED) {
             val error = "Cannot send message: connection state is ${_bleConnectionState.value}"
-            logw(error)
+            Logx.w(TAG, error)
             notifyError(error)
             return false
         }
@@ -436,7 +437,7 @@ class SimpleBleController(context: Context) : BleComponent(context) {
             }
             true // 전송 시작은 성공 (실제 결과는 콜백에서 확인)
         } catch (e: Exception) {
-            loge("Exception during message send: ${e.message}")
+            Logx.e(TAG, "Exception during message send: ${e.message}")
             notifyError("Send failed: ${e.message}")
             false
         }
@@ -455,31 +456,31 @@ class SimpleBleController(context: Context) : BleComponent(context) {
     
     // 헬퍼 메서드들 - 실제 구현
     private fun scanForDeviceAndConnect(targetDeviceName: String) {
-        logd("Scanning for device: $targetDeviceName")
+        Logx.d(TAG, "Scanning for device: $targetDeviceName")
         try {
             scanner.startScan(targetDeviceName, scanListener)
         } catch (e: Exception) {
-            loge("Failed to start scan: ${e.message}")
+            Logx.e(TAG, "Failed to start scan: ${e.message}")
             notifyError("Scan failed: ${e.message}")
         }
     }
 
     private fun startScanForAllDevices() {
-        logd("Starting scan for all devices")
+        Logx.d(TAG, "Starting scan for all devices")
         try {
             scanner.startScanOnly(scanListener)
         } catch (e: Exception) {
-            loge("Failed to start scan only: ${e.message}")
+            Logx.e(TAG, "Failed to start scan only: ${e.message}")
             notifyError("Scan failed: ${e.message}")
         }
     }
 
     private fun startAdvertising(deviceName: String) {
-        logd("Starting advertising with name: $deviceName")
+        Logx.d(TAG, "Starting advertising with name: $deviceName")
         try {
             advertiser.startAdvertising(deviceName, advertiseListener)
         } catch (e: Exception) {
-            loge("Failed to start advertising: ${e.message}")
+            Logx.e(TAG, "Failed to start advertising: ${e.message}")
             notifyError("Advertising failed: ${e.message}")
         }
     }

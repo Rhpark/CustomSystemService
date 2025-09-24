@@ -13,7 +13,6 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import kr.open.library.logcat.Logx
 import kr.open.library.systemmanager.controller.bluetooth.SimpleBleController
-import kr.open.library.systemmanager.controller.bluetooth.base.BleComponent
 import kotlinx.coroutines.*
 
 /**

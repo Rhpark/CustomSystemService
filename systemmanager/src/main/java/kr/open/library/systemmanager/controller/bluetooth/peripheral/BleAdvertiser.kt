@@ -51,14 +51,14 @@ class BleAdvertiser(context: Context) : BleComponent(context) {
     // 단순한 광고 콜백
     private val advertiseCallback = object : AdvertiseCallback() {
         override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
-            logi("🎉🎉🎉 ADVERTISING STARTED SUCCESSFULLY! 🎉🎉🎉")
+            Logx.i(TAG, "🎉🎉🎉 ADVERTISING STARTED SUCCESSFULLY! 🎉🎉🎉")
             isAdvertising.set(true)
             currentListener?.onAdvertiseStarted()
         }
 
         override fun onStartFailure(errorCode: Int) {
             val errorMsg = getAdvertiseErrorString(errorCode)
-            loge("❌❌❌ ADVERTISING FAILED: $errorMsg (code: $errorCode) ❌❌❌")
+            Logx.e(TAG, "❌❌❌ ADVERTISING FAILED: $errorMsg (code: $errorCode) ❌❌❌")
             isAdvertising.set(false)
             currentListener?.onAdvertiseError(errorMsg)
         }
@@ -71,15 +71,15 @@ class BleAdvertiser(context: Context) : BleComponent(context) {
                 BluetoothProfile.STATE_CONNECTED -> {
                     if (isConnectionAccepted) {
                         // 이미 연결된 디바이스가 있으면 새 연결 거부
-                        logi("Rejecting additional connection from ${device.address}")
+                        Logx.i(TAG, "Rejecting additional connection from ${device.address}")
                         try {
                             gattServer?.cancelConnection(device)
                         } catch (e: Exception) {
-                            logw("Error rejecting connection: ${e.message}")
+                            Logx.w(TAG, "Error rejecting connection: ${e.message}")
                         }
                     } else {
                         // 첫 번째 연결 수락
-                        logi("Accepting connection from ${device.address}")
+                        Logx.i(TAG, "Accepting connection from ${device.address}")
                         isConnectionAccepted = true
                         currentConnectedDevice = device.address
                         
@@ -91,7 +91,7 @@ class BleAdvertiser(context: Context) : BleComponent(context) {
                 }
                 BluetoothProfile.STATE_DISCONNECTED -> {
                     if (device.address == currentConnectedDevice) {
-                        logi("Device disconnected: ${device.address}")
+                        Logx.i(TAG, "Device disconnected: ${device.address}")
                         isConnectionAccepted = false
                         currentConnectedDevice = null
                     }
@@ -251,28 +251,28 @@ class BleAdvertiser(context: Context) : BleComponent(context) {
      * @param listener 광고 이벤트 리스너
      */
     fun startAdvertising(deviceName: String, listener: AdvertiseListener? = null) {
-        logd("🚀🚀🚀 BleAdvertiser.startAdvertising() CALLED")
-        logd("🚀 Device name: '$deviceName'")
-        logd("🚀 Listener: ${if (listener != null) "SET" else "NULL"}")
+        Logx.d(TAG, "🚀🚀🚀 BleAdvertiser.startAdvertising() CALLED")
+        Logx.d(TAG, "🚀 Device name: '$deviceName'")
+        Logx.d(TAG, "🚀 Listener: ${if (listener != null) "SET" else "NULL"}")
 
         // 🔧 호환성 문제 해결을 위해 synchronized 대신 단순 체크
         if (isAdvertising.get()) {
-            logw("🚀 Advertising already in progress")
+            Logx.w(TAG, "🚀 Advertising already in progress")
             return
         }
 
-        logd("🚀 Checking if component is ready...")
+        Logx.d(TAG, "🚀 Checking if component is ready...")
         if (!isComponentReady()) {
             val error = "Advertiser not ready"
-            loge("🚀 ERROR: $error")
+            Logx.e(TAG, "🚀 ERROR: $error")
             listener?.onAdvertiseError(error)
             return
         }
-        logd("🚀 All checks passed - starting advertising...")
+        Logx.d(TAG, "🚀 All checks passed - starting advertising...")
 
         if (deviceName.length > BleConstants.MAX_DEVICE_NAME_LENGTH) {
             val error = "Device name too long: ${deviceName.length} > ${BleConstants.MAX_DEVICE_NAME_LENGTH}"
-            loge(error)
+            Logx.e(TAG, error)
             listener?.onAdvertiseError(error)
             return
         }
@@ -280,17 +280,17 @@ class BleAdvertiser(context: Context) : BleComponent(context) {
         this.deviceName = deviceName
         this.currentListener = listener
 
-        logd("🚀 Starting advertising as: '$deviceName'")
+        Logx.d(TAG, "🚀 Starting advertising as: '$deviceName'")
 
         // 🔧 디바이스 이름 설정 개선 (로그 강화)
         try {
             val oldName = bluetoothAdapter?.name
             bluetoothAdapter?.name = deviceName
-            logd("📡 Adapter 이름: '$oldName' → '$deviceName'")
+            Logx.d(TAG, "📡 Adapter 이름: '$oldName' → '$deviceName'")
         } catch (e: SecurityException) {
-            logw("🚀 어댑터 이름 설정 실패: ${e.message}")
+            Logx.w(TAG, "🚀 어댑터 이름 설정 실패: ${e.message}")
         }
-        logd("🚀 Creating advertise settings...")
+        Logx.d(TAG, "🚀 Creating advertise settings...")
         val advertiseSettings = AdvertiseSettings.Builder()
             .setAdvertiseMode(BleConstants.ADVERTISE_MODE)
             .setTxPowerLevel(BleConstants.ADVERTISE_TX_POWER)
@@ -298,7 +298,7 @@ class BleAdvertiser(context: Context) : BleComponent(context) {
             .setTimeout(BleConstants.ADVERTISE_TIMEOUT)
             .build()
 
-        logd("🚀 Creating advertise data...")
+        Logx.d(TAG, "🚀 Creating advertise data...")
         // 🔧 광고 데이터 최적화 (31바이트 제한 해결)
         val advertiseData = AdvertiseData.Builder()
             .setIncludeDeviceName(true)  // 디바이스 이름만 포함 (8바이트)
@@ -311,27 +311,27 @@ class BleAdvertiser(context: Context) : BleComponent(context) {
             .addServiceUuid(ParcelUuid(BleConstants.SERVICE_UUID)) // Service UUID는 여기에
             .build()
 
-        logd("📡 광고 데이터 설정 완료")
-        logd("🔧 Primary 광고 데이터: 이름 + TxPower (~11바이트)")
-        logd("🔧 스캔 응답 데이터: Service UUID (~19바이트)")
+        Logx.d(TAG, "📡 광고 데이터 설정 완료")
+        Logx.d(TAG, "🔧 Primary 광고 데이터: 이름 + TxPower (~11바이트)")
+        Logx.d(TAG, "🔧 스캔 응답 데이터: Service UUID (~19바이트)")
 
         try {
-            logd("🚀 Calling bluetoothLeAdvertiser.startAdvertising()...")
+            Logx.d(TAG, "🚀 Calling bluetoothLeAdvertiser.startAdvertising()...")
             bluetoothLeAdvertiser?.startAdvertising(
                 advertiseSettings,
                 advertiseData,
                 scanResponseData,
                 advertiseCallback
             )
-            logd("🚀 startAdvertising() call completed - waiting for callback...")
+            Logx.d(TAG, "🚀 startAdvertising() call completed - waiting for callback...")
 
         } catch (e: SecurityException) {
             val error = "Permission denied: ${e.message}"
-            loge("🚀 SECURITY EXCEPTION: $error")
+            Logx.e(TAG, "🚀 SECURITY EXCEPTION: $error")
             listener?.onAdvertiseError(error)
         } catch (e: Exception) {
             val error = "Advertising failed: ${e.message}"
-            loge("🚀 EXCEPTION in startAdvertising: $error")
+            Logx.e(TAG, "🚀 EXCEPTION in startAdvertising: $error")
             listener?.onAdvertiseError(error)
         }
     }
@@ -352,18 +352,18 @@ class BleAdvertiser(context: Context) : BleComponent(context) {
             return
         }
 
-        logd("🚀 Stopping advertising...")
+        Logx.d(TAG, "🚀 Stopping advertising...")
 
         try {
             bluetoothLeAdvertiser?.stopAdvertising(advertiseCallback)
         } catch (e: SecurityException) {
-            logw("🚀 Security exception during advertising stop: ${e.message}")
+            Logx.w(TAG, "🚀 Security exception during advertising stop: ${e.message}")
         } catch (e: Exception) {
-            logw("🚀 Exception during advertising stop: ${e.message}")
+            Logx.w(TAG, "🚀 Exception during advertising stop: ${e.message}")
         } finally {
             isAdvertising.set(false)
             currentListener?.onAdvertiseStopped()
-            logd("🚀 Advertising stopped")
+            Logx.d(TAG, "🚀 Advertising stopped")
         }
     }
     
@@ -386,13 +386,13 @@ class BleAdvertiser(context: Context) : BleComponent(context) {
      * 연결을 강제로 해제
      */
     fun disconnectDevice(deviceAddress: String) {
-        logd("Disconnecting device: $deviceAddress")
+        Logx.d(TAG, "Disconnecting device: $deviceAddress")
         
         try {
             val device = bluetoothAdapter?.getRemoteDevice(deviceAddress)
             device?.let { gattServer?.cancelConnection(it) }
         } catch (e: Exception) {
-            logw("Error disconnecting device: ${e.message}")
+            Logx.w(TAG, "Error disconnecting device: ${e.message}")
         }
     }
     

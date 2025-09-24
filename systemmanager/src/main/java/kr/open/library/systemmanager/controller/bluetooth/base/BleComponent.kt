@@ -99,30 +99,19 @@ abstract class BleComponent(context: Context) : BaseSystemService(context, BLE_P
     // 단순한 상태 업데이트 메서드들 (suspend 제거)
     protected fun updateConnectionState(newState: ConnectionState) {
         connectionState = newState
-        logd("Connection state changed to: $newState")
+        Logx.d(TAG, "Connection state changed to: $newState")
     }
     
     protected fun updateReadyState(ready: Boolean) {
         isReady.set(ready)
-        logd("Ready state changed to: $ready")
+        Logx.d(TAG, "Ready state changed to: $ready")
     }
     
     protected fun emitError(error: String) {
-        loge(error)
+        Logx.e(TAG, error)
         errorListener?.invoke(error)
     }
     
-    // Logx 통합 메서드들
-    protected fun logd(message: String) = Logx.d(TAG, message)
-    protected fun logi(message: String) = Logx.i(TAG, message)  
-    protected fun logw(message: String) = Logx.w(TAG, message)
-    protected fun loge(message: String, throwable: Throwable? = null) {
-        if (throwable != null) {
-            Logx.e(TAG, "$message: ${throwable.message}")
-        } else {
-            Logx.e(TAG, message)
-        }
-    }
     
     // 공통 생명주기 (서브클래스에서 구현) - suspend 함수로 변경
     abstract suspend fun initialize(): Boolean
@@ -132,12 +121,12 @@ abstract class BleComponent(context: Context) : BaseSystemService(context, BLE_P
     
     // 리소스 정리 - Coroutine Scope 취소
     open suspend fun cleanup() {
-        logd("Cleaning up BLE component...")
-        
+        Logx.d(TAG, "Cleaning up BLE component...")
+
         try {
             cleanupGattResources()
         } catch (e: Exception) {
-            loge("Error during GATT cleanup", e)
+            Logx.e(TAG, "Error during GATT cleanup: ${e.message}")
         }
         
         // 모든 Coroutine 취소
@@ -152,7 +141,7 @@ abstract class BleComponent(context: Context) : BaseSystemService(context, BLE_P
     protected fun checkAllRequiredPermissions(): Boolean {
         val deniedPermissions = getDeniedPermissionList()
         if (deniedPermissions.isNotEmpty()) {
-            logw("Missing BLE permissions: $deniedPermissions")
+            Logx.w(TAG, "Missing BLE permissions: $deniedPermissions")
             return false
         }
         return true
@@ -164,11 +153,11 @@ abstract class BleComponent(context: Context) : BaseSystemService(context, BLE_P
         block: () -> T
     ): T? {
         return try {
-            logd("Executing $operation")
+            Logx.d(TAG, "Executing $operation")
             block()
         } catch (e: Exception) {
             val error = "$operation failed: ${e.message}"
-            loge(error, e)
+            Logx.e(TAG, "$error: ${e.message}")
             emitError(error)
             null
         }
@@ -180,11 +169,11 @@ abstract class BleComponent(context: Context) : BaseSystemService(context, BLE_P
         block: suspend () -> T
     ): T? {
         return try {
-            logd("Executing $operation (suspend)")
+            Logx.d(TAG, "Executing $operation (suspend)")
             block()
         } catch (e: Exception) {
             val error = "$operation failed: ${e.message}"
-            loge(error, e)
+            Logx.e(TAG, "$error: ${e.message}")
             emitError(error)
             null
         }

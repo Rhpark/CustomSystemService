@@ -48,36 +48,36 @@ class BleScanner(context: Context) : BleComponent(context) {
             val device = BleDevice.fromScanResult(result)
 
             // 🔍 모든 발견된 디바이스 로그 출력
-            logd("📱 DEVICE DISCOVERED:")
-            logd("   이름: '${device.name}' (표시명: '${device.displayName}')")
-            logd("   주소: ${device.address}")
-            logd("   RSSI: ${device.rssi}dBm (${device.signalStrengthText})")
-            logd("   연결가능: ${device.isConnectable}")
-            logd("   타겟: '$targetDeviceName'")
-            logd("   모드: ${if (isScanOnlyMode) "SCAN_ONLY" else "AUTO_CONNECT"}")
+            Logx.d(TAG, "📱 DEVICE DISCOVERED:")
+            Logx.d(TAG, "   이름: '${device.name}' (표시명: '${device.displayName}')")
+            Logx.d(TAG, "   주소: ${device.address}")
+            Logx.d(TAG, "   RSSI: ${device.rssi}dBm (${device.signalStrengthText})")
+            Logx.d(TAG, "   연결가능: ${device.isConnectable}")
+            Logx.d(TAG, "   타겟: '$targetDeviceName'")
+            Logx.d(TAG, "   모드: ${if (isScanOnlyMode) "SCAN_ONLY" else "AUTO_CONNECT"}")
 
             try {
                 if (isScanOnlyMode) {
-                    logd("📡 Scan-only mode: 모든 디바이스 리포트")
+                    Logx.d(TAG, "📡 Scan-only mode: 모든 디바이스 리포트")
                     currentListener?.onDeviceFound(device)
                 } else {
                     // 자동 연결 모드: 필터링 적용 + 상세 로그
                     if (shouldAcceptDevice(device)) {
-                        logi("✅ TARGET FOUND: ${device.displayName} - stopping scan immediately")
+                        Logx.i(TAG, "✅ TARGET FOUND: ${device.displayName} - stopping scan immediately")
                         stopScanInternal()
                         currentListener?.onDeviceFound(device)
                     } else {
-                        logd("❌ 타겟 아님: 계속 스캔")
+                        Logx.d(TAG, "❌ 타겟 아님: 계속 스캔")
                     }
                 }
             } catch (e: Exception) {
-                loge("Error processing scan result", e)
+                Logx.e(TAG, "Error processing scan result: ${e.message}")
             }
         }
         
         override fun onScanFailed(errorCode: Int) {
             val errorMsg = getScanErrorString(errorCode)
-            loge("❌ SCAN FAILED: $errorMsg (code: $errorCode)")
+            Logx.e(TAG, "❌ SCAN FAILED: $errorMsg (code: $errorCode)")
 
             isScanning.set(false)
             currentListener?.onScanError(errorMsg)
@@ -85,77 +85,77 @@ class BleScanner(context: Context) : BleComponent(context) {
     }
     
     override suspend fun initialize(): Boolean {
-        logd("Initializing BleScanner...")
+        Logx.d(TAG, "Initializing BleScanner...")
         
         if (!checkAllRequiredPermissions()) {
             val deniedPermissions = getDeniedPermissionList()
-            loge("Required permissions not granted: $deniedPermissions")
+            Logx.e(TAG, "Required permissions not granted: $deniedPermissions")
             return false
         }
-        logd("All BLE permissions granted")
+        Logx.d(TAG, "All BLE permissions granted")
         
         // Android 12+ 권한 재확인
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val connectPermission = ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT)
-            logd("BLUETOOTH_CONNECT permission: ${if (connectPermission == PackageManager.PERMISSION_GRANTED) "GRANTED" else "DENIED"}")
+            Logx.d(TAG, "BLUETOOTH_CONNECT permission: ${if (connectPermission == PackageManager.PERMISSION_GRANTED) "GRANTED" else "DENIED"}")
             
             if (connectPermission != PackageManager.PERMISSION_GRANTED) {
-                loge("BLUETOOTH_CONNECT permission required for Android 12+")
+                Logx.e(TAG, "BLUETOOTH_CONNECT permission required for Android 12+")
                 return false
             }
         }
         
         val bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
         if (bluetoothManager == null) {
-            loge("BluetoothManager not available")
+            Logx.e(TAG, "BluetoothManager not available")
             return false
         }
         
         bluetoothAdapter = bluetoothManager.adapter
         if (bluetoothAdapter == null) {
-            loge("BluetoothAdapter not available")
+            Logx.e(TAG, "BluetoothAdapter not available")
             return false
         }
         
         // 자세한 블루투스 상태 디버깅
         try {
             val isEnabled = bluetoothAdapter?.isEnabled
-            logd("BluetoothAdapter.isEnabled = $isEnabled")
+            Logx.d(TAG, "BluetoothAdapter.isEnabled = $isEnabled")
             
             if (isEnabled != true) {
-                loge("Bluetooth is disabled (isEnabled = $isEnabled)")
+                Logx.e(TAG, "Bluetooth is disabled (isEnabled = $isEnabled)")
                 return false
             }
         } catch (e: SecurityException) {
-            loge("SecurityException checking bluetooth state: ${e.message}")
+            Logx.e(TAG, "SecurityException checking bluetooth state: ${e.message}")
             return false
         } catch (e: Exception) {
-            loge("Exception checking bluetooth state: ${e.message}")
+            Logx.e(TAG, "Exception checking bluetooth state: ${e.message}")
             return false
         }
         
         bluetoothLeScanner = bluetoothAdapter?.bluetoothLeScanner
         if (bluetoothLeScanner == null) {
-            loge("BluetoothLeScanner not available")
+            Logx.e(TAG, "BluetoothLeScanner not available")
             return false
         }
         
-        logi("BleScanner initialized successfully")
+        Logx.i(TAG, "BleScanner initialized successfully")
         return true
     }
     
     internal override suspend fun cleanupGattResources() {
-        logd("Cleaning up scanner GATT resources...")
+        Logx.d(TAG, "Cleaning up scanner GATT resources...")
         
         // 진행중인 스캔이 있으면 강제 중지
         try {
             if (isScanning.get()) {
                 bluetoothLeScanner?.stopScan(scanCallback)
                 isScanning.set(false)
-                logd("Forced scan stop during cleanup")
+                Logx.d(TAG, "Forced scan stop during cleanup")
             }
         } catch (e: Exception) {
-            logw("Error stopping scan during cleanup: ${e.message}")
+            Logx.w(TAG, "Error stopping scan during cleanup: ${e.message}")
         }
         
         // 리스너, 타겟 초기화
@@ -165,11 +165,11 @@ class BleScanner(context: Context) : BleComponent(context) {
         // 시스템에 정리 시간 제공
         delay(50)
         
-        logd("Scanner GATT resources cleaned")
+        Logx.d(TAG, "Scanner GATT resources cleaned")
     }
     
     override suspend fun cleanup() {
-        logd("Cleaning up BleScanner...")
+        Logx.d(TAG, "Cleaning up BleScanner...")
         stopScan()
         currentListener = null
         super.cleanup()
@@ -181,11 +181,11 @@ class BleScanner(context: Context) : BleComponent(context) {
      * @param listener 스캔 이벤트 리스너
      */
     fun startScan(targetDeviceName: String? = null, listener: ScanListener? = null) {
-        logd("🔍 startScan() called with target: '$targetDeviceName'")
+        Logx.d(TAG, "🔍 startScan() called with target: '$targetDeviceName'")
         isScanOnlyMode = false
         // 🔧 서비스 필터 강제 비활성화 - 모든 디바이스 발견하도록
         startScanInternal(targetDeviceName, listener, useServiceFilter = false)
-        logd("🔧 FIXED: Service filter forced to FALSE")
+        Logx.d(TAG, "🔧 FIXED: Service filter forced to FALSE")
     }
     
     /**
@@ -193,8 +193,8 @@ class BleScanner(context: Context) : BleComponent(context) {
      * @param listener 스캔 이벤트 리스너
      */
     fun startScanOnly(listener: ScanListener? = null) {
-        logd("🎯 startScanOnly() called")
-        logd("🔧 Setting scan-only mode: no filters, all devices")
+        Logx.d(TAG, "🎯 startScanOnly() called")
+        Logx.d(TAG, "🔧 Setting scan-only mode: no filters, all devices")
         isScanOnlyMode = true
         startScanInternal(targetDeviceName = null, listener = listener, useServiceFilter = false)
     }
@@ -204,28 +204,28 @@ class BleScanner(context: Context) : BleComponent(context) {
      */
     private fun startScanInternal(targetDeviceName: String?, listener: ScanListener?, useServiceFilter: Boolean) {
         synchronized(stateLock) {
-            logd("📡 startScanInternal() called:")
-            logd("   Target: '$targetDeviceName'")
-            logd("   UseServiceFilter: $useServiceFilter")
-            logd("   ScanOnlyMode: $isScanOnlyMode")
+            Logx.d(TAG, "📡 startScanInternal() called:")
+            Logx.d(TAG, "   Target: '$targetDeviceName'")
+            Logx.d(TAG, "   UseServiceFilter: $useServiceFilter")
+            Logx.d(TAG, "   ScanOnlyMode: $isScanOnlyMode")
 
             if (isScanning.get()) {
-                logw("Scan already in progress")
+                Logx.w(TAG, "Scan already in progress")
                 return
             }
 
             if (!isComponentReady()) {
                 val error = "Scanner not ready"
-                loge(error)
+                Logx.e(TAG, error)
                 listener?.onScanError(error)
                 return
             }
 
             this@BleScanner.targetDeviceName = targetDeviceName
             this@BleScanner.currentListener = listener
-            logd("⚙️ Listener set: ${if (listener != null) "SET" else "NULL"}")
+            Logx.d(TAG, "⚙️ Listener set: ${if (listener != null) "SET" else "NULL"}")
 
-            logd("Starting scan for device: ${targetDeviceName ?: "any"} (service filter: $useServiceFilter)")
+            Logx.d(TAG, "Starting scan for device: ${targetDeviceName ?: "any"} (service filter: $useServiceFilter)")
             
             val scanSettings = ScanSettings.Builder()
                 .setScanMode(BleConstants.SCAN_MODE)
@@ -241,33 +241,33 @@ class BleScanner(context: Context) : BleComponent(context) {
             
             // 🔧 실제 필터 적용 로직 확실하게 수정
             val scanFilters = if (useServiceFilter) {
-                logd("📡 Using service filter: ${BleConstants.SERVICE_UUID}")
+                Logx.d(TAG, "📡 Using service filter: ${BleConstants.SERVICE_UUID}")
                 listOf(
                     ScanFilter.Builder()
                         .setServiceUuid(android.os.ParcelUuid(BleConstants.SERVICE_UUID))
                         .build()
                 )
             } else {
-                logd("📡 No service filter - scanning ALL devices")
+                Logx.d(TAG, "📡 No service filter - scanning ALL devices")
                 emptyList()  // 🔧 빈 리스트 = 모든 디바이스 스캔
             }
 
-            logd("📡 Final filter list size: ${scanFilters.size}")
+            Logx.d(TAG, "📡 Final filter list size: ${scanFilters.size}")
             
             try {
                 bluetoothLeScanner?.startScan(scanFilters, scanSettings, scanCallback)
                 isScanning.set(true)
                 
-                logd("Scan started successfully")
+                Logx.d(TAG, "Scan started successfully")
                 listener?.onScanStarted()
                 
             } catch (e: SecurityException) {
                 val error = "Permission denied: ${e.message}"
-                loge("Security exception during scan start: ${e.message}")
+                Logx.e(TAG, "Security exception during scan start: ${e.message}")
                 listener?.onScanError(error)
             } catch (e: Exception) {
                 val error = "Scan failed: ${e.message}"
-                loge("Unexpected error during scan start: ${e.message}")
+                Logx.e(TAG, "Unexpected error during scan start: ${e.message}")
                 listener?.onScanError(error)
             }
         }
@@ -289,18 +289,18 @@ class BleScanner(context: Context) : BleComponent(context) {
                 return
             }
             
-            logd("Stopping scan...")
+            Logx.d(TAG, "Stopping scan...")
             
             try {
                 bluetoothLeScanner?.stopScan(scanCallback)
             } catch (e: SecurityException) {
-                logw("Security exception during scan stop: ${e.message}")
+                Logx.w(TAG, "Security exception during scan stop: ${e.message}")
             } catch (e: Exception) {
-                logw("Exception during scan stop: ${e.message}")
+                Logx.w(TAG, "Exception during scan stop: ${e.message}")
             } finally {
                 isScanning.set(false)
                 currentListener?.onScanStopped()
-                logd("Scan stopped")
+                Logx.d(TAG, "Scan stopped")
             }
         }
     }
@@ -326,43 +326,43 @@ class BleScanner(context: Context) : BleComponent(context) {
      * 디바이스가 타겟에 해당하는지 확인 - 🔧 필터링 단계별 상세 로그
      */
     private fun shouldAcceptDevice(device: BleDevice): Boolean {
-        logd("🔍 shouldAcceptDevice() 체크 시작: ${device.displayName}")
+        Logx.d(TAG, "🔍 shouldAcceptDevice() 체크 시작: ${device.displayName}")
 
         // 1. 유효한 주소 확인
         if (!device.isValidAddress) {
-            logd("❌ 거부됨: 잘못된 주소 (${device.address})")
+            Logx.d(TAG, "❌ 거부됨: 잘못된 주소 (${device.address})")
             return false
         }
-        logd("✅ 주소 유효: ${device.address}")
+        Logx.d(TAG, "✅ 주소 유효: ${device.address}")
 
         // 2. 연결 가능한 디바이스만
         if (!device.isConnectable) {
-            logd("❌ 거부됨: 연결 불가능 (${device.displayName})")
+            Logx.d(TAG, "❌ 거부됨: 연결 불가능 (${device.displayName})")
             return false
         }
-        logd("✅ 연결 가능: ${device.displayName}")
+        Logx.d(TAG, "✅ 연결 가능: ${device.displayName}")
 
         // 3. 신호 강도 확인 (최소 -90dBm로 완화)
         if (device.rssi < -90) {
-            logd("❌ 거부됨: 신호 약함 (${device.rssi}dBm < -90dBm)")
+            Logx.d(TAG, "❌ 거부됨: 신호 약함 (${device.rssi}dBm < -90dBm)")
             return false
         }
-        logd("✅ 신호 강도 양호: ${device.rssi}dBm (${device.signalStrengthText})")
+        Logx.d(TAG, "✅ 신호 강도 양호: ${device.rssi}dBm (${device.signalStrengthText})")
 
         // 4. 타겟 디바이스 이름 매칭
         val target = targetDeviceName
         if (target != null) {
             val deviceName = device.name ?: ""
             val matches = deviceName.contains(target, ignoreCase = true)
-            logd("🔍 이름 매칭: '$deviceName' contains '$target' = $matches")
+            Logx.d(TAG, "🔍 이름 매칭: '$deviceName' contains '$target' = $matches")
             if (!matches) {
-                logd("❌ 거부됨: 이름 불일치 ('$deviceName' != '$target')")
+                Logx.d(TAG, "❌ 거부됨: 이름 불일치 ('$deviceName' != '$target')")
                 return false
             }
         }
-        logd("✅ 이름 매칭 성공")
+        Logx.d(TAG, "✅ 이름 매칭 성공")
 
-        logd("✅ 디바이스 수락됨: ${device.displayName} (${device.signalStrengthText})")
+        Logx.d(TAG, "✅ 디바이스 수락됨: ${device.displayName} (${device.signalStrengthText})")
         return true
     }
     

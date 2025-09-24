@@ -57,31 +57,31 @@ class BleConnector(context: Context) : BleComponent(context) {
     private val gattCallback = object : BluetoothGattCallback() {
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
             val deviceAddress = gatt.device.address
-            logd("Connection state changed: ${BleConstants.getGattStatusString(status)}, newState: $newState")
+            Logx.d(TAG, "Connection state changed: ${BleConstants.getGattStatusString(status)}, newState: $newState")
             
             // Coroutine은 타임아웃이 필요한 작업에만 사용
             when (newState) {
                 BluetoothProfile.STATE_CONNECTED -> {
                     if (status == BluetoothGatt.GATT_SUCCESS) {
-                        logi("Connected to $deviceAddress")
+                        Logx.i(TAG, "Connected to $deviceAddress")
                         updateConnectionState(ConnectionState.CONNECTED)
                         connectedDevice = deviceAddress
                         
                         // 서비스 검색 시작 (타임아웃 필요)
-                        logd("Starting service discovery...")
+                        Logx.d(TAG, "Starting service discovery...")
                         if (!gatt.discoverServices()) {
-                            loge("Failed to start service discovery")
+                            Logx.e(TAG, "Failed to start service discovery")
                             handleConnectionError(deviceAddress, "Service discovery failed to start")
                         }
                     } else {
                         val error = "Connection failed: ${BleConstants.getGattStatusString(status)}"
-                        loge("Connection failed with status: ${BleConstants.getGattStatusString(status)}")
+                        Logx.e(TAG, "Connection failed with status: ${BleConstants.getGattStatusString(status)}")
                         handleConnectionError(deviceAddress, error)
                     }
                 }
                 
                 BluetoothProfile.STATE_DISCONNECTED -> {
-                    logi("Disconnected from $deviceAddress")
+                    Logx.i(TAG, "Disconnected from $deviceAddress")
                     updateConnectionState(ConnectionState.DISCONNECTED)
                     connectedDevice = null
                     isConnecting.set(false)
@@ -102,17 +102,17 @@ class BleConnector(context: Context) : BleComponent(context) {
             componentScope.launch {
                 if (status != BluetoothGatt.GATT_SUCCESS) {
                     val error = "Service discovery failed: ${BleConstants.getGattStatusString(status)}"
-                    loge(error)
+                    Logx.e(TAG, error)
                     handleConnectionError(deviceAddress, "Service discovery failed")
                     return@launch
                 }
                 
-                logd("Services discovered for $deviceAddress")
+                Logx.d(TAG, "Services discovered for $deviceAddress")
                 
                 // Nordic UART Service 검색
                 val service = gatt.getService(BleConstants.SERVICE_UUID)
                 if (service == null) {
-                    loge("Nordic UART Service not found")
+                    Logx.e(TAG, "Nordic UART Service not found")
                     handleConnectionError(deviceAddress, "Required service not found")
                     return@launch
                 }
@@ -122,7 +122,7 @@ class BleConnector(context: Context) : BleComponent(context) {
                 rxCharacteristic = service.getCharacteristic(BleConstants.RX_CHAR_UUID)
                 
                 if (txCharacteristic == null || rxCharacteristic == null) {
-                    loge("Required characteristics not found")
+                    Logx.e(TAG, "Required characteristics not found")
                     handleConnectionError(deviceAddress, "Required characteristics not found")
                     return@launch
                 }
@@ -130,7 +130,7 @@ class BleConnector(context: Context) : BleComponent(context) {
                 // TX 특성에 대한 알림 활성화
                 val success = enableNotifications(gatt, txCharacteristic!!)
                 if (!success) {
-                    loge("Failed to enable notifications")
+                    Logx.e(TAG, "Failed to enable notifications")
                     handleConnectionError(deviceAddress, "Failed to enable notifications")
                     return@launch
                 }
@@ -149,21 +149,21 @@ class BleConnector(context: Context) : BleComponent(context) {
             
             // 메시지 처리는 단순하므로 직접 처리
             if (data == null || data.isEmpty()) {
-                logw("Received empty data from $deviceAddress")
+                Logx.w(TAG, "Received empty data from $deviceAddress")
                 return
             }
             
-            logd("Received ${data.size} bytes from $deviceAddress")
+            Logx.d(TAG, "Received ${data.size} bytes from $deviceAddress")
             
             // TLV 디코딩
             val tlvResult = BinaryProtocol.decode(data)
             if (tlvResult == null) {
-                logw("Failed to decode TLV message from $deviceAddress")
+                Logx.w(TAG, "Failed to decode TLV message from $deviceAddress")
                 return
             }
             
             val (type, length, payload) = tlvResult
-            logd("Decoded TLV: type=0x${type.toString(16)}, length=$length")
+            Logx.d(TAG, "Decoded TLV: type=0x${type.toString(16)}, length=$length")
             
             // 직접 콜백 호출
             currentListener?.onMessageReceived(deviceAddress, type, payload)
@@ -174,7 +174,7 @@ class BleConnector(context: Context) : BleComponent(context) {
             
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 currentMtu.set(mtu)
-                logi("MTU changed to $mtu for $deviceAddress")
+                Logx.i(TAG, "MTU changed to $mtu for $deviceAddress")
                 
                 currentListener?.onMtuChanged(deviceAddress, mtu)
                 
@@ -183,7 +183,7 @@ class BleConnector(context: Context) : BleComponent(context) {
                     processPendingMessages()
                 }
             } else {
-                logw("MTU change failed: ${BleConstants.getGattStatusString(status)}")
+                Logx.w(TAG, "MTU change failed: ${BleConstants.getGattStatusString(status)}")
             }
             
             mtuRequested = false
@@ -193,9 +193,9 @@ class BleConnector(context: Context) : BleComponent(context) {
             val deviceAddress = gatt.device.address
             
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                logd("Message sent successfully to $deviceAddress")
+                Logx.d(TAG, "Message sent successfully to $deviceAddress")
             } else {
-                loge("Message send failed: ${BleConstants.getGattStatusString(status)}")
+                Logx.e(TAG, "Message send failed: ${BleConstants.getGattStatusString(status)}")
             }
         }
     }
@@ -240,7 +240,7 @@ class BleConnector(context: Context) : BleComponent(context) {
     override fun getReadyState(): Boolean = isComponentReady()
     
     internal override suspend fun cleanupGattResources() {
-        logd("Cleaning up BleConnector GATT resources...")
+        Logx.d(TAG, "Cleaning up BleConnector GATT resources...")
         
         try {
             // GATT 클라이언트 정리
@@ -248,9 +248,9 @@ class BleConnector(context: Context) : BleComponent(context) {
                 try {
                     gatt.disconnect()
                     gatt.close()
-                    logd("GATT client closed successfully")
+                    Logx.d(TAG, "GATT client closed successfully")
                 } catch (e: Exception) {
-                    logw("Exception closing GATT client: ${e.message}")
+                    Logx.w(TAG, "Exception closing GATT client: ${e.message}")
                 }
             }
             bluetoothGatt = null
@@ -260,9 +260,9 @@ class BleConnector(context: Context) : BleComponent(context) {
                 try {
                     server.clearServices()
                     server.close()
-                    logd("GATT server closed successfully")
+                    Logx.d(TAG, "GATT server closed successfully")
                 } catch (e: Exception) {
-                    logw("Exception closing GATT server: ${e.message}")
+                    Logx.w(TAG, "Exception closing GATT server: ${e.message}")
                 }
             }
             gattServer = null
@@ -270,14 +270,14 @@ class BleConnector(context: Context) : BleComponent(context) {
             cleanupCharacteristics()
             
         } catch (e: SecurityException) {
-            logw("SecurityException during GATT cleanup: ${e.message}")
+            Logx.w(TAG, "SecurityException during GATT cleanup: ${e.message}")
         } catch (e: Exception) {
-            logw("Exception during GATT cleanup: ${e.message}")
+            Logx.w(TAG, "Exception during GATT cleanup: ${e.message}")
         }
     }
     
     override suspend fun cleanup() {
-        logd("Cleaning up BleConnector...")
+        Logx.d(TAG, "Cleaning up BleConnector...")
         
         connectedDevice?.let { disconnect(it) }
         cleanupGattResources()
@@ -296,26 +296,26 @@ class BleConnector(context: Context) : BleComponent(context) {
                 // 1:1 연결 확인
                 val current = connectedDevice
                 if (current != null && current != deviceAddress) {
-                    logw("Already connected to $current. Cannot connect to $deviceAddress")
+                    Logx.w(TAG, "Already connected to $current. Cannot connect to $deviceAddress")
                     return false
                 }
                 
                 if (current == deviceAddress && connectionState == ConnectionState.CONNECTED) {
-                    logd("Already connected to $deviceAddress")
+                    Logx.d(TAG, "Already connected to $deviceAddress")
                     return true
                 }
                 
                 if (isConnecting.get()) {
-                    logw("Connection already in progress")
+                    Logx.w(TAG, "Connection already in progress")
                     return false
                 }
                 
                 if (!isComponentReady()) {
-                    loge("Connector not ready")
+                    Logx.e(TAG, "Connector not ready")
                     return false
                 }
                 
-                logd("Connecting to $deviceAddress...")
+                Logx.d(TAG, "Connecting to $deviceAddress...")
                 
                 // 기존 GATT 리소스 정리
                 // cleanupGattResources() // synchronized 내에서 suspend 함수 호출 불가
@@ -323,7 +323,7 @@ class BleConnector(context: Context) : BleComponent(context) {
                 try {
                     val device = bluetoothAdapter?.getRemoteDevice(deviceAddress)
                     if (device == null) {
-                        loge("Failed to get remote device for $deviceAddress")
+                        Logx.e(TAG, "Failed to get remote device for $deviceAddress")
                         return false
                     }
                     
@@ -333,28 +333,28 @@ class BleConnector(context: Context) : BleComponent(context) {
                     
                     bluetoothGatt = device.connectGatt(context, false, gattCallback)
                     if (bluetoothGatt == null) {
-                        loge("Failed to create GATT connection")
+                        Logx.e(TAG, "Failed to create GATT connection")
                         isConnecting.set(false)
                         updateConnectionState(ConnectionState.DISCONNECTED)
                         connectedDevice = null
                         return false
                     }
                     
-                    logd("GATT connection initiated")
+                    Logx.d(TAG, "GATT connection initiated")
                     return true
                     
                 } catch (e: SecurityException) {
-                    loge("Security exception during connection: ${e.message}")
+                    Logx.e(TAG, "Security exception during connection: ${e.message}")
                     handleConnectionError(deviceAddress, "Permission denied: ${e.message}")
                     return false
                 } catch (e: Exception) {
-                    loge("Unexpected error during connection: ${e.message}")
+                    Logx.e(TAG, "Unexpected error during connection: ${e.message}")
                     handleConnectionError(deviceAddress, "Connection failed: ${e.message}")
                     return false
                 }
             }
         } catch (e: Exception) {
-            loge("Error in connect: ${e.message}")
+            Logx.e(TAG, "Error in connect: ${e.message}")
             false
         }
     }
@@ -365,18 +365,18 @@ class BleConnector(context: Context) : BleComponent(context) {
     suspend fun disconnect(deviceAddress: String) {
         synchronized(stateLock) {
             if (connectedDevice != deviceAddress) {
-                logw("No connection to $deviceAddress")
+                Logx.w(TAG, "No connection to $deviceAddress")
                 return
             }
             
-            logd("Disconnecting from $deviceAddress...")
+            Logx.d(TAG, "Disconnecting from $deviceAddress...")
             
             updateConnectionState(ConnectionState.DISCONNECTING)
             
             try {
                 bluetoothGatt?.disconnect()
             } catch (e: Exception) {
-                logw("Exception during disconnect: ${e.message}")
+                Logx.w(TAG, "Exception during disconnect: ${e.message}")
             } finally {
                 // GATT 리소스는 onConnectionStateChange에서 정리됨
             }
@@ -390,12 +390,12 @@ class BleConnector(context: Context) : BleComponent(context) {
         return try {
             synchronized(stateLock) {
                 if (connectedDevice != deviceAddress) {
-                    logw("No connection to $deviceAddress")
+                    Logx.w(TAG, "No connection to $deviceAddress")
                     return false
                 }
                 
                 if (connectionState != ConnectionState.CONNECTED) {
-                    logw("Not connected to $deviceAddress")
+                    Logx.w(TAG, "Not connected to $deviceAddress")
                     return false
                 }
                 
@@ -405,15 +405,15 @@ class BleConnector(context: Context) : BleComponent(context) {
                     // 메시지 크기 확인
                     val maxSize = currentMtu.get() - 3 // ATT 헤더 3바이트 제외
                     if (tlvMessage.size > maxSize) {
-                        loge("Message too large: ${tlvMessage.size} > $maxSize")
+                        Logx.e(TAG, "Message too large: ${tlvMessage.size} > $maxSize")
                         return false
                     }
                     
-                    logd("Sending TLV message: type=0x${type.toString(16)}, size=${tlvMessage.size}")
+                    Logx.d(TAG, "Sending TLV message: type=0x${type.toString(16)}, size=${tlvMessage.size}")
                     
                     // MTU 협상 대기 중이면 메시지를 큐에 저장
                     if (mtuRequested) {
-                        logd("MTU negotiation in progress, queuing message")
+                        Logx.d(TAG, "MTU negotiation in progress, queuing message")
                         pendingMessages.add(tlvMessage)
                         return true
                     }
@@ -421,12 +421,12 @@ class BleConnector(context: Context) : BleComponent(context) {
                     return sendMessageInternal(tlvMessage)
                     
                 } catch (e: Exception) {
-                    loge("Error encoding/sending message: ${e.message}")
+                    Logx.e(TAG, "Error encoding/sending message: ${e.message}")
                     return false
                 }
             }
         } catch (e: Exception) {
-            loge("Error in sendMessage: ${e.message}")
+            Logx.e(TAG, "Error in sendMessage: ${e.message}")
             false
         }
     }
@@ -436,7 +436,7 @@ class BleConnector(context: Context) : BleComponent(context) {
      */
     suspend fun requestMtu(deviceAddress: String, mtu: Int = BleConstants.TARGET_MTU) {
         if (connectedDevice != deviceAddress) {
-            logw("No connection to $deviceAddress for MTU request")
+            Logx.w(TAG, "No connection to $deviceAddress for MTU request")
             return
         }
         
@@ -529,14 +529,14 @@ class BleConnector(context: Context) : BleComponent(context) {
     private suspend fun processPendingMessages() {
         synchronized(stateLock) {
             if (pendingMessages.isNotEmpty()) {
-                logd("Processing ${pendingMessages.size} pending messages")
+                Logx.d(TAG, "Processing ${pendingMessages.size} pending messages")
                 
                 val messages = pendingMessages.toList()
                 pendingMessages.clear()
                 
                 for (message in messages) {
                     if (!sendMessageInternal(message)) {
-                        loge("Failed to send pending message")
+                        Logx.e(TAG, "Failed to send pending message")
                         break
                     }
                     
@@ -548,7 +548,7 @@ class BleConnector(context: Context) : BleComponent(context) {
     }
     
     private fun handleConnectionError(deviceAddress: String, error: String) {
-        loge("Connection error with $deviceAddress: $error")
+        Logx.e(TAG, "Connection error with $deviceAddress: $error")
         
         isConnecting.set(false)
         updateConnectionState(ConnectionState.ERROR)
@@ -563,7 +563,7 @@ class BleConnector(context: Context) : BleComponent(context) {
             try {
                 cleanupGattResources()
             } catch (e: Exception) {
-                logw("Error during GATT cleanup: ${e.message}")
+                Logx.w(TAG, "Error during GATT cleanup: ${e.message}")
             }
         }
         
